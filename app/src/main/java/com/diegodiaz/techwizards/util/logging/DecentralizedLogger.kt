@@ -1,4 +1,4 @@
 package com.diegodiaz.techwizards.util.logging
 
-class DecentralizedLogger {
+object DecentralizedLogger {
 }

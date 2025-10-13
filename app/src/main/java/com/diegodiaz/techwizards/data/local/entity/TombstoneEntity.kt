@@ -1,4 +1,3 @@
 package com.diegodiaz.techwizards.data.local.entity
 
-class TombstoneEntity {
-}
+data class TombstoneEntity()

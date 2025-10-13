@@ -1,4 +1,3 @@
 package com.diegodiaz.techwizards.domain.model
 
-class Lobby {
-}
+data class Lobby()

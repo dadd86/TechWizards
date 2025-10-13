@@ -1,4 +1,3 @@
 package com.diegodiaz.techwizards.data.local.entity
 
-class MatchEntity {
-}
+data class MatchEntity()

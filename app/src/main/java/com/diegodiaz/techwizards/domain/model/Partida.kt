@@ -1,4 +1,3 @@
 package com.diegodiaz.techwizards.domain.model
 
-class Partida {
-}
+data class Partida()
