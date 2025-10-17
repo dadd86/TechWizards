@@ -1,9 +1,10 @@
-# Sample AGENTS.md file
+# AGENTS.md — Android Studio (Kotlin/Gradle)
 
-## Dev environment tips
-- cada funcion debe incluir un bloque de documentación minuciosa en español (que funcion tiene la funcion  y una explicacion de cada variable para su uso) para cumplir con buenas practicas de programación JSDoc la.
-- Este código se puede hacer más seguro y robusto.
-- todas las variables y funciones debe escribirse unicamente en lowerCamelCase.
-- En la carpeta (SQL) esta el script .sql(PrimerSQL.sql)
-- Asegurate de que cada script con el que trabajamos sea 100% compatible con el proyecto y el script .sql.
-- Antes de responder, te pido que dediques tiempo a pensar y razonar detenidamente y a analizar con profundidad la siguiente consulta. Considera todos los aspectos relevantes y utiliza tu juicio crítico para formular la mejor respuesta posible. Esta debe ser robusta y detallada y ejecutar su trabajo de manera excepcional y meticulosa.
+## Objetivo
+Estandarizar cómo desarrollamos, documentamos y validamos el agente en Android (Kotlin), garantizando:
+- **Nomenclatura lowerCamelCase** en **todas** las variables, funciones, propiedades y **nombres de archivo** (ver sección “Reglas de estilo”).  
+- **Documentación en español** (KDoc) detallando propósito, parámetros, retornos, errores y consideraciones de seguridad.
+- **Compatibilidad 100%** con el esquema SQL definido en `SQL/PrimerSQL.sql`.
+- **Código seguro y robusto** (validaciones, manejo de errores, límites de recursos, logging responsable).
+- Inclusión y uso consistente de `util/loggingDecentralizedLogger.kt` en TODOS los módulos que lo requieran.
+
