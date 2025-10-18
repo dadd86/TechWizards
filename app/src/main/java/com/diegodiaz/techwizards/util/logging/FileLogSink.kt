@@ -9,14 +9,19 @@ import java.util.Date
 import java.util.concurrent.Executors
 
 /**
- * Sink que escribe logs a archivo en el almacenamiento interno de la app,
- * con rotación simple por tamaño.
+ * Sink de archivo con rotación simple por tamaño (sin bloqueos de UI).
  *
- * Nota: escribe en un thread de un solo hilo para evitar bloqueos del main thread.
+ * @param context Contexto de app para seleccionar almacenamiento interno.
+ * @param maxBytes Umbral de rotación (por defecto 5 MB).
+ * @param backupCount Número de backups a conservar.
+ * @param fileName Nombre base del archivo principal.
+ * @security
+ * - Escribe en almacenamiento interno (privado por app).
+ * - Si se requiere alta seguridad, cifrar contenido antes de persistir.
  */
 class FileLogSink(
     context: Context,
-    private val maxBytes: Long = 5L * 1024L * 1024L,  // 5 MB
+    private val maxBytes: Long = 5L * 1024L * 1024L,
     private val backupCount: Int = 3,
     private val fileName: String = "app.log"
 ) : LogSink {
@@ -26,13 +31,13 @@ class FileLogSink(
     private val ioExecutor = Executors.newSingleThreadExecutor()
     private val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
 
-    override fun log(level: String, tag: String, message: String, throwable: Throwable?) {
+    override fun emit(level: LogLevel, tag: String, message: String, throwable: Throwable?) {
         val line = buildString {
             append(stamp.format(Date()))
             append(" ")
-            append(level.padEnd(5, ' '))
+            append(level.label.padEnd(7, ' '))
             append(" ")
-            append(tag.take(24).padEnd(24, ' '))
+            append(tag.padEnd(24, ' ').take(24))
             append(" | ")
             append(message)
             if (throwable != null) {
@@ -53,7 +58,7 @@ class FileLogSink(
     @WorkerThread
     private fun rotateIfNeeded() {
         if (logFile.length() < maxBytes) return
-        // Borra el más antiguo
+        // Elimina el más antiguo
         val oldest = File(logDir, "$fileName.${backupCount}")
         if (oldest.exists()) oldest.delete()
         // Desplaza backups
@@ -62,10 +67,9 @@ class FileLogSink(
             val dest = File(logDir, "$fileName.${i + 1}")
             if (src.exists()) src.renameTo(dest)
         }
-        // Renombra actual a .1
+        // Renombra actual a .1 y limpia
         val firstBackup = File(logDir, "$fileName.1")
         if (logFile.exists()) logFile.renameTo(firstBackup)
-        // Crea uno nuevo
         logFile.writeText("")
     }
 }

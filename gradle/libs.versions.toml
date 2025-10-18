@@ -9,6 +9,7 @@ espressoCore = "3.7.0"
 appcompat = "1.7.1"
 material = "1.13.0"
 
+
 # NUEVO: Compose / Navigation / Lifecycle / Coroutines
 compose-bom = "2024.10.01"
 compose-activity = "1.11.0"
@@ -33,6 +34,7 @@ androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "j
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
 
 # NUEVO: Compose BOM + UI
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
