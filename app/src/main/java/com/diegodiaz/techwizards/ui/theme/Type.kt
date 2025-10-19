@@ -1,4 +1,4 @@
-package com.diegodiaz.techwizards.app.ui.theme
+package com.diegodiaz.techwizards.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
