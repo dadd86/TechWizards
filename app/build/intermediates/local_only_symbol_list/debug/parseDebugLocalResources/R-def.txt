@@ -7,8 +7,11 @@ color purple_700
 color teal_200
 color teal_700
 color white
+drawable dado
+drawable dado_negro
 drawable ic_launcher_background
 drawable ic_launcher_foreground
+drawable moneda
 mipmap ic_launcher
 mipmap ic_launcher_round
 string app_name
