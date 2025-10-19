@@ -1,24 +1,17 @@
 package com.diegodiaz.techwizards.util.logging
 
 /**
- * Contrato para receptores de logs (*sinks*).
- *
- * Un sink decide cómo persistir o emitir el mensaje (Logcat, archivo, red, etc.).
- *
- * @security
- * - Los sinks deben evitar almacenar datos sensibles en claro.
- * - Se recomienda aplicar retención y rotación de archivos, y cifrado si se persiste.
+ * Interfaz para destinos de log (sinks). Permite enrutar los mensajes
+ * a múltiples salidas (Logcat, archivo, crash reporter, etc.).
  */
-fun interface LogSink {
+interface LogSink {
     /**
-     * Emite un mensaje preparado hacia el backend del sink.
+     * Registra un mensaje con nivel y etiqueta.
      *
-     * @param level Nivel tipado del mensaje.
-     * @param tag Etiqueta corta identificando el origen.
-     * @param message Texto ya sanitizado y opcionalmente enmascarado.
+     * @param level Nivel del mensaje ("VERBOSE","DEBUG","INFO","WARN","ERROR").
+     * @param tag Etiqueta corta (módulo/clase).
+     * @param message Texto ya sanitizado.
      * @param throwable Excepción opcional para stacktrace.
-     * @return Unit: solo efectos secundarios.
-     * @security Los sinks deben respetar políticas de protección y limpieza de PII.
      */
-    fun emit(level: LogLevel, tag: String, message: String, throwable: Throwable? = null)
+    fun log(level: String, tag: String, message: String, throwable: Throwable? = null)
 }
