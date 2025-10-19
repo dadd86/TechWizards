@@ -1,3 +1,3 @@
 package com.diegodiaz.techwizards.domain.model
 
-data class Partida()
+data class Lobby()
