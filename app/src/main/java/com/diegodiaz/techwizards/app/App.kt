@@ -1,33 +1,38 @@
 package com.diegodiaz.techwizards.app
 
 import android.app.Application
+import androidx.room.Room
+import com.diegodiaz.techwizards.BuildConfig
+import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
+import com.diegodiaz.techwizards.data.repository.impl.JuegoRepositoryRoom
+import com.diegodiaz.techwizards.domain.repository.JuegoRepository
 import com.diegodiaz.techwizards.util.logging.AndroidLogSink
 import com.diegodiaz.techwizards.util.logging.FileLogSink
-import com.diegodiaz.techwizards.util.logging.LogLevel
 import com.diegodiaz.techwizards.util.logging.loggingDecentralizedLogger
-import com.diegodiaz.techwizards.BuildConfig
 
-
-/**
- * Punto de arranque de la app: registra sinks y define nivel mínimo.
- *
- * @security Evita registrar sinks duplicados y define máscaras PII comunes.
- */
 class App : Application() {
+
+    lateinit var db: BaseDeDatos
+        private set
+    lateinit var repoJuego: JuegoRepository
+        private set
+
     override fun onCreate() {
         super.onCreate()
 
-        // Nivel mínimo: DEBUG en dev; INFO/ WARN en release (puedes condicionar por BuildConfig.DEBUG)
-        loggingDecentralizedLogger.setMinLevel(
-            if (BuildConfig.DEBUG) LogLevel.DEBUG else LogLevel.INFO
-        )
-
-        // Sinks
+        // Logger centralizado
         loggingDecentralizedLogger.registerSink(AndroidLogSink())
         loggingDecentralizedLogger.registerSink(FileLogSink(this))
+        loggingDecentralizedLogger.setMinLevel(if (BuildConfig.DEBUG) "DEBUG" else "INFO")
+        // (Opcional) Enmascaradores PII
+        // loggingDecentralizedLogger.addPiiMask(Regex("""token=[A-Za-z0-9\-_.]+"""))
 
-        // Máscaras PII de ejemplo (emails y UUID)
-        loggingDecentralizedLogger.addPiiMask(Regex("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"))
-        loggingDecentralizedLogger.addPiiMask(Regex("[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}"))
+        // Room
+        db = Room.databaseBuilder(this, BaseDeDatos::class.java, "techwizards.db")
+            .fallbackToDestructiveMigration() // TODO: reemplazar por migraciones
+            .build()
+
+        // Repo
+        repoJuego = JuegoRepositoryRoom(db.iPartidaDao(), db.iMonederoDao())
     }
 }

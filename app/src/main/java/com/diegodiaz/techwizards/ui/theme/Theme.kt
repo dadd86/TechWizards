@@ -1,4 +1,5 @@
-package com.diegodiaz.techwizards.app.ui.theme
+package com.diegodiaz.techwizards.ui.theme
+
 
 import android.app.Activity
 import android.os.Build
