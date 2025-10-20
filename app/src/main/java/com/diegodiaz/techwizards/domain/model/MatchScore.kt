@@ -1,3 +1,5 @@
 package com.diegodiaz.techwizards.domain.model
 
-data class MatchScore()
+data class MatchScore(
+    val id: String
+)

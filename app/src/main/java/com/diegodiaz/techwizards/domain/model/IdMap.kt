@@ -1,3 +1,5 @@
 package com.diegodiaz.techwizards.domain.model
 
-data class IdMap()
+data class IdMap(
+    val id: String
+)
