@@ -1,3 +1,5 @@
 package com.diegodiaz.techwizards.data.local.entity
 
-data class MessageEntity()
+data class MessageEntity(
+    val id: String //EJEMPLO, CAMBIAR!!
+)

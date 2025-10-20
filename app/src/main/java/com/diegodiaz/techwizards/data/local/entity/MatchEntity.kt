@@ -1,3 +1,5 @@
 package com.diegodiaz.techwizards.data.local.entity
 
-data class MatchEntity()
+data class MatchEntity(
+    val id: String //EJEMPLO, CAMBIAR SEGÚN HAGA FALTA!!
+)

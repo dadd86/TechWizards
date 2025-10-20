@@ -1,3 +1,5 @@
 package com.diegodiaz.techwizards.domain.model
 
-data class Partida()
+data class Partida(
+    val id: String //EJEMPLO
+)

@@ -1,3 +1,5 @@
 package com.diegodiaz.techwizards.data.local.entity
 
-data class PartidaEntity()
+data class PartidaEntity(
+    val id: String //EJEMPLO, CAMBIAR!!
+)

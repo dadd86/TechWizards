@@ -1,3 +1,5 @@
 package com.diegodiaz.techwizards.domain.model
 
-data class Outbox()
+data class Outbox(
+    val id: String //EJEMPLO
+)

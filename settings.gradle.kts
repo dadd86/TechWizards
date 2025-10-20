@@ -1,4 +1,4 @@
-git pluginManagement {
+pluginManagement {
     repositories {
         google {
             content {
