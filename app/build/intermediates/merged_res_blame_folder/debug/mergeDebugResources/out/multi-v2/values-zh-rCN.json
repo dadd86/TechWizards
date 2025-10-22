@@ -1,27 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.diegodiaz.techwizards.app-mergeDebugResources-62:/values-zh-rCN/values-zh-rCN.xml",
+            "outputFile": "com.diegodiaz.techwizards.app-mergeDebugResources-60:/values-zh-rCN/values-zh-rCN.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\miria\\.gradle\\caches\\8.13\\transforms\\0c9139c8e066605b26489ec105dcee1a\\transformed\\ui-release\\res\\values-zh-rCN\\values-zh-rCN.xml",
-                    "from": {
-                        "startLines": "3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "177,254,330,415,506,583,657,734,812,887,960,1035,1103,1184,1257,1329,1400,1473,1539",
-                        "endColumns": "76,75,84,90,76,73,76,77,74,72,74,67,80,72,71,70,72,65,115",
-                        "endOffsets": "249,325,410,501,578,652,729,807,882,955,1030,1098,1179,1252,1324,1395,1468,1534,1650"
-                    },
-                    "to": {
-                        "startLines": "48,49,50,51,52,57,58,181,182,184,185,189,191,192,193,194,196,197,198",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "4132,4209,4285,4370,4461,4787,4861,14957,15035,15179,15252,15554,15692,15773,15846,15918,16090,16163,16229",
-                        "endColumns": "76,75,84,90,76,73,76,77,74,72,74,67,80,72,71,70,72,65,115",
-                        "endOffsets": "4204,4280,4365,4456,4533,4856,4933,15030,15105,15247,15322,15617,15768,15841,15913,15984,16158,16224,16340"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\miria\\.gradle\\caches\\8.13\\transforms\\f78e30446a5a49a10481971caa2bc2fb\\transformed\\foundation-release\\res\\values-zh-rCN\\values-zh-rCN.xml",
+                    "source": "C:\\Users\\diaz_\\.gradle\\caches\\8.13\\transforms\\5c6fc47552dc321e8899c6999009cc2c\\transformed\\foundation-release\\res\\values-zh-rCN\\values-zh-rCN.xml",
                     "from": {
                         "startLines": "2,3,4",
                         "startColumns": "4,4,4",
@@ -38,24 +21,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\miria\\.gradle\\caches\\8.13\\transforms\\a05fae25ffddfefdcded95eb763faaf5\\transformed\\core-1.17.0\\res\\values-zh-rCN\\values-zh-rCN.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,147,248,342,436,529,623,719",
-                        "endColumns": "91,100,93,93,92,93,95,100",
-                        "endOffsets": "142,243,337,431,524,618,714,815"
-                    },
-                    "to": {
-                        "startLines": "38,39,40,41,42,43,44,195",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "3198,3290,3391,3485,3579,3672,3766,15989",
-                        "endColumns": "91,100,93,93,92,93,95,100",
-                        "endOffsets": "3285,3386,3480,3574,3667,3761,3857,16085"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\miria\\.gradle\\caches\\8.13\\transforms\\47491eafe0853225cc10cec2d467866d\\transformed\\material3-release\\res\\values-zh-rCN\\values-zh-rCN.xml",
+                    "source": "C:\\Users\\diaz_\\.gradle\\caches\\8.13\\transforms\\0972c85a6452be20bb00faefea36cd8c\\transformed\\material3-release\\res\\values-zh-rCN\\values-zh-rCN.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -72,7 +38,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\miria\\.gradle\\caches\\8.13\\transforms\\491acab52aee0cdd8eaf909442db3d9b\\transformed\\material-1.13.0\\res\\values-zh-rCN\\values-zh-rCN.xml",
+                    "source": "C:\\Users\\diaz_\\.gradle\\caches\\8.13\\transforms\\badd4c5ba34b289a567325330f9a2452\\transformed\\material-1.13.0\\res\\values-zh-rCN\\values-zh-rCN.xml",
                     "from": {
                         "startLines": "2,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -91,7 +57,41 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\miria\\.gradle\\caches\\8.13\\transforms\\57b75823c08ccc73fd8cc592ee1e187e\\transformed\\appcompat-1.7.1\\res\\values-zh-rCN\\values-zh-rCN.xml",
+                    "source": "C:\\Users\\diaz_\\.gradle\\caches\\8.13\\transforms\\9325a8e5ff986bfd9c657c4acb83b259\\transformed\\core-1.17.0\\res\\values-zh-rCN\\values-zh-rCN.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,147,248,342,436,529,623,719",
+                        "endColumns": "91,100,93,93,92,93,95,100",
+                        "endOffsets": "142,243,337,431,524,618,714,815"
+                    },
+                    "to": {
+                        "startLines": "38,39,40,41,42,43,44,195",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "3198,3290,3391,3485,3579,3672,3766,15989",
+                        "endColumns": "91,100,93,93,92,93,95,100",
+                        "endOffsets": "3285,3386,3480,3574,3667,3761,3857,16085"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\diaz_\\.gradle\\caches\\8.13\\transforms\\891610a6dc3130a14e98f4345deceea2\\transformed\\ui-release\\res\\values-zh-rCN\\values-zh-rCN.xml",
+                    "from": {
+                        "startLines": "3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "177,254,330,415,506,583,657,734,812,887,960,1035,1103,1184,1257,1329,1400,1473,1539",
+                        "endColumns": "76,75,84,90,76,73,76,77,74,72,74,67,80,72,71,70,72,65,115",
+                        "endOffsets": "249,325,410,501,578,652,729,807,882,955,1030,1098,1179,1252,1324,1395,1468,1534,1650"
+                    },
+                    "to": {
+                        "startLines": "48,49,50,51,52,57,58,181,182,184,185,189,191,192,193,194,196,197,198",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "4132,4209,4285,4370,4461,4787,4861,14957,15035,15179,15252,15554,15692,15773,15846,15918,16090,16163,16229",
+                        "endColumns": "76,75,84,90,76,73,76,77,74,72,74,67,80,72,71,70,72,65,115",
+                        "endOffsets": "4204,4280,4365,4456,4533,4856,4933,15030,15105,15247,15322,15617,15768,15841,15913,15984,16158,16224,16340"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\diaz_\\.gradle\\caches\\8.13\\transforms\\5252f2f9cdfb66b2067d7d382108a05c\\transformed\\appcompat-1.7.1\\res\\values-zh-rCN\\values-zh-rCN.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",

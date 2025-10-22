@@ -26,7 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.diegodiaz.techwizards.app.ui.theme.TechWizardsTheme
+import com.diegodiaz.techwizards.ui.theme.TechWizardsTheme
 import com.diegodiaz.techwizards.R
 
 class MainActivity : ComponentActivity() {

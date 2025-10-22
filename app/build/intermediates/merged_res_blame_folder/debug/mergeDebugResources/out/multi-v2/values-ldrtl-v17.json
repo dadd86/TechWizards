@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.diegodiaz.techwizards.app-mergeDebugResources-62:/values-ldrtl-v17/values-ldrtl-v17.xml",
+            "outputFile": "com.diegodiaz.techwizards.app-mergeDebugResources-60:/values-ldrtl-v17/values-ldrtl-v17.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\miria\\.gradle\\caches\\8.13\\transforms\\491acab52aee0cdd8eaf909442db3d9b\\transformed\\material-1.13.0\\res\\values-ldrtl-v17\\values-ldrtl-v17.xml",
+                    "source": "C:\\Users\\diaz_\\.gradle\\caches\\8.13\\transforms\\badd4c5ba34b289a567325330f9a2452\\transformed\\material-1.13.0\\res\\values-ldrtl-v17\\values-ldrtl-v17.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",
