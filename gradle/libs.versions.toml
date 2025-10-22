@@ -11,20 +11,21 @@ material = "1.13.0"
 
 
 # NUEVO: Compose / Navigation / Lifecycle / Coroutines
-compose-bom = "2024.10.01"
+compose-bom = "2024.12.01"
 compose-activity = "1.11.0"
+compose-compiler = "1.6.10"
 nav-compose = "2.9.5"
 lifecycle = "2.9.4"
 coroutines = "1.10.2"
 
 # NUEVO: Room / Work / Crypto / Serialization
-room = "2.6.1"
-work = "2.9.1"
+room = "2.8.2"
+work = "2.10.5"
 security-crypto = "1.1.0"
 serialization = "1.7.3"
 
 # NUEVO: KSP (alineado con Kotlin 2.0.21)
-ksp = "2.0.21-1.0.25"
+ksp = "2.0.21-1.0.27"
 
 [libraries]
 # Tus libs existentes

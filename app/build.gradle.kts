@@ -33,9 +33,6 @@ android {
         compose = true
         buildConfig = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.15"
-    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -90,4 +87,5 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
+
 
