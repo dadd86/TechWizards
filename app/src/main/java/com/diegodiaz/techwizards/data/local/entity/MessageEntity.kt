@@ -1,5 +1,5 @@
 package com.diegodiaz.techwizards.data.local.entity
 
 data class MessageEntity(
-    val id: String
+    val id: String //EJEMPLO, CAMBIAR!!
 )

@@ -1,6 +1,5 @@
 package com.diegodiaz.techwizards.data.local.entity
 
-
 data class MatchEventEntity(
-    val id: String
+    val id: String //EJEMPLO, CAMBIAR SEGUN HAGA FALTA!!
 )
