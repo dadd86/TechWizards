@@ -1,6 +1,9 @@
 package com.diegodiaz.techwizards.data.local.entity
 
+@Entity(tableName = "lobby")
 data class LobbyEntity(
-    val id: String,
-    val nombre: String //EJEMPLO, CAMBIAR SEGÚN HAGA FALTA!!
+    @PrimaryKey val id: String,
+    val nombre: String,
+    val capacidad: Int,
+    val abierta: Boolean
 )

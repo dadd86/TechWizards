@@ -1,5 +1,27 @@
 package com.diegodiaz.techwizards.data.local.entity
 
+@Entity(
+    tableName = "message",
+    foreignKeys = [
+        ForeignKey(
+            entity = MatchEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["matchId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = UsuarioEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["remitenteId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("matchId"), Index("remitenteId")]
+)
 data class MessageEntity(
-    val id: String //EJEMPLO, CAMBIAR!!
+    @PrimaryKey val id: String,
+    val matchId: String,
+    val remitenteId: String,
+    val contenido: String,
+    val timestamp: Long
 )

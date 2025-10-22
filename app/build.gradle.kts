@@ -82,6 +82,12 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
 
+    // --- RxJava + Room ---
+    implementation(libs.room.rxjava3)
+    implementation(libs.rxjava3)
+    implementation(libs.rxandroid)
+    implementation(libs.coroutines.rx3)
+
     // Test
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
