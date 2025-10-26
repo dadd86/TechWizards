@@ -96,5 +96,7 @@ class RegistrarLanzamientoUseCase(
         }
 }
 
-private fun redact(value: String): String =
-    if (value.length <= 4) "***" else value.take(2) + "***" + value.takeLast(2)
+private fun redact(value: Any?): String {
+    val s = value?.toString() ?: return "***"
+    return if (s.length <= 4) "***" else s.take(2) + "***" + s.takeLast(2)
+}
