@@ -18,4 +18,7 @@ interface IMonederoDao {
 
     @Query("UPDATE monedero SET saldo = :nuevo WHERE usuarioId = :usuarioId")
     fun actualizarSaldo(usuarioId: String, nuevo: Int): Completable
+
+    @Query("DELETE FROM usuario")
+    fun borrarTodo()
 }

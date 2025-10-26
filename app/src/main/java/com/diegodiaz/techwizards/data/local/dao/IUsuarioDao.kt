@@ -15,4 +15,7 @@ interface IUsuarioDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun upsert(entity: UsuarioEntity): Completable
+
+    @Query("DELETE FROM usuario")
+    fun borrarTodo()
 }
