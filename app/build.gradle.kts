@@ -33,9 +33,6 @@ android {
         compose = true
         buildConfig = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.15"
-    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -46,6 +43,12 @@ android {
     packaging {
         resources.excludes += setOf("/META-INF/{AL2.0,LGPL2.1}")
     }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+    arg("room.incremental", "true")
+    arg("room.expandProjection", "true")
 }
 
 dependencies {
@@ -84,9 +87,17 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-        // Test
+
+    // --- RxJava + Room ---
+    implementation(libs.room.rxjava3)
+    implementation(libs.rxjava3)
+    implementation(libs.rxandroid)
+    implementation(libs.coroutines.rx3)
+
+    // Test
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
+
 

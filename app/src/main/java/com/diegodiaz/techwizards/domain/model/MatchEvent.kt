@@ -1,3 +1,5 @@
 package com.diegodiaz.techwizards.domain.model
 
-data class MatchEvent()
+data class MatchEvent(
+    val id: String //EJEMPLO, CAMBIAR!!
+)

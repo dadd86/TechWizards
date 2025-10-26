@@ -1,11 +1,15 @@
 package com.diegodiaz.techwizards.domain.repository
 
-import com.diegodiaz.techwizards.domain.model.Monedero
-import com.diegodiaz.techwizards.domain.model.Partida
-import kotlinx.coroutines.flow.Flow
-
+/**
+ * JuegoRepository.kt
+ *
+ * Aquí se define qué puede hacer el repositorio del juego.
+ * De momento solo lo dejamos como interfaz, sin implementación concreta.
+ */
 interface JuegoRepository {
-    fun observarMonedero(): Flow<Monedero>
-    fun observarHistorial(limit: Int): Flow<List<Partida>>
-    suspend fun lanzarDado(): Partida
+    // 🔹 Recuperar información general del juego (opcional)
+    // suspend fun obtenerInfoJuego(): Juego?
+
+    // 🔹 Registrar o actualizar progreso del jugador
+    // suspend fun actualizarProgreso(usuarioId: Int, monedas: Int)
 }

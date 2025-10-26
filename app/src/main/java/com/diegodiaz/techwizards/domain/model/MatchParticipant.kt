@@ -1,3 +1,5 @@
 package com.diegodiaz.techwizards.domain.model
 
-data class MatchParticipant()
+data class MatchParticipant(
+    val id: String //EJEMPLO, CAMBIAR!!
+)
