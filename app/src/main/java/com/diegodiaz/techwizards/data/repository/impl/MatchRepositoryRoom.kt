@@ -7,6 +7,7 @@ import com.diegodiaz.techwizards.data.local.mapper.toEntity
 import com.diegodiaz.techwizards.domain.model.Partida
 import io.reactivex.rxjava3.core.Completable
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.rx3.asFlow
 import kotlinx.coroutines.rx3.await
 

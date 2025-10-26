@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.diegodiaz.techwizards.app-mergeDebugResources-62:/values-h480dp-v13/values-h480dp-v13.xml",
+            "outputFile": "com.diegodiaz.techwizards.app-mergeDebugResources-63:/values-h480dp-v13/values-h480dp-v13.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\miria\\.gradle\\caches\\8.13\\transforms\\491acab52aee0cdd8eaf909442db3d9b\\transformed\\material-1.13.0\\res\\values-h480dp-v13\\values-h480dp-v13.xml",
+                    "source": "C:\\Users\\miria\\.gradle\\caches\\8.13\\transforms\\27364ba5db819fb09a507c4e3810e98e\\transformed\\material-1.13.0\\res\\values-h480dp-v13\\values-h480dp-v13.xml",
                     "from": {
                         "startLines": "2,3,4,5",
                         "startColumns": "4,4,4,4",
