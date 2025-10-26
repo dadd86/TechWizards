@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -19,10 +20,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.Alignment
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -33,7 +34,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            TechWizardsTheme {
+            // Tema claro u oscuro
+            var isDarkTheme by rememberSaveable { mutableStateOf(false) }
+
+            TechWizardsTheme (darkTheme = isDarkTheme){
                 val navController = rememberNavController()
                 NavHost(
                     navController = navController,
@@ -41,11 +45,13 @@ class MainActivity : ComponentActivity() {
                 ) {
                     composable("bienvenida") {
                         PantallaBienvenida(
+                            isDarkTheme = isDarkTheme,
                             onJugar = { navController.navigate("menu") }
                         )
                     }
                     composable("menu") {
                         PantallaMenu(
+                            isDarkTheme = isDarkTheme,
                             onJugar = { navController.navigate("partida") },
                             onHistorial = { navController.navigate("historial") },
                             onAjustes = { navController.navigate("ajustes") }
@@ -53,16 +59,20 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("partida") {
                         PantallaPartida(
+                            isDarkTheme = isDarkTheme,
                             onVolverAlMenu = { navController.navigate("menu") }
                         )
                     }
                     composable("historial") {
                         PantallaHistorial(
+                            isDarkTheme = isDarkTheme,
                             onVolverAlMenu = { navController.navigate("menu") }
                         )
                     }
                     composable("ajustes") {
                         PantallaAjustes(
+                            isDarkTheme = isDarkTheme,
+                            onToggleTheme = { isDarkTheme = it },
                             onVolverAlMenu = { navController.navigate("menu") }
                         )
                     }
@@ -72,12 +82,14 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun PantallaBienvenida(onJugar: () -> Unit) {
+    fun PantallaBienvenida(isDarkTheme: Boolean,onJugar: () -> Unit) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF7EC8E3)) //Azul claro
+                .background(if (!isDarkTheme) Color(0xFF7EC8E3) // Azul claro solo en tema claro
+                else MaterialTheme.colorScheme.background // Fondo oscuro en dark
+                )
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -131,11 +143,12 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun PantallaMenu(
+        isDarkTheme: Boolean,
         onJugar: () -> Unit,
         onHistorial: () -> Unit = {},
         onAjustes: () -> Unit = {}
     ) {
-        // Estado para el diálogo
+        // Estado para el diálogo de salir de la app
         var showDialog by remember { mutableStateOf(false) }
 
         // Acceso al contexto (para cerrar la Activity)
@@ -144,7 +157,8 @@ class MainActivity : ComponentActivity() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF7F7F7)),
+                .background(if (!isDarkTheme) Color(0xFFF7F7F7)
+                else MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -155,7 +169,7 @@ class MainActivity : ComponentActivity() {
                     text = "Menú principal",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(Modifier.height(16.dp))
                 MenuBoton("Jugar", onClick = onJugar)
@@ -209,11 +223,12 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun PantallaPartida(onVolverAlMenu: () -> Unit) {
+    fun PantallaPartida(isDarkTheme: Boolean, onVolverAlMenu: () -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFD6E8CD)), //Fondo verde claro
+                .background(if (!isDarkTheme) Color(0xFFD6E8CD)
+                else MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -237,7 +252,8 @@ class MainActivity : ComponentActivity() {
                     Text(
                         text = " 100",
                         fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }
                 Spacer(Modifier.height(18.dp))
@@ -274,7 +290,8 @@ class MainActivity : ComponentActivity() {
                 Text(
                     text = "Último lanzamiento: Ganó", // CAMBIAR!!!!
                     fontWeight = FontWeight.Medium,
-                    fontSize = 22.sp
+                    fontSize = 22.sp,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
 
                 // Botón de volver al menú
@@ -298,11 +315,12 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun PantallaHistorial(onVolverAlMenu: () -> Unit) {
+    fun PantallaHistorial(isDarkTheme: Boolean, onVolverAlMenu: () -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF9F9F9)), //Fondo gris claro
+                .background(if (!isDarkTheme) Color(0xFFF9F9F9)
+                else MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.TopCenter
         ) {
             Column(
@@ -315,7 +333,7 @@ class MainActivity : ComponentActivity() {
                     text = "Historial de partidas",
                     fontSize = 34.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF222222)
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(Modifier.height(40.dp))
                 Box(
@@ -392,11 +410,12 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun PantallaAjustes(onVolverAlMenu: () -> Unit) {
+    fun PantallaAjustes(isDarkTheme: Boolean, onToggleTheme: (Boolean) -> Unit, onVolverAlMenu: () -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFB5E2F8)), // Fondo azul claro
+                .background(if (!isDarkTheme) Color(0xFFB5E2F8)
+                else MaterialTheme.colorScheme.background)
         ) {
             Column(
                 modifier = Modifier
@@ -410,17 +429,21 @@ class MainActivity : ComponentActivity() {
                     AjusteSwitch("Efectos de sonido", checked = false)
                 }
                 AjustesSeccion(titulo = "Visualización") {
-                    AjusteSwitch("Tema claro/oscuro", checked = true)
+                    AjusteSwitch(
+                        label = "Tema claro/oscuro",
+                        checked = isDarkTheme,
+                        onCheckedChange = onToggleTheme
+                    )
                     AjusteSwitch("Animaciones gráficas del juego", checked = false)
                 }
                 AjustesSeccion(titulo = "Notificaciones") {
                     AjusteSwitch("Notificaciones de resultado o logros", checked = true)
                 }
-
                 Text(
                     text = "Monedas / Datos de jugador",
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -429,7 +452,7 @@ class MainActivity : ComponentActivity() {
                         tint = Color(0xFFFFC947),
                         modifier = Modifier.size(26.dp)
                     )
-                    Text(text = " Monedas: 100", fontSize = 17.sp, color = Color(0xFF444444))
+                    Text(text = " Monedas: 100", fontSize = 17.sp, color = MaterialTheme.colorScheme.onBackground)
                 }
                 Spacer(Modifier.height(4.dp))
                 Button(
@@ -444,7 +467,8 @@ class MainActivity : ComponentActivity() {
                 Text(
                     text = "Información",
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -492,14 +516,14 @@ class MainActivity : ComponentActivity() {
         Text(
             text = titulo,
             fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
         )
         Column(verticalArrangement = Arrangement.spacedBy(8.dp), content = content)
     }
 
     @Composable
-    fun AjusteSwitch(label: String, checked: Boolean) {
-        var isChecked by remember { mutableStateOf(checked) }
+    fun AjusteSwitch(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit = {}) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -508,7 +532,7 @@ class MainActivity : ComponentActivity() {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(label, fontSize = 16.sp, color = Color(0xFF3A3A3A))
-            Switch(checked = isChecked, onCheckedChange = { isChecked = it })
+            Switch(checked = checked, onCheckedChange = onCheckedChange)
         }
     }
 }

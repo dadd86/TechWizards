@@ -40,9 +40,8 @@ class JuegoRepositoryRoom(
             )
 
     // -------- Wrappers coroutines (opcional) --------
-    fun observarSaldo(usuarioId: String): Flow<Monedero> {
-        return observeSaldoRx(usuarioId).asFlow()
-    }
+    fun observarSaldo(usuarioId: String): Flow<Monedero> =
+        observeSaldoRx(usuarioId).asFlow<Monedero>()
 
     suspend fun inicializarMonedas(usuario: Usuario, monedasIniciales: Int) {
         inicializarMonedasRx(usuario, monedasIniciales).await()
