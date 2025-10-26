@@ -2,6 +2,7 @@ package com.diegodiaz.techwizards.domain.repository
 
 import com.diegodiaz.techwizards.core.common.AgentError
 import com.diegodiaz.techwizards.domain.model.Usuario
+import com.diegodiaz.techwizards.domain.model.GameSettings
 
 /**
  * Acceso a datos del jugador principal.
@@ -39,4 +40,25 @@ interface UsuarioRepository {
      * - No emite logs con identificadores directos sin redactar.
      */
     suspend fun actualizarUltimoResultado(usuario: Usuario, gano: Boolean): Result<Unit, AgentError>
+}
+/**
+ * Maneja las preferencias locales del jugador.
+ *
+ * @security
+ * - No almacena datos sensibles, solo flags de configuración.
+ */
+interface SettingsRepository {
+
+    /**
+     * Guarda las preferencias del jugador.
+     *
+     * @param settings Preferencias a guardar.
+     * @return Resultado vacío en éxito.
+     */
+    suspend fun guardarPreferencias(settings: GameSettings): Result<Unit, AgentError>
+
+    /**
+     * Obtiene las preferencias actuales.
+     */
+    suspend fun obtenerPreferencias(): Result<GameSettings, AgentError>
 }
