@@ -45,24 +45,18 @@ class RegistrarLanzamientoUseCase(
             require(monedasDelta in -500..500) { "Delta de monedas inválido" }
             when (val eventoResultado = matchRepository.registrarEvento(event)) {
                 is Result.Err -> {
-                    DecentralizedLogger.error(
-                        event = "registroEventoFallido",
-                        meta = mapOf(
-                            "matchId" to loggingDecentralizedLogger.redact(match.id),
-                            "tipo" to event.type,
-                        ),
-                        throwable = (eventoResultado.error as? AgentError.Database)?.cause,
+                    DecentralizedLogger.e(
+                        "RegistrarLanzamiento",
+                        "Evento fallido match=${redact(match.id)} tipo=${event.type}",
+                        (eventoResultado.error as? AgentError.Database)?.cause,
                     )
                     return@withContext eventoResultado
                 }
 
                 is Result.Ok -> {
-                    loggingDecentralizedLogger.info(
-                        event = "eventoRegistrado",
-                        meta = mapOf(
-                            "matchId" to loggingDecentralizedLogger.redact(match.id),
-                            "seq" to event.seq,
-                        ),
+                    DecentralizedLogger.i(
+                        "RegistrarLanzamiento",
+                        "Evento registrado match=${redact(match.id)} seq=${event.seq}",
                     )
                 }
             }
@@ -77,32 +71,26 @@ class RegistrarLanzamientoUseCase(
             when (val saldoResultado = usuarioRepository.actualizarSaldo(usuario, nuevoSaldo)) {
                 is Result.Err -> return@withContext saldoResultado
                 is Result.Ok -> {
-                    loggingDecentralizedLogger.info(
-                        event = "saldoActualizado",
-                        meta = mapOf(
-                            "usuario" to loggingDecentralizedLogger.redact(usuario.numero.toString()),
-                            "saldo" to nuevoSaldo,
-                        ),
+                    DecentralizedLogger.i(
+                        "RegistrarLanzamiento",
+                        "Saldo actualizado usuario=${redact(usuario.numero.toString())} saldo=$nuevoSaldo",
                     )
                 }
             }
 
             when (val resultado = usuarioRepository.actualizarUltimoResultado(usuario, gano)) {
                 is Result.Err -> {
-                    loggingDecentralizedLogger.warn(
-                        event = "ultimoResultadoNoActualizado",
-                        meta = mapOf("usuario" to loggingDecentralizedLogger.redact(usuario.numero.toString())),
+                    DecentralizedLogger.w(
+                        "RegistrarLanzamiento",
+                        "Último resultado no actualizado usuario=${redact(usuario.numero.toString())}",
                     )
                     return@withContext resultado
                 }
 
                 is Result.Ok -> {
-                    loggingDecentralizedLogger.info(
-                        event = "ultimoResultadoActualizado",
-                        meta = mapOf(
-                            "usuario" to loggingDecentralizedLogger.redact(usuario.numero.toString()),
-                            "gano" to gano,
-                        ),
+                    DecentralizedLogger.i(
+                        "RegistrarLanzamiento",
+                        "Último resultado actualizado usuario=${redact(usuario.numero.toString())} gano=$gano",
                     )
                 }
             }
@@ -110,3 +98,6 @@ class RegistrarLanzamientoUseCase(
             Result.Ok(Unit)
         }
 }
+
+private fun redact(value: String): String =
+    if (value.length <= 4) "***" else value.take(2) + "***" + value.takeLast(2)
