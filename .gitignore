@@ -1,18 +1,35 @@
-*.iml
-.gradle
-/local.properties
-.idea/
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
+# Gradle
+.gradle/
+build/
 **/build/
-/build
-app/build/
-/captures
-.externalNativeBuild
-.cxx
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local configuration
 local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# NDK / Caches / Generated files
+**/captures/
+**/.externalNativeBuild/
+**/.cxx/
+**/intermediates/
+**/generated/
+**/tmp/
+**/kspCaches/
+
+# Jetpack Compose previews cache
+**/compose-snapshots/
+
+# Misc
+/out/
