@@ -2,7 +2,7 @@ package com.diegodiaz.techwizards.core.usecases
 
 import com.diegodiaz.techwizards.core.common.AgentError
 import com.diegodiaz.techwizards.domain.model.GameSettings
-import com.diegodiaz.techwizards.domain.repository.aSettingsRepository
+import com.diegodiaz.techwizards.domain.repository.SettingsRepository
 import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
