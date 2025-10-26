@@ -3,7 +3,7 @@ package com.diegodiaz.techwizards.core.usecases
 import com.diegodiaz.techwizards.core.common.AgentError
 import com.diegodiaz.techwizards.domain.model.Match
 import com.diegodiaz.techwizards.domain.repository.MatchRepository
-import com.diegodiaz.techwizards.util.loggingDecentralizedLogger
+import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -33,10 +33,10 @@ class ObtenerHistorialPartidasUseCase(
             require(limite in 1..100) { "Límite inválido" }
             val resultado = matchRepository.obtenerHistorial(limite)
             if (resultado is Result.Ok) {
-                loggingDecentralizedLogger.info(
-                    event = "historialRecuperado",
-                    meta = mapOf("cantidad" to resultado.value.size),
-                )
+                DecentralizedLogger.i(
+                    "HistorialPartidas",
+                    "Historial recuperado cantidad=${resultado.value.size}",
+                    )
             }
             resultado
         }
