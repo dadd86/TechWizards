@@ -32,4 +32,9 @@ local.properties
 **/compose-snapshots/
 
 # Misc
-/out/
+/out/.idea/
+*.iml
+.gradle/
+**/build/
+app/build/
+local.properties
