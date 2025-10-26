@@ -23,8 +23,9 @@ class MatchRepositoryRoom(
             .andThen(monederoDao.actualizarSaldo(partida.usuarioId, saldoNuevo))
 
     // -------- Wrappers coroutines (opcional) --------
-    fun historial(usuarioId: String): Flow<List<Partida>> =
-        historialRx(usuarioId).asFlow()
+    fun historial(usuarioId: String): Flow<List<Partida>> {
+        return historialRx(usuarioId).asFlow()
+    }
 
     suspend fun registrarResultado(partida: Partida, saldoNuevo: Int) {
         registrarResultadoRx(partida, saldoNuevo).await()

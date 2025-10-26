@@ -11,6 +11,7 @@ import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.rx3.asFlow
 import kotlinx.coroutines.rx3.await
 
@@ -39,8 +40,9 @@ class JuegoRepositoryRoom(
             )
 
     // -------- Wrappers coroutines (opcional) --------
-    fun observarSaldo(usuarioId: String): Flow<Monedero> =
-        observeSaldoRx(usuarioId).asFlow()
+    fun observarSaldo(usuarioId: String): Flow<Monedero> {
+        return observeSaldoRx(usuarioId).asFlow()
+    }
 
     suspend fun inicializarMonedas(usuario: Usuario, monedasIniciales: Int) {
         inicializarMonedasRx(usuario, monedasIniciales).await()
