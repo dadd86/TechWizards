@@ -7,6 +7,7 @@ import com.diegodiaz.techwizards.data.local.mapper.toEntity
 import com.diegodiaz.techwizards.domain.model.Partida
 import io.reactivex.rxjava3.core.Completable
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.rx3.asFlow
 import kotlinx.coroutines.rx3.await
 
@@ -23,8 +24,9 @@ class MatchRepositoryRoom(
             .andThen(monederoDao.actualizarSaldo(partida.usuarioId, saldoNuevo))
 
     // -------- Wrappers coroutines (opcional) --------
-    fun historial(usuarioId: String): Flow<List<Partida>> =
-        historialRx(usuarioId).asFlow()
+    fun historial(usuarioId: String): Flow<List<Partida>> {
+        return historialRx(usuarioId).asFlow()
+    }
 
     suspend fun registrarResultado(partida: Partida, saldoNuevo: Int) {
         registrarResultadoRx(partida, saldoNuevo).await()
