@@ -2,6 +2,7 @@ package com.diegodiaz.techwizards.core.usecases
 
 import com.diegodiaz.techwizards.core.common.AgentError
 import com.diegodiaz.techwizards.domain.model.Match
+import com.diegodiaz.techwizards.core.common.Result
 import com.diegodiaz.techwizards.domain.repository.MatchRepository
 import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import kotlinx.coroutines.CoroutineDispatcher

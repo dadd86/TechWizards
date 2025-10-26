@@ -3,6 +3,7 @@ package com.diegodiaz.techwizards.core.usecases
 import com.diegodiaz.techwizards.core.common.AgentError
 import com.diegodiaz.techwizards.domain.model.Match
 import com.diegodiaz.techwizards.domain.model.MatchEvent
+import com.diegodiaz.techwizards.core.common.Result
 import com.diegodiaz.techwizards.domain.repository.MatchRepository
 import com.diegodiaz.techwizards.domain.repository.UsuarioRepository
 import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
@@ -48,32 +49,30 @@ class RegistrarLanzamientoUseCase(
                     DecentralizedLogger.e(
                         "RegistrarLanzamiento",
                         "Evento fallido match=${redact(match.id)} tipo=${event.type}",
-                        (eventoResultado.error as? AgentError.Database)?.cause,
+                        (eventoResultado.error as? AgentError.Database)?.cause
                     )
                     return@withContext eventoResultado
                 }
-
                 is Result.Ok -> {
                     DecentralizedLogger.i(
                         "RegistrarLanzamiento",
-                        "Evento registrado match=${redact(match.id)} seq=${event.seq}",
+                        "Evento registrado match=${redact(match.id)} seq=${event.seq}"
                     )
                 }
             }
 
-            val usuarioResultado = usuarioRepository.obtenerUsuarioPrincipal()
-            val usuario = when (usuarioResultado) {
-                is Result.Err -> return@withContext usuarioResultado
-                is Result.Ok -> usuarioResultado.value
+            val usuario = when (val u = usuarioRepository.obtenerUsuarioPrincipal()) {
+                is Result.Err -> return@withContext u
+                is Result.Ok  -> u.value
             }
 
             val nuevoSaldo = (usuario.monedas + monedasDelta).coerceAtLeast(0)
-            when (val saldoResultado = usuarioRepository.actualizarSaldo(usuario, nuevoSaldo)) {
-                is Result.Err -> return@withContext saldoResultado
+            when (val saldoRes = usuarioRepository.actualizarSaldo(usuario, nuevoSaldo)) {
+                is Result.Err -> return@withContext saldoRes
                 is Result.Ok -> {
                     DecentralizedLogger.i(
                         "RegistrarLanzamiento",
-                        "Saldo actualizado usuario=${redact(usuario.numero.toString())} saldo=$nuevoSaldo",
+                        "Saldo actualizado usuario=${redact(usuario.id)} saldo=$nuevoSaldo"
                     )
                 }
             }
@@ -82,19 +81,17 @@ class RegistrarLanzamientoUseCase(
                 is Result.Err -> {
                     DecentralizedLogger.w(
                         "RegistrarLanzamiento",
-                        "Último resultado no actualizado usuario=${redact(usuario.numero.toString())}",
+                        "Último resultado NO actualizado usuario=${redact(usuario.id)}"
                     )
                     return@withContext resultado
                 }
-
                 is Result.Ok -> {
                     DecentralizedLogger.i(
                         "RegistrarLanzamiento",
-                        "Último resultado actualizado usuario=${redact(usuario.numero.toString())} gano=$gano",
+                        "Último resultado actualizado usuario=${redact(usuario.id)} gano=$gano"
                     )
                 }
             }
-
             Result.Ok(Unit)
         }
 }
