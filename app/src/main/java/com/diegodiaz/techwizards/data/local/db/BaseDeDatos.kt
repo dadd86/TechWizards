@@ -14,7 +14,8 @@ import com.diegodiaz.techwizards.data.local.entity.*
     entities = [
         UsuarioEntity::class,
         MonederoEntity::class,
-        PartidaEntity::class
+        PartidaEntity::class,
+        EventoEntity::class
     ]
 )
 abstract class BaseDeDatos : RoomDatabase() {
