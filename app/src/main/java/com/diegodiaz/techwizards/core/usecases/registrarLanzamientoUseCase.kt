@@ -24,7 +24,7 @@ class RegistrarLanzamientoUseCase(
     private val usuarioRepository: UsuarioRepository,
     private val matchRepository: MatchRepository,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-) {
+) /*{
     /**
      * Ejecuta el registro de evento y actualización de saldo.
      *
@@ -99,4 +99,4 @@ class RegistrarLanzamientoUseCase(
 private fun redact(value: Any?): String {
     val s = value?.toString() ?: return "***"
     return if (s.length <= 4) "***" else s.take(2) + "***" + s.takeLast(2)
-}
+}*/
