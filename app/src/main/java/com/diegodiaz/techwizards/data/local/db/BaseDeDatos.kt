@@ -15,7 +15,10 @@ import com.diegodiaz.techwizards.data.local.entity.*
         UsuarioEntity::class,
         MonederoEntity::class,
         PartidaEntity::class,
-        EventoEntity::class
+        EventoEntity::class,
+        MatchEventEntity::class,
+        MatchEntity::class,
+        LobbyEntity::class,
     ]
 )
 abstract class BaseDeDatos : RoomDatabase() {

@@ -52,8 +52,14 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_partida_usuarioId` ON `partida` (`usuarioId`)");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_partida_fecha` ON `partida` (`fecha`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `evento` (`id` TEXT NOT NULL, `nombre` TEXT NOT NULL, `descripcion` TEXT NOT NULL, `fechaInicio` INTEGER NOT NULL, `fechaFin` INTEGER NOT NULL, `completado` INTEGER NOT NULL, PRIMARY KEY(`id`))");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `match_event` (`id` TEXT NOT NULL, `matchId` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `tipo` TEXT NOT NULL, `descripcion` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`matchId`) REFERENCES `match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_match_event_matchId` ON `match_event` (`matchId`)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `match` (`id` TEXT NOT NULL, `lobbyId` TEXT NOT NULL, `estado` TEXT NOT NULL, `fechaInicio` INTEGER NOT NULL, `fechaFin` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`lobbyId`) REFERENCES `lobby`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_match_lobbyId` ON `match` (`lobbyId`)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `lobby` (`id` TEXT NOT NULL, `nombre` TEXT NOT NULL, `capacidad` INTEGER NOT NULL, `abierta` INTEGER NOT NULL, PRIMARY KEY(`id`))");
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_lobby_nombre` ON `lobby` (`nombre`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '71e4b68e3d6d8eaabdbbd1a0f0c585b5')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a4c28061ef60a559b760350454851332')");
       }
 
       @Override
@@ -62,6 +68,9 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
         db.execSQL("DROP TABLE IF EXISTS `monedero`");
         db.execSQL("DROP TABLE IF EXISTS `partida`");
         db.execSQL("DROP TABLE IF EXISTS `evento`");
+        db.execSQL("DROP TABLE IF EXISTS `match_event`");
+        db.execSQL("DROP TABLE IF EXISTS `match`");
+        db.execSQL("DROP TABLE IF EXISTS `lobby`");
         final List<? extends RoomDatabase.Callback> _callbacks = mCallbacks;
         if (_callbacks != null) {
           for (RoomDatabase.Callback _callback : _callbacks) {
@@ -167,9 +176,58 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
                   + " Expected:\n" + _infoEvento + "\n"
                   + " Found:\n" + _existingEvento);
         }
+        final HashMap<String, TableInfo.Column> _columnsMatchEvent = new HashMap<String, TableInfo.Column>(5);
+        _columnsMatchEvent.put("id", new TableInfo.Column("id", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchEvent.put("matchId", new TableInfo.Column("matchId", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchEvent.put("timestamp", new TableInfo.Column("timestamp", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchEvent.put("tipo", new TableInfo.Column("tipo", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchEvent.put("descripcion", new TableInfo.Column("descripcion", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysMatchEvent = new HashSet<TableInfo.ForeignKey>(1);
+        _foreignKeysMatchEvent.add(new TableInfo.ForeignKey("match", "CASCADE", "NO ACTION", Arrays.asList("matchId"), Arrays.asList("id")));
+        final HashSet<TableInfo.Index> _indicesMatchEvent = new HashSet<TableInfo.Index>(1);
+        _indicesMatchEvent.add(new TableInfo.Index("index_match_event_matchId", false, Arrays.asList("matchId"), Arrays.asList("ASC")));
+        final TableInfo _infoMatchEvent = new TableInfo("match_event", _columnsMatchEvent, _foreignKeysMatchEvent, _indicesMatchEvent);
+        final TableInfo _existingMatchEvent = TableInfo.read(db, "match_event");
+        if (!_infoMatchEvent.equals(_existingMatchEvent)) {
+          return new RoomOpenHelper.ValidationResult(false, "match_event(com.diegodiaz.techwizards.data.local.entity.MatchEventEntity).\n"
+                  + " Expected:\n" + _infoMatchEvent + "\n"
+                  + " Found:\n" + _existingMatchEvent);
+        }
+        final HashMap<String, TableInfo.Column> _columnsMatch = new HashMap<String, TableInfo.Column>(5);
+        _columnsMatch.put("id", new TableInfo.Column("id", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatch.put("lobbyId", new TableInfo.Column("lobbyId", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatch.put("estado", new TableInfo.Column("estado", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatch.put("fechaInicio", new TableInfo.Column("fechaInicio", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatch.put("fechaFin", new TableInfo.Column("fechaFin", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysMatch = new HashSet<TableInfo.ForeignKey>(1);
+        _foreignKeysMatch.add(new TableInfo.ForeignKey("lobby", "CASCADE", "NO ACTION", Arrays.asList("lobbyId"), Arrays.asList("id")));
+        final HashSet<TableInfo.Index> _indicesMatch = new HashSet<TableInfo.Index>(1);
+        _indicesMatch.add(new TableInfo.Index("index_match_lobbyId", false, Arrays.asList("lobbyId"), Arrays.asList("ASC")));
+        final TableInfo _infoMatch = new TableInfo("match", _columnsMatch, _foreignKeysMatch, _indicesMatch);
+        final TableInfo _existingMatch = TableInfo.read(db, "match");
+        if (!_infoMatch.equals(_existingMatch)) {
+          return new RoomOpenHelper.ValidationResult(false, "match(com.diegodiaz.techwizards.data.local.entity.MatchEntity).\n"
+                  + " Expected:\n" + _infoMatch + "\n"
+                  + " Found:\n" + _existingMatch);
+        }
+        final HashMap<String, TableInfo.Column> _columnsLobby = new HashMap<String, TableInfo.Column>(4);
+        _columnsLobby.put("id", new TableInfo.Column("id", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsLobby.put("nombre", new TableInfo.Column("nombre", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsLobby.put("capacidad", new TableInfo.Column("capacidad", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsLobby.put("abierta", new TableInfo.Column("abierta", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysLobby = new HashSet<TableInfo.ForeignKey>(0);
+        final HashSet<TableInfo.Index> _indicesLobby = new HashSet<TableInfo.Index>(1);
+        _indicesLobby.add(new TableInfo.Index("index_lobby_nombre", true, Arrays.asList("nombre"), Arrays.asList("ASC")));
+        final TableInfo _infoLobby = new TableInfo("lobby", _columnsLobby, _foreignKeysLobby, _indicesLobby);
+        final TableInfo _existingLobby = TableInfo.read(db, "lobby");
+        if (!_infoLobby.equals(_existingLobby)) {
+          return new RoomOpenHelper.ValidationResult(false, "lobby(com.diegodiaz.techwizards.data.local.entity.LobbyEntity).\n"
+                  + " Expected:\n" + _infoLobby + "\n"
+                  + " Found:\n" + _existingLobby);
+        }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "71e4b68e3d6d8eaabdbbd1a0f0c585b5", "e54586a035ed2ca665feed41c6e808f6");
+    }, "a4c28061ef60a559b760350454851332", "c6e68e9ff7e8a77a4a29c74ca28cd35e");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;
@@ -180,7 +238,7 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
   protected InvalidationTracker createInvalidationTracker() {
     final HashMap<String, String> _shadowTablesMap = new HashMap<String, String>(0);
     final HashMap<String, Set<String>> _viewTables = new HashMap<String, Set<String>>(0);
-    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "usuario","monedero","partida","evento");
+    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "usuario","monedero","partida","evento","match_event","match","lobby");
   }
 
   @Override
@@ -200,6 +258,9 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
       _db.execSQL("DELETE FROM `monedero`");
       _db.execSQL("DELETE FROM `partida`");
       _db.execSQL("DELETE FROM `evento`");
+      _db.execSQL("DELETE FROM `match_event`");
+      _db.execSQL("DELETE FROM `match`");
+      _db.execSQL("DELETE FROM `lobby`");
       super.setTransactionSuccessful();
     } finally {
       super.endTransaction();

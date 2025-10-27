@@ -13,13 +13,13 @@ interface IEventoDao {
 
     /** Devuelve todos los eventos registrados. */
     @Query("SELECT * FROM evento ORDER BY fechaInicio ASC")
-    fun getAll(): Flowable<List<EventoEntity>>
+    fun getEventos(): Flowable<List<EventoEntity>>
 
     /** Inserta o actualiza un evento en la base de datos. */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(evento: EventoEntity): Completable
 
-    /** Marca un evento como completado para un usuario concreto. */
+    /** Marca un evento como completado. */
     @Query("UPDATE evento SET completado = 1 WHERE id = :eventoId")
-    fun marcarCompletado(eventoId: String, usuarioId: String): Completable
+    fun marcarCompletado(eventoId: String): Completable
 }
