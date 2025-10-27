@@ -34,6 +34,8 @@ public final class IMonederoDao_Impl implements IMonederoDao {
 
   private final SharedSQLiteStatement __preparedStmtOfActualizarSaldo;
 
+  private final SharedSQLiteStatement __preparedStmtOfBorrarTodo;
+
   public IMonederoDao_Impl(@NonNull final RoomDatabase __db) {
     this.__db = __db;
     this.__insertionAdapterOfMonederoEntity = new EntityInsertionAdapter<MonederoEntity>(__db) {
@@ -56,6 +58,14 @@ public final class IMonederoDao_Impl implements IMonederoDao {
       @NonNull
       public String createQuery() {
         final String _query = "UPDATE monedero SET saldo = ? WHERE usuarioId = ?";
+        return _query;
+      }
+    };
+    this.__preparedStmtOfBorrarTodo = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "DELETE FROM usuario";
         return _query;
       }
     };
@@ -104,6 +114,23 @@ public final class IMonederoDao_Impl implements IMonederoDao {
         }
       }
     });
+  }
+
+  @Override
+  public void borrarTodo() {
+    __db.assertNotSuspendingTransaction();
+    final SupportSQLiteStatement _stmt = __preparedStmtOfBorrarTodo.acquire();
+    try {
+      __db.beginTransaction();
+      try {
+        _stmt.executeUpdateDelete();
+        __db.setTransactionSuccessful();
+      } finally {
+        __db.endTransaction();
+      }
+    } finally {
+      __preparedStmtOfBorrarTodo.release(_stmt);
+    }
   }
 
   @Override

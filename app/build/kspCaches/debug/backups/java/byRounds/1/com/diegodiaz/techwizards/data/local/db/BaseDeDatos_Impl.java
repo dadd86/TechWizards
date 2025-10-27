@@ -51,8 +51,9 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
         db.execSQL("CREATE TABLE IF NOT EXISTS `partida` (`id` TEXT NOT NULL, `usuarioId` TEXT NOT NULL, `fecha` INTEGER NOT NULL, `resultado` TEXT NOT NULL, `cambioMonedas` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`usuarioId`) REFERENCES `usuario`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_partida_usuarioId` ON `partida` (`usuarioId`)");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_partida_fecha` ON `partida` (`fecha`)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `evento` (`id` TEXT NOT NULL, `nombre` TEXT NOT NULL, `descripcion` TEXT NOT NULL, `fechaInicio` INTEGER NOT NULL, `fechaFin` INTEGER NOT NULL, `completado` INTEGER NOT NULL, PRIMARY KEY(`id`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4151371c4fdd3a3c3886d1e2a82762f0')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '71e4b68e3d6d8eaabdbbd1a0f0c585b5')");
       }
 
       @Override
@@ -60,6 +61,7 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
         db.execSQL("DROP TABLE IF EXISTS `usuario`");
         db.execSQL("DROP TABLE IF EXISTS `monedero`");
         db.execSQL("DROP TABLE IF EXISTS `partida`");
+        db.execSQL("DROP TABLE IF EXISTS `evento`");
         final List<? extends RoomDatabase.Callback> _callbacks = mCallbacks;
         if (_callbacks != null) {
           for (RoomDatabase.Callback _callback : _callbacks) {
@@ -149,9 +151,25 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
                   + " Expected:\n" + _infoPartida + "\n"
                   + " Found:\n" + _existingPartida);
         }
+        final HashMap<String, TableInfo.Column> _columnsEvento = new HashMap<String, TableInfo.Column>(6);
+        _columnsEvento.put("id", new TableInfo.Column("id", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsEvento.put("nombre", new TableInfo.Column("nombre", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsEvento.put("descripcion", new TableInfo.Column("descripcion", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsEvento.put("fechaInicio", new TableInfo.Column("fechaInicio", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsEvento.put("fechaFin", new TableInfo.Column("fechaFin", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsEvento.put("completado", new TableInfo.Column("completado", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysEvento = new HashSet<TableInfo.ForeignKey>(0);
+        final HashSet<TableInfo.Index> _indicesEvento = new HashSet<TableInfo.Index>(0);
+        final TableInfo _infoEvento = new TableInfo("evento", _columnsEvento, _foreignKeysEvento, _indicesEvento);
+        final TableInfo _existingEvento = TableInfo.read(db, "evento");
+        if (!_infoEvento.equals(_existingEvento)) {
+          return new RoomOpenHelper.ValidationResult(false, "evento(com.diegodiaz.techwizards.data.local.entity.EventoEntity).\n"
+                  + " Expected:\n" + _infoEvento + "\n"
+                  + " Found:\n" + _existingEvento);
+        }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "4151371c4fdd3a3c3886d1e2a82762f0", "96423ab7cd2d71addfb74b3c31c1f6be");
+    }, "71e4b68e3d6d8eaabdbbd1a0f0c585b5", "e54586a035ed2ca665feed41c6e808f6");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;
@@ -162,7 +180,7 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
   protected InvalidationTracker createInvalidationTracker() {
     final HashMap<String, String> _shadowTablesMap = new HashMap<String, String>(0);
     final HashMap<String, Set<String>> _viewTables = new HashMap<String, Set<String>>(0);
-    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "usuario","monedero","partida");
+    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "usuario","monedero","partida","evento");
   }
 
   @Override
@@ -181,6 +199,7 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
       _db.execSQL("DELETE FROM `usuario`");
       _db.execSQL("DELETE FROM `monedero`");
       _db.execSQL("DELETE FROM `partida`");
+      _db.execSQL("DELETE FROM `evento`");
       super.setTransactionSuccessful();
     } finally {
       super.endTransaction();
