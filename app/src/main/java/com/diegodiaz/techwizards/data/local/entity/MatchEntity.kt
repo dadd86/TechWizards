@@ -1,4 +1,5 @@
 package com.diegodiaz.techwizards.data.local.entity
+
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.ForeignKey
@@ -11,15 +12,15 @@ import androidx.room.Index
             entity = LobbyEntity::class,
             parentColumns = ["id"],
             childColumns = ["lobbyId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.SET_NULL
         )
     ],
     indices = [Index("lobbyId")]
 )
 data class MatchEntity(
-    @PrimaryKey val id: String,
-    val lobbyId: String,
-    val estado: String,
-    val fechaInicio: Long,
-    val fechaFin: Long?
+    @PrimaryKey(autoGenerate = true) val id: Long,
+    val lobbyId: Long?,
+    val status: String,         // guardamos el enum como texto
+    val inicioEn: Long,
+    val finEn: Long?
 )

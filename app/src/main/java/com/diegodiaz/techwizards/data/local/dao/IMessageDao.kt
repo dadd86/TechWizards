@@ -7,26 +7,29 @@ import androidx.room.Query
 import com.diegodiaz.techwizards.data.local.entity.MessageEntity
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
+import io.reactivex.rxjava3.core.Maybe
+
 
 @Dao
 interface IMessageDao {
 
-    /**
-     * Devuelve todos los mensajes de un lobby, ordenados por fecha ascendente.
-     */
-    @Query("SELECT * FROM message WHERE lobbyId = :lobbyId ORDER BY fecha ASC")
-    fun getMensajes(lobbyId: String): Flowable<List<MessageEntity>>
+    @Query("SELECT * FROM message WHERE id = :id LIMIT 1")
+    fun getById(id: Long): Maybe<MessageEntity>
 
-    /**
-     * Inserta o reemplaza un mensaje en la base de datos.
-     */
+    // Mensajes por match, ordenados por tiempo ascendente
+    @Query("SELECT * FROM message WHERE matchId = :matchId ORDER BY timestamp ASC")
+    fun listByMatch(matchId: Long): Flowable<List<MessageEntity>>
+
+    // Mensajes de un usuario dentro de un match
+    @Query("SELECT * FROM message WHERE matchId = :matchId AND remitenteId = :userId ORDER BY timestamp ASC")
+    fun listByMatchAndUser(matchId: Long, userId: Long): Flowable<List<MessageEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(mensaje: MessageEntity): Completable
+    fun upsert(entity: MessageEntity): Completable
 
-    /**
-     * Borra todos los mensajes asociados a un lobby.
-     * (opcional pero útil si limpias datos entre partidas)
-     */
-    @Query("DELETE FROM message WHERE lobbyId = :lobbyId")
-    fun deleteMensajesPorLobby(lobbyId: String): Completable
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun upsertAll(list: List<MessageEntity>): Completable
+
+    @Query("DELETE FROM message WHERE matchId = :matchId")
+    fun deleteByMatch(matchId: Long): Completable
 }

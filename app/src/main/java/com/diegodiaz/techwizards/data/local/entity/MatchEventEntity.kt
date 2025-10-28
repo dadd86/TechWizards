@@ -13,14 +13,22 @@ import androidx.room.PrimaryKey
             parentColumns = ["id"],
             childColumns = ["matchId"],
             onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = MatchParticipantEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["actorParticipantId"],
+            onDelete = ForeignKey.SET_NULL
         )
     ],
-    indices = [Index("matchId")]
+    indices = [Index("matchId"), Index("actorParticipantId")]
 )
 data class MatchEventEntity(
-    @PrimaryKey val id: String,
-    val matchId: String,
+    @PrimaryKey(autoGenerate = true) val id: Long,
+    val matchId: Long,
+    val tipo: String,
     val timestamp: Long,
-    val tipo: String,       // tipo de evento: "START", "TURN", "END"...
-    val descripcion: String // descripción breve del evento
+    val actorParticipantId: Long?,
+    val payload: String?
 )
+

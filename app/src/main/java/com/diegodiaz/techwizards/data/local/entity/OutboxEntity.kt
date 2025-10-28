@@ -1,16 +1,19 @@
 package com.diegodiaz.techwizards.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-/**
- * Representa tareas pendientes de sincronización con el servidor
- * (por ejemplo, partidas que aún no se han subido).
- */
-@Entity(tableName = "outbox")
-data class OutboxEntity(
-    @PrimaryKey val id: String,       // Identificador único
-    val tipo: String,                 // Tipo de evento (ej: "partida", "monedero")
-    val payload: String,              // Contenido en JSON o texto plano
-    val timestamp: Long               // Cuándo se generó
+@Entity(
+    tableName = "outbox",
+    indices = [Index("tipo"), Index("entregado"), Index("creadoEn")]
 )
+data class OutboxEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long,
+    val tipo: String,
+    val payload: String,
+    val creadoEn: Long,
+    val entregado: Boolean,
+    val reintentos: Int
+)
+

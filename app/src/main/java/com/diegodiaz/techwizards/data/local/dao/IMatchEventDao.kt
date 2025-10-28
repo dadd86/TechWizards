@@ -7,25 +7,26 @@ import androidx.room.Query
 import com.diegodiaz.techwizards.data.local.entity.MatchEventEntity
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
+import io.reactivex.rxjava3.core.Maybe
 
 @Dao
 interface IMatchEventDao {
 
-    /**
-     * Devuelve todos los eventos registrados en una partida concreta.
-     */
+    // ---- Lecturas ----
+    @Query("SELECT * FROM match_event WHERE id = :id LIMIT 1")
+    fun getById(id: Long): Maybe<MatchEventEntity>
+
     @Query("SELECT * FROM match_event WHERE matchId = :matchId ORDER BY timestamp ASC")
-    fun getEventosPorPartida(matchId: String): Flowable<List<MatchEventEntity>>
+    fun listByMatch(matchId: Long): Flowable<List<MatchEventEntity>>
 
-    /**
-     * Inserta un nuevo evento o lo reemplaza si ya existe.
-     */
+    // ---- Escrituras ----
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertarEvento(evento: MatchEventEntity): Completable
+    fun upsert(event: MatchEventEntity): Completable
 
-    /**
-     * Elimina todos los eventos asociados a una partida.
-     */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun upsertAll(events: List<MatchEventEntity>): Completable
+
     @Query("DELETE FROM match_event WHERE matchId = :matchId")
-    fun borrarEventosPorPartida(matchId: String): Completable
+    fun deleteByMatch(matchId: Long): Completable
 }
+
