@@ -4,11 +4,14 @@ import com.diegodiaz.techwizards.data.local.dao.ILobbyDao
 import com.diegodiaz.techwizards.data.local.entity.LobbyEntity
 import com.diegodiaz.techwizards.data.local.mapper.toDomain
 import com.diegodiaz.techwizards.domain.model.Lobby
+import com.diegodiaz.techwizards.domain.model.LobbyEstado
 import io.reactivex.rxjava3.core.Completable
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.rx3.await
+import io.reactivex.rxjava3.core.Flowable
+import io.reactivex.rxjava3.core.Maybe
 
 /**
  * Se encarga de gestionar las salas (lobbies) del juego.
@@ -23,37 +26,36 @@ class LobbyRepositoryRoom(
     fun observarLobbiesRx() =
         lobbyDao.getAll().map { list -> list.map { it.toDomain() } }
 
-    /** Crea un nuevo lobby con el nombre y capacidad indicados. */
-    fun crearLobbyRx(nombre: String, capacidad: Int): Completable =
-        lobbyDao.insert(
-            LobbyEntity(
-                id = "lobby_${System.currentTimeMillis()}",
-                nombre = nombre,
-                capacidad = capacidad,
-                abierta = true
-            )
+    /** Observa lobbies por estado. */
+    fun observarPorEstadoRx(estado: LobbyEstado, limite: Int): Flowable<List<Lobby>> =
+        lobbyDao.listByEstado(estado.name, limite).map { list -> list.map { it.toDomain() } }
+
+    /** Obtiene un lobby por id. */
+    fun obtenerPorIdRx(lobbyId: String): Maybe<Lobby> =
+        lobbyDao.getById(lobbyId).map { it.toDomain() }
+
+    /** Crea un lobby inicial (estado PENDING). */
+    fun crearLobbyRx(
+        nombre: String,
+        creadorNumero: Long,
+        modo: String,
+        codigo: String? = null
+    ): Completable {
+        val now = System.currentTimeMillis()
+        val entity = LobbyEntity(
+            id = "lobby_$now",
+            nombre = nombre,
+            codigo = codigo,
+            modo = modo,
+            estado = LobbyEstado.PENDING.name,
+            creadorNumero = creadorNumero,
+            createdAtMs = now
         )
-
-    /** Cierra un lobby existente por su ID. */
-    fun cerrarLobbyRx(lobbyId: String): Completable =
-        lobbyDao.cerrarLobby(lobbyId)
-
-    // -------- Wrappers coroutines (opcional) --------
-
-    fun observarLobbies(): Flow<List<Lobby>> = callbackFlow {
-        val disposable = observarLobbiesRx()
-            .subscribe(
-                { lobbies -> trySend(lobbies).isSuccess },
-                { error -> close(error) }
-            )
-        awaitClose { disposable.dispose() }
+        return lobbyDao.insert(entity)
     }
 
-    suspend fun crearLobby(nombre: String, capacidad: Int) {
-        crearLobbyRx(nombre, capacidad).await()
-    }
 
-    suspend fun cerrarLobby(lobbyId: String) {
-        cerrarLobbyRx(lobbyId).await()
-    }
+/** Cierra un lobby existente (estado CLOSED). */
+fun cerrarLobbyRx(lobbyId: String): Completable =
+    lobbyDao.updateEstado(lobbyId, LobbyEstado.CLOSED.name)
 }

@@ -1,11 +1,5 @@
 package com.diegodiaz.techwizards.data.local.dao
 
-import androidx.room.*
-
-import io.reactivex.rxjava3.core.Completable
-import io.reactivex.rxjava3.core.Maybe
-import io.reactivex.rxjava3.core.Single
-
 
 import com.diegodiaz.techwizards.data.local.entity.IdMapEntity
 import androidx.room.Dao
@@ -13,25 +7,18 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 
+/**
+ * DAO para la tabla `IdMap`.
+ *
+ * @security
+ * - Utiliza consultas parametrizadas para impedir inyección SQL.
+ * - No expone valores sensibles; solo claves técnicas.
+ */
 @Dao
 interface IIdMapDao {
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun upsert(entity: IdMapEntity): Completable
+    suspend fun upsert(entity: IdMapEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun upsertAll(list: List<IdMapEntity>): Completable
-
-    @Query("SELECT * FROM id_map WHERE type = :type AND localId = :localId LIMIT 1")
-    fun findByLocal(type: String, localId: String): Maybe<IdMapEntity>
-
-    @Query("SELECT * FROM id_map WHERE type = :type AND remoteId = :remoteId LIMIT 1")
-    fun findByRemote(type: String, remoteId: String): Maybe<IdMapEntity>
-
-    @Query("DELETE FROM id_map WHERE type = :type AND localId = :localId")
-    fun deleteByLocal(type: String, localId: String): Completable
-
-    @Query("SELECT * FROM id_map WHERE type = :type")
-    fun listByType(type: String): Single<List<IdMapEntity>>
-
+    @Query("SELECT * FROM IdMap WHERE localTable = :localTable AND localId = :localId LIMIT 1")
+    suspend fun obtener(localTable: String, localId: String): IdMapEntity?
 }

@@ -10,12 +10,13 @@ import io.reactivex.rxjava3.core.Flowable
 
 @Dao
 interface IPartidaDao {
-    @Query("SELECT * FROM partida WHERE usuarioId = :usuarioId ORDER BY fecha DESC")
-    fun historial(usuarioId: String): Flowable<List<PartidaEntity>>
+
+    @Query("SELECT * FROM Partida WHERE usuarioNumero = :usuarioNumero ORDER BY fecha DESC")
+    fun historial(usuarioNumero: Long): Flowable<List<PartidaEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertar(entity: PartidaEntity): Completable
 
-    @Query("DELETE FROM usuario")
-    fun borrarTodo()
+    @Query("DELETE FROM Partida")
+    fun borrarTodo(): Completable
 }

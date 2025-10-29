@@ -4,23 +4,41 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.ColumnInfo
+
 
 @Entity(
-    tableName = "partida",
+    tableName = "Partida",
     foreignKeys = [
         ForeignKey(
             entity = UsuarioEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["usuarioId"],
+            parentColumns = ["numero"],        // ✅ ahora apunta correctamente al PK de Usuario
+            childColumns = ["usuarioNumero"],  // ✅ nombre alineado
+            onUpdate = ForeignKey.CASCADE,
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("usuarioId"), Index("fecha")]
+    indices = [
+        Index(value = ["usuarioNumero"]),
+        Index(value = ["usuarioNumero", "fecha"])
+    ]
 )
 data class PartidaEntity(
-    @PrimaryKey val id: String,
-    val usuarioId: String,
-    val fecha: Long,       // epoch millis
-    val resultado: String, // "GANADO" | "PERDIDO"
+    @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "id")
+    val id: Long = 0L,
+
+    @ColumnInfo(name = "usuarioNumero")
+    val usuarioNumero: Long,                  // ✅ tipo compatible con UsuarioEntity.numero
+
+    @ColumnInfo(name = "fecha")
+    val fecha: Long,                          // epoch millis
+
+    @ColumnInfo(name = "resultado")
+    val resultado: Resultado,                 // enum tipado
+
+    @ColumnInfo(name = "cambioMonedas")
     val cambioMonedas: Int
 )
+
+enum class Resultado { GANADO, PERDIDO }

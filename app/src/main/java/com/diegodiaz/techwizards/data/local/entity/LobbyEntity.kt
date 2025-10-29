@@ -6,13 +6,6 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.ColumnInfo
 
-/**
- * Entidad Room para la tabla `Lobby`.
- *
- * @security
- * - Restricciones de FK garantizan integridad con `Usuario`.
- * - Evita duplicidad de códigos mediante índice único.
- */
 @Entity(
     tableName = "Lobby",
     indices = [
@@ -22,23 +15,23 @@ import androidx.room.ColumnInfo
     foreignKeys = [
         ForeignKey(
             entity = UsuarioEntity::class,
-            parentColumns = ["numero"],
-            childColumns = ["creadorNum"],
-            onDelete = ForeignKey.CASCADE,
+            parentColumns = ["numero"],     // PK de UsuarioEntity
+            childColumns = ["creadorNum"],  // nombre de columna real
+            onDelete = ForeignKey.CASCADE
         ),
     ],
 )
 data class LobbyEntity(
+    @ColumnInfo(name = "nombre")
     val nombre: String,
-    @PrimaryKey
-    @ColumnInfo(name = "id")
+    @PrimaryKey @ColumnInfo(name = "id")
     val id: String,
     @ColumnInfo(name = "codigo")
-    val codigo: String?,
+    val codigo: String?,          // null-safe
     @ColumnInfo(name = "modo")
     val modo: String,
     @ColumnInfo(name = "estado")
-    val estado: String,
+    val estado: String,           // persistimos String; el enum se usa en dominio
     @ColumnInfo(name = "creadorNum")
     val creadorNumero: Long,
     @ColumnInfo(name = "createdAtMs")

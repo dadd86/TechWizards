@@ -1,6 +1,8 @@
+// Dominio
 package com.diegodiaz.techwizards.domain.model
 
 data class Monedero(
-    val id: Int = 1,
-    val monedas: Int
+    val id: String,
+    val usuarioNumero: Long,
+    val saldo: Int
 )
