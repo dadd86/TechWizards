@@ -6,6 +6,7 @@ import androidx.annotation.Nullable;
 import androidx.room.EntityInsertionAdapter;
 import androidx.room.RoomDatabase;
 import androidx.room.RoomSQLiteQuery;
+import androidx.room.SharedSQLiteStatement;
 import androidx.room.util.CursorUtil;
 import androidx.room.util.DBUtil;
 import androidx.sqlite.db.SupportSQLiteStatement;
@@ -30,6 +31,8 @@ public final class IUsuarioDao_Impl implements IUsuarioDao {
 
   private final EntityInsertionAdapter<UsuarioEntity> __insertionAdapterOfUsuarioEntity;
 
+  private final SharedSQLiteStatement __preparedStmtOfBorrarTodo;
+
   public IUsuarioDao_Impl(@NonNull final RoomDatabase __db) {
     this.__db = __db;
     this.__insertionAdapterOfUsuarioEntity = new EntityInsertionAdapter<UsuarioEntity>(__db) {
@@ -45,6 +48,14 @@ public final class IUsuarioDao_Impl implements IUsuarioDao {
         statement.bindString(1, entity.getId());
         statement.bindString(2, entity.getNombre());
         statement.bindLong(3, entity.getMonedas());
+      }
+    };
+    this.__preparedStmtOfBorrarTodo = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "DELETE FROM usuario";
+        return _query;
       }
     };
   }
@@ -65,6 +76,23 @@ public final class IUsuarioDao_Impl implements IUsuarioDao {
         }
       }
     });
+  }
+
+  @Override
+  public void borrarTodo() {
+    __db.assertNotSuspendingTransaction();
+    final SupportSQLiteStatement _stmt = __preparedStmtOfBorrarTodo.acquire();
+    try {
+      __db.beginTransaction();
+      try {
+        _stmt.executeUpdateDelete();
+        __db.setTransactionSuccessful();
+      } finally {
+        __db.endTransaction();
+      }
+    } finally {
+      __preparedStmtOfBorrarTodo.release(_stmt);
+    }
   }
 
   @Override

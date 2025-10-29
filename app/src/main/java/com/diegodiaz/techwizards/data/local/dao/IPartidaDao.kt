@@ -15,4 +15,7 @@ interface IPartidaDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertar(entity: PartidaEntity): Completable
+
+    @Query("DELETE FROM usuario")
+    fun borrarTodo()
 }

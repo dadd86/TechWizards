@@ -1,13 +1,9 @@
 package com.diegodiaz.techwizards.data.local.entity
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import androidx.room.ForeignKey
-import androidx.room.Index
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 import androidx.room.ForeignKey
 import androidx.room.Index
+import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "match_participant",
@@ -21,15 +17,21 @@ import androidx.room.Index
         ForeignKey(
             entity = UsuarioEntity::class,
             parentColumns = ["id"],
-            childColumns = ["usuarioId"],
+            childColumns = ["userId"],
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("matchId"), Index("usuarioId")]
+    indices = [
+        Index("matchId"),
+        Index("userId"),
+        Index(value = ["matchId", "userId"], unique = true) // 1 usuario por match
+    ]
 )
 data class MatchParticipantEntity(
-    @PrimaryKey val id: String,
-    val matchId: String,
-    val usuarioId: String,
-    val puntuacion: Int
+    @PrimaryKey(autoGenerate = true) val id: Long,
+    val matchId: Long,
+    val userId: Long,
+    val apodo: String?,
+    val joinedAt: Long,
+    val esGanador: Boolean
 )
