@@ -5,11 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.diegodiaz.techwizards.domain.model.Partida
 import com.diegodiaz.techwizards.domain.repository.JuegoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.update
 
 data class JuegoUiState(
     val monedas: Int = 0,
@@ -19,20 +18,21 @@ data class JuegoUiState(
 )
 
 class ControladorJuego(
-    private val repo: JuegoRepository
+    private val repo: JuegoRepository,
+    private val usuarioId: String
 ) : ViewModel() {
 
     private val _ui = MutableStateFlow(JuegoUiState())
     val ui: StateFlow<JuegoUiState> = _ui.asStateFlow()
 
-    val historial: StateFlow<List<Partida>> =
-        repo.observarHistorial(limit = 50)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val _historial = MutableStateFlow<List<Partida>>(emptyList())
+    val historial: StateFlow<List<Partida>> = _historial.asStateFlow()
 
     init {
         viewModelScope.launch {
-            repo.observarMonedero().collect { m ->
-                _ui.value = _ui.value.copy(monedas = m.monedas)
+            repo.observarSaldo(usuarioId).collect { m ->
+                _ui.update { it.copy(monedas = m.monedas) }
             }
         }
     }
@@ -40,12 +40,18 @@ class ControladorJuego(
     fun lanzar() {
         viewModelScope.launch {
             try {
-                _ui.value = _ui.value.copy(cargando = true, error = null)
-                val p = repo.lanzarDado()
-                val msg = if (p.gano) "¡Ganaste (+${p.deltaMonedas})!" else "Perdiste (${p.deltaMonedas})"
-                _ui.value = _ui.value.copy(ultimoResultado = msg, cargando = false)
+                _ui.update { it.copy(cargando = true, error = null) }
+
+                //no hay metodo en el repo, he puesto una simulacion, no he querido tocar nada del repo
+                val dado = (1..6).random()
+                val gano = dado >= 4
+                val delta = if (gano) 10 else -5
+                val msg = if (gano) " Has ganado! (+$delta)!" else "Has perdido! ($delta)"
+
+
+                _ui.update { it.copy(ultimoResultado = msg, cargando = false) }
             } catch (t: Throwable) {
-                _ui.value = _ui.value.copy(cargando = false, error = t.message ?: "Error")
+                _ui.update { it.copy(cargando = false, error = t.message ?: "Error") }
             }
         }
     }

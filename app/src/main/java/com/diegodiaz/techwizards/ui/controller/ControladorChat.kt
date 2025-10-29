@@ -23,16 +23,18 @@ class ControladorChat : ViewModel() {
         _ui.value = _ui.value.copy(textoActual = texto)
     }
 
-    fun enviar(autorId: Long = 0L, lobbyId: Long? = null, matchId: Long? = null) {
+    fun enviar(remitenteId: String, matchId: String) {
         val texto = _ui.value.textoActual.trim()
         if (texto.isBlank()) return
+
         viewModelScope.launch {
+            val ahora = System.currentTimeMillis()
             val nuevo = Message(
-                id = System.currentTimeMillis(),
-                authorId = autorId,
-                lobbyId = lobbyId,
+                id = ahora.toString(),
                 matchId = matchId,
-                texto = texto
+                remitenteId = remitenteId,
+                contenido = texto,
+                timestamp = ahora
             )
             _ui.value = _ui.value.copy(
                 mensajes = _ui.value.mensajes + nuevo,
