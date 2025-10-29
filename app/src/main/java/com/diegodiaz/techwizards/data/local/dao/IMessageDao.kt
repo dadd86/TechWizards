@@ -10,6 +10,13 @@ import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
 
 
+/**
+ * DAO para `Message`.
+ *
+ * @security
+ * - Consultas parametrizadas y sanitización previa evitan inyección.
+ * - Solo se almacenan mensajes filtrados por capas superiores.
+ */
 @Dao
 interface IMessageDao {
 
@@ -39,4 +46,10 @@ interface IMessageDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(entity: MessageEntity): Completable
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertar(message: MessageEntity)
+
+    @Query("SELECT * FROM Message WHERE matchId = :matchId ORDER BY createdAtMs DESC LIMIT :limite")
+    suspend fun listarRecientes(matchId: String, limite: Int): List<MessageEntity>
 }

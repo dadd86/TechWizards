@@ -7,6 +7,7 @@ import com.diegodiaz.techwizards.domain.model.MatchEvent
 import com.diegodiaz.techwizards.domain.model.MatchParticipant
 import com.diegodiaz.techwizards.domain.model.MatchScore
 
+
 /**
  * Contrato de acceso a datos de partidas multijugador.
  *
@@ -73,4 +74,13 @@ interface MatchRepository {
      * - No debe exponer datos de jugadores ajenos al usuario activo.
      */
     suspend fun obtenerHistorial(limite: Int): Result<List<Match>, AgentError>
+    /**
+     * Persiste o actualiza la definición de un match.
+     */
+    suspend fun upsertMatch(match: Match): Result<Unit, AgentError>
+
+    /**
+     * Almacena el marcador final de un jugador.
+     */
+    suspend fun guardarScore(score: MatchScore): Result<Unit, AgentError>
 }

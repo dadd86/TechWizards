@@ -1,8 +1,10 @@
 package com.diegodiaz.techwizards.data.local.dao;
 
 import android.database.Cursor;
+import android.os.CancellationSignal;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.room.CoroutinesRoom;
 import androidx.room.EntityInsertionAdapter;
 import androidx.room.RoomDatabase;
 import androidx.room.RoomSQLiteQuery;
@@ -21,6 +23,7 @@ import java.lang.Class;
 import java.lang.Exception;
 import java.lang.Integer;
 import java.lang.Long;
+import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.lang.SuppressWarnings;
@@ -30,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import javax.annotation.processing.Generated;
+import kotlin.coroutines.Continuation;
 
 @Generated("androidx.room.RoomProcessor")
 @SuppressWarnings({"unchecked", "deprecation"})
@@ -48,24 +52,31 @@ public final class IMatchDao_Impl implements IMatchDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `match` (`id`,`lobbyId`,`status`,`inicioEn`,`finEn`) VALUES (nullif(?, 0),?,?,?,?)";
+        return "INSERT OR REPLACE INTO `Match` (`id`,`lobbyId`,`modo`,`estado`,`createdByNum`,`createdAtMs`,`startedAtMs`,`finishedAtMs`) VALUES (?,?,?,?,?,?,?,?)";
       }
 
       @Override
       protected void bind(@NonNull final SupportSQLiteStatement statement,
           @NonNull final MatchEntity entity) {
-        statement.bindLong(1, entity.getId());
+        statement.bindString(1, entity.getId());
         if (entity.getLobbyId() == null) {
           statement.bindNull(2);
         } else {
-          statement.bindLong(2, entity.getLobbyId());
+          statement.bindString(2, entity.getLobbyId());
         }
-        statement.bindString(3, entity.getStatus());
-        statement.bindLong(4, entity.getInicioEn());
-        if (entity.getFinEn() == null) {
-          statement.bindNull(5);
+        statement.bindString(3, entity.getModo());
+        statement.bindString(4, entity.getEstado());
+        statement.bindLong(5, entity.getCreatedByNumero());
+        statement.bindLong(6, entity.getCreatedAtMs());
+        if (entity.getStartedAtMs() == null) {
+          statement.bindNull(7);
         } else {
-          statement.bindLong(5, entity.getFinEn());
+          statement.bindLong(7, entity.getStartedAtMs());
+        }
+        if (entity.getFinishedAtMs() == null) {
+          statement.bindNull(8);
+        } else {
+          statement.bindLong(8, entity.getFinishedAtMs());
         }
       }
     };
@@ -189,30 +200,43 @@ public final class IMatchDao_Impl implements IMatchDao {
         try {
           final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
           final int _cursorIndexOfLobbyId = CursorUtil.getColumnIndexOrThrow(_cursor, "lobbyId");
-          final int _cursorIndexOfStatus = CursorUtil.getColumnIndexOrThrow(_cursor, "status");
-          final int _cursorIndexOfInicioEn = CursorUtil.getColumnIndexOrThrow(_cursor, "inicioEn");
-          final int _cursorIndexOfFinEn = CursorUtil.getColumnIndexOrThrow(_cursor, "finEn");
+          final int _cursorIndexOfModo = CursorUtil.getColumnIndexOrThrow(_cursor, "modo");
+          final int _cursorIndexOfEstado = CursorUtil.getColumnIndexOrThrow(_cursor, "estado");
+          final int _cursorIndexOfCreatedByNumero = CursorUtil.getColumnIndexOrThrow(_cursor, "createdByNum");
+          final int _cursorIndexOfCreatedAtMs = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAtMs");
+          final int _cursorIndexOfStartedAtMs = CursorUtil.getColumnIndexOrThrow(_cursor, "startedAtMs");
+          final int _cursorIndexOfFinishedAtMs = CursorUtil.getColumnIndexOrThrow(_cursor, "finishedAtMs");
           final MatchEntity _result;
           if (_cursor.moveToFirst()) {
-            final long _tmpId;
-            _tmpId = _cursor.getLong(_cursorIndexOfId);
-            final Long _tmpLobbyId;
+            final String _tmpId;
+            _tmpId = _cursor.getString(_cursorIndexOfId);
+            final String _tmpLobbyId;
             if (_cursor.isNull(_cursorIndexOfLobbyId)) {
               _tmpLobbyId = null;
             } else {
-              _tmpLobbyId = _cursor.getLong(_cursorIndexOfLobbyId);
+              _tmpLobbyId = _cursor.getString(_cursorIndexOfLobbyId);
             }
-            final String _tmpStatus;
-            _tmpStatus = _cursor.getString(_cursorIndexOfStatus);
-            final long _tmpInicioEn;
-            _tmpInicioEn = _cursor.getLong(_cursorIndexOfInicioEn);
-            final Long _tmpFinEn;
-            if (_cursor.isNull(_cursorIndexOfFinEn)) {
-              _tmpFinEn = null;
+            final String _tmpModo;
+            _tmpModo = _cursor.getString(_cursorIndexOfModo);
+            final String _tmpEstado;
+            _tmpEstado = _cursor.getString(_cursorIndexOfEstado);
+            final long _tmpCreatedByNumero;
+            _tmpCreatedByNumero = _cursor.getLong(_cursorIndexOfCreatedByNumero);
+            final long _tmpCreatedAtMs;
+            _tmpCreatedAtMs = _cursor.getLong(_cursorIndexOfCreatedAtMs);
+            final Long _tmpStartedAtMs;
+            if (_cursor.isNull(_cursorIndexOfStartedAtMs)) {
+              _tmpStartedAtMs = null;
             } else {
-              _tmpFinEn = _cursor.getLong(_cursorIndexOfFinEn);
+              _tmpStartedAtMs = _cursor.getLong(_cursorIndexOfStartedAtMs);
             }
-            _result = new MatchEntity(_tmpId,_tmpLobbyId,_tmpStatus,_tmpInicioEn,_tmpFinEn);
+            final Long _tmpFinishedAtMs;
+            if (_cursor.isNull(_cursorIndexOfFinishedAtMs)) {
+              _tmpFinishedAtMs = null;
+            } else {
+              _tmpFinishedAtMs = _cursor.getLong(_cursorIndexOfFinishedAtMs);
+            }
+            _result = new MatchEntity(_tmpId,_tmpLobbyId,_tmpModo,_tmpEstado,_tmpCreatedByNumero,_tmpCreatedAtMs,_tmpStartedAtMs,_tmpFinishedAtMs);
           } else {
             _result = null;
           }
@@ -241,35 +265,6 @@ public final class IMatchDao_Impl implements IMatchDao {
       public List<MatchEntity> call() throws Exception {
         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
         try {
-          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
-          final int _cursorIndexOfLobbyId = CursorUtil.getColumnIndexOrThrow(_cursor, "lobbyId");
-          final int _cursorIndexOfStatus = CursorUtil.getColumnIndexOrThrow(_cursor, "status");
-          final int _cursorIndexOfInicioEn = CursorUtil.getColumnIndexOrThrow(_cursor, "inicioEn");
-          final int _cursorIndexOfFinEn = CursorUtil.getColumnIndexOrThrow(_cursor, "finEn");
-          final List<MatchEntity> _result = new ArrayList<MatchEntity>(_cursor.getCount());
-          while (_cursor.moveToNext()) {
-            final MatchEntity _item;
-            final long _tmpId;
-            _tmpId = _cursor.getLong(_cursorIndexOfId);
-            final Long _tmpLobbyId;
-            if (_cursor.isNull(_cursorIndexOfLobbyId)) {
-              _tmpLobbyId = null;
-            } else {
-              _tmpLobbyId = _cursor.getLong(_cursorIndexOfLobbyId);
-            }
-            final String _tmpStatus;
-            _tmpStatus = _cursor.getString(_cursorIndexOfStatus);
-            final long _tmpInicioEn;
-            _tmpInicioEn = _cursor.getLong(_cursorIndexOfInicioEn);
-            final Long _tmpFinEn;
-            if (_cursor.isNull(_cursorIndexOfFinEn)) {
-              _tmpFinEn = null;
-            } else {
-              _tmpFinEn = _cursor.getLong(_cursorIndexOfFinEn);
-            }
-            _item = new MatchEntity(_tmpId,_tmpLobbyId,_tmpStatus,_tmpInicioEn,_tmpFinEn);
-            _result.add(_item);
-          }
           return _result;
         } finally {
           _cursor.close();
@@ -285,7 +280,7 @@ public final class IMatchDao_Impl implements IMatchDao {
 
   @Override
   public Flowable<List<MatchEntity>> listOngoing() {
-    final String _sql = "SELECT `match`.`id` AS `id`, `match`.`lobbyId` AS `lobbyId`, `match`.`status` AS `status`, `match`.`inicioEn` AS `inicioEn`, `match`.`finEn` AS `finEn` FROM `match` WHERE finEn IS NULL ORDER BY inicioEn DESC";
+    final String _sql = "SELECT * FROM `match` WHERE finEn IS NULL ORDER BY inicioEn DESC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     return RxRoom.createFlowable(__db, false, new String[] {"match"}, new Callable<List<MatchEntity>>() {
       @Override
@@ -293,35 +288,6 @@ public final class IMatchDao_Impl implements IMatchDao {
       public List<MatchEntity> call() throws Exception {
         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
         try {
-          final int _cursorIndexOfId = 0;
-          final int _cursorIndexOfLobbyId = 1;
-          final int _cursorIndexOfStatus = 2;
-          final int _cursorIndexOfInicioEn = 3;
-          final int _cursorIndexOfFinEn = 4;
-          final List<MatchEntity> _result = new ArrayList<MatchEntity>(_cursor.getCount());
-          while (_cursor.moveToNext()) {
-            final MatchEntity _item;
-            final long _tmpId;
-            _tmpId = _cursor.getLong(_cursorIndexOfId);
-            final Long _tmpLobbyId;
-            if (_cursor.isNull(_cursorIndexOfLobbyId)) {
-              _tmpLobbyId = null;
-            } else {
-              _tmpLobbyId = _cursor.getLong(_cursorIndexOfLobbyId);
-            }
-            final String _tmpStatus;
-            _tmpStatus = _cursor.getString(_cursorIndexOfStatus);
-            final long _tmpInicioEn;
-            _tmpInicioEn = _cursor.getLong(_cursorIndexOfInicioEn);
-            final Long _tmpFinEn;
-            if (_cursor.isNull(_cursorIndexOfFinEn)) {
-              _tmpFinEn = null;
-            } else {
-              _tmpFinEn = _cursor.getLong(_cursorIndexOfFinEn);
-            }
-            _item = new MatchEntity(_tmpId,_tmpLobbyId,_tmpStatus,_tmpInicioEn,_tmpFinEn);
-            _result.add(_item);
-          }
           return _result;
         } finally {
           _cursor.close();
@@ -345,18 +311,6 @@ public final class IMatchDao_Impl implements IMatchDao {
       public Integer call() throws Exception {
         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
         try {
-          final Integer _result;
-          if (_cursor.moveToFirst()) {
-            final Integer _tmp;
-            if (_cursor.isNull(0)) {
-              _tmp = null;
-            } else {
-              _tmp = _cursor.getInt(0);
-            }
-            _result = _tmp;
-          } else {
-            _result = null;
-          }
           if (_result == null) {
             throw new EmptyResultSetException("Query returned empty result set: " + _statement.getSql());
           }
@@ -371,6 +325,138 @@ public final class IMatchDao_Impl implements IMatchDao {
         _statement.release();
       }
     });
+  }
+
+  @Override
+  public Object listarPorEstado(final String estado, final int limite,
+      final Continuation<? super List<MatchEntity>> $completion) {
+    final String _sql = "SELECT * FROM Match WHERE estado = ? ORDER BY finishedAtMs DESC, createdAtMs DESC LIMIT ?";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
+    int _argIndex = 1;
+    _statement.bindString(_argIndex, estado);
+    _argIndex = 2;
+    _statement.bindLong(_argIndex, limite);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<List<MatchEntity>>() {
+      @Override
+      @NonNull
+      public List<MatchEntity> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfLobbyId = CursorUtil.getColumnIndexOrThrow(_cursor, "lobbyId");
+          final int _cursorIndexOfModo = CursorUtil.getColumnIndexOrThrow(_cursor, "modo");
+          final int _cursorIndexOfEstado = CursorUtil.getColumnIndexOrThrow(_cursor, "estado");
+          final int _cursorIndexOfCreatedByNumero = CursorUtil.getColumnIndexOrThrow(_cursor, "createdByNum");
+          final int _cursorIndexOfCreatedAtMs = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAtMs");
+          final int _cursorIndexOfStartedAtMs = CursorUtil.getColumnIndexOrThrow(_cursor, "startedAtMs");
+          final int _cursorIndexOfFinishedAtMs = CursorUtil.getColumnIndexOrThrow(_cursor, "finishedAtMs");
+          final List<MatchEntity> _result = new ArrayList<MatchEntity>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final MatchEntity _item;
+            final String _tmpId;
+            _tmpId = _cursor.getString(_cursorIndexOfId);
+            final String _tmpLobbyId;
+            if (_cursor.isNull(_cursorIndexOfLobbyId)) {
+              _tmpLobbyId = null;
+            } else {
+              _tmpLobbyId = _cursor.getString(_cursorIndexOfLobbyId);
+            }
+            final String _tmpModo;
+            _tmpModo = _cursor.getString(_cursorIndexOfModo);
+            final String _tmpEstado;
+            _tmpEstado = _cursor.getString(_cursorIndexOfEstado);
+            final long _tmpCreatedByNumero;
+            _tmpCreatedByNumero = _cursor.getLong(_cursorIndexOfCreatedByNumero);
+            final long _tmpCreatedAtMs;
+            _tmpCreatedAtMs = _cursor.getLong(_cursorIndexOfCreatedAtMs);
+            final Long _tmpStartedAtMs;
+            if (_cursor.isNull(_cursorIndexOfStartedAtMs)) {
+              _tmpStartedAtMs = null;
+            } else {
+              _tmpStartedAtMs = _cursor.getLong(_cursorIndexOfStartedAtMs);
+            }
+            final Long _tmpFinishedAtMs;
+            if (_cursor.isNull(_cursorIndexOfFinishedAtMs)) {
+              _tmpFinishedAtMs = null;
+            } else {
+              _tmpFinishedAtMs = _cursor.getLong(_cursorIndexOfFinishedAtMs);
+            }
+            _item = new MatchEntity(_tmpId,_tmpLobbyId,_tmpModo,_tmpEstado,_tmpCreatedByNumero,_tmpCreatedAtMs,_tmpStartedAtMs,_tmpFinishedAtMs);
+            _result.add(_item);
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object obtenerPorId(final String matchId,
+      final Continuation<? super MatchEntity> $completion) {
+    final String _sql = "SELECT * FROM Match WHERE id = ? LIMIT 1";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    _statement.bindString(_argIndex, matchId);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<MatchEntity>() {
+      @Override
+      @Nullable
+      public MatchEntity call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfLobbyId = CursorUtil.getColumnIndexOrThrow(_cursor, "lobbyId");
+          final int _cursorIndexOfModo = CursorUtil.getColumnIndexOrThrow(_cursor, "modo");
+          final int _cursorIndexOfEstado = CursorUtil.getColumnIndexOrThrow(_cursor, "estado");
+          final int _cursorIndexOfCreatedByNumero = CursorUtil.getColumnIndexOrThrow(_cursor, "createdByNum");
+          final int _cursorIndexOfCreatedAtMs = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAtMs");
+          final int _cursorIndexOfStartedAtMs = CursorUtil.getColumnIndexOrThrow(_cursor, "startedAtMs");
+          final int _cursorIndexOfFinishedAtMs = CursorUtil.getColumnIndexOrThrow(_cursor, "finishedAtMs");
+          final MatchEntity _result;
+          if (_cursor.moveToFirst()) {
+            final String _tmpId;
+            _tmpId = _cursor.getString(_cursorIndexOfId);
+            final String _tmpLobbyId;
+            if (_cursor.isNull(_cursorIndexOfLobbyId)) {
+              _tmpLobbyId = null;
+            } else {
+              _tmpLobbyId = _cursor.getString(_cursorIndexOfLobbyId);
+            }
+            final String _tmpModo;
+            _tmpModo = _cursor.getString(_cursorIndexOfModo);
+            final String _tmpEstado;
+            _tmpEstado = _cursor.getString(_cursorIndexOfEstado);
+            final long _tmpCreatedByNumero;
+            _tmpCreatedByNumero = _cursor.getLong(_cursorIndexOfCreatedByNumero);
+            final long _tmpCreatedAtMs;
+            _tmpCreatedAtMs = _cursor.getLong(_cursorIndexOfCreatedAtMs);
+            final Long _tmpStartedAtMs;
+            if (_cursor.isNull(_cursorIndexOfStartedAtMs)) {
+              _tmpStartedAtMs = null;
+            } else {
+              _tmpStartedAtMs = _cursor.getLong(_cursorIndexOfStartedAtMs);
+            }
+            final Long _tmpFinishedAtMs;
+            if (_cursor.isNull(_cursorIndexOfFinishedAtMs)) {
+              _tmpFinishedAtMs = null;
+            } else {
+              _tmpFinishedAtMs = _cursor.getLong(_cursorIndexOfFinishedAtMs);
+            }
+            _result = new MatchEntity(_tmpId,_tmpLobbyId,_tmpModo,_tmpEstado,_tmpCreatedByNumero,_tmpCreatedAtMs,_tmpStartedAtMs,_tmpFinishedAtMs);
+          } else {
+            _result = null;
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
   }
 
   @NonNull

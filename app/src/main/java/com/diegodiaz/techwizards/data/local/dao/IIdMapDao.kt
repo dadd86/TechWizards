@@ -1,10 +1,17 @@
 package com.diegodiaz.techwizards.data.local.dao
 
 import androidx.room.*
-import com.diegodiaz.techwizards.data.local.entity.IdMapEntity
+
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Maybe
 import io.reactivex.rxjava3.core.Single
+
+
+import com.diegodiaz.techwizards.data.local.entity.IdMapEntity
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 
 @Dao
 interface IIdMapDao {
@@ -26,4 +33,5 @@ interface IIdMapDao {
 
     @Query("SELECT * FROM id_map WHERE type = :type")
     fun listByType(type: String): Single<List<IdMapEntity>>
+
 }

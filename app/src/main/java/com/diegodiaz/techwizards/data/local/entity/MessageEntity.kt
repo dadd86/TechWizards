@@ -1,32 +1,49 @@
 package com.diegodiaz.techwizards.data.local.entity
+
+import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 import androidx.room.ForeignKey
 import androidx.room.Index
+import androidx.room.PrimaryKey
 
-
+/**
+ * Entidad Room para la tabla `Message`.
+ *
+ * @security
+ * - Mantiene relaciones fuertes con Match y Usuario evitando mensajes huérfanos.
+ * - Requiere que el texto llegue sanitizado desde capas superiores.
+ */
 @Entity(
-    tableName = "message",
+    tableName = "Message",
+    indices = [
+        Index(value = ["matchId", "createdAtMs"]),
+        Index(value = ["senderNum"]),
+    ],
     foreignKeys = [
         ForeignKey(
             entity = MatchEntity::class,
             parentColumns = ["id"],
             childColumns = ["matchId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = UsuarioEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["remitenteId"],
-            onDelete = ForeignKey.CASCADE
-        )
+            parentColumns = ["numero"],
+            childColumns = ["senderNum"],
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
-    indices = [Index("matchId"), Index("remitenteId")]
 )
 data class MessageEntity(
-    @PrimaryKey val id: String,
+    @PrimaryKey
+    @ColumnInfo(name = "id")
+    val id: String,
+    @ColumnInfo(name = "matchId")
     val matchId: String,
-    val remitenteId: String,
-    val contenido: String,
-    val timestamp: Long
+    @ColumnInfo(name = "senderNum")
+    val senderNumero: Long,
+    @ColumnInfo(name = "text")
+    val text: String,
+    @ColumnInfo(name = "createdAtMs")
+    val createdAtMs: Long,
 )

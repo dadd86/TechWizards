@@ -4,6 +4,9 @@ import com.diegodiaz.techwizards.domain.model.Message
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
 import kotlinx.coroutines.flow.Flow
+import com.diegodiaz.techwizards.core.common.AgentError
+import com.diegodiaz.techwizards.core.common.Result
+
 
 /**
  * ChatRepository.kt
@@ -22,5 +25,12 @@ interface ChatRepository {
 
     // 🔹 Coroutines — versión suspendida
     fun obtenerMensajes(): Flow<List<Message>>
-    suspend fun enviarMensaje(message: Message)
+    //suspend fun enviarMensaje(message: Message)
+
+
+    /** Envía un mensaje al chat del match. */
+    suspend fun enviarMensaje(message: Message): Result<Unit, AgentError>
+
+    /** Obtiene el historial reciente de mensajes del match. */
+    suspend fun obtenerMensajes(matchId: String, limite: Int): Result<List<Message>, AgentError>
 }

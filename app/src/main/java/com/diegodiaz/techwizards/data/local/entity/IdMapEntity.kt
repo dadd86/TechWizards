@@ -3,16 +3,29 @@ package com.diegodiaz.techwizards.data.local.entity
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.ColumnInfo
 
 /**
- * Mapea IDs locales - remotos para sincronización.
- * type: nombre lógico del recurso ("usuario","match","message"..)
+ * Entidad Room para la tabla `IdMap`.
+ *
+ * @security
+ * - Solo persiste mapeos de identificadores técnicos sin PII.
+ * - Índices únicos evitan colisiones de IDs remotos.
  */
-@Entity(tableName = "id_map", /* índices si quieres */)
+@Entity(
+    tableName = "IdMap",
+    primaryKeys = ["localTable", "localId"],
+    indices = [
+        Index(value = ["remoteCollection", "remoteId"], unique = true),
+    ],
+)
 data class IdMapEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0L,
-    val type: String,
+    @ColumnInfo(name = "localTable")
+    val localTable: String,
+    @ColumnInfo(name = "localId")
     val localId: String,
-    val remoteId: String?,   // mismo tipo que en dominio
-    val updatedAt: Long
+    @ColumnInfo(name = "remoteCollection")
+    val remoteCollection: String,
+    @ColumnInfo(name = "remoteId")
+    val remoteId: String,
 )

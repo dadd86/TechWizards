@@ -1,8 +1,10 @@
 package com.diegodiaz.techwizards.data.local.dao;
 
 import android.database.Cursor;
+import android.os.CancellationSignal;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.room.CoroutinesRoom;
 import androidx.room.EntityInsertionAdapter;
 import androidx.room.RoomDatabase;
 import androidx.room.RoomSQLiteQuery;
@@ -17,6 +19,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import java.lang.Class;
 import java.lang.Exception;
+import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.lang.SuppressWarnings;
@@ -26,6 +29,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import javax.annotation.processing.Generated;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 
 @Generated("androidx.room.RoomProcessor")
 @SuppressWarnings({"unchecked", "deprecation"})
@@ -33,6 +38,8 @@ public final class IMessageDao_Impl implements IMessageDao {
   private final RoomDatabase __db;
 
   private final EntityInsertionAdapter<MessageEntity> __insertionAdapterOfMessageEntity;
+
+  private final EntityInsertionAdapter<MessageEntity> __insertionAdapterOfMessageEntity_1;
 
   private final SharedSQLiteStatement __preparedStmtOfDeleteByMatch;
 
@@ -42,7 +49,7 @@ public final class IMessageDao_Impl implements IMessageDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `message` (`id`,`matchId`,`remitenteId`,`contenido`,`timestamp`) VALUES (?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `Message` (`id`,`matchId`,`senderNum`,`text`,`createdAtMs`) VALUES (?,?,?,?,?)";
       }
 
       @Override
@@ -50,9 +57,26 @@ public final class IMessageDao_Impl implements IMessageDao {
           @NonNull final MessageEntity entity) {
         statement.bindString(1, entity.getId());
         statement.bindString(2, entity.getMatchId());
-        statement.bindString(3, entity.getRemitenteId());
-        statement.bindString(4, entity.getContenido());
-        statement.bindLong(5, entity.getTimestamp());
+        statement.bindLong(3, entity.getSenderNumero());
+        statement.bindString(4, entity.getText());
+        statement.bindLong(5, entity.getCreatedAtMs());
+      }
+    };
+    this.__insertionAdapterOfMessageEntity_1 = new EntityInsertionAdapter<MessageEntity>(__db) {
+      @Override
+      @NonNull
+      protected String createQuery() {
+        return "INSERT OR ABORT INTO `Message` (`id`,`matchId`,`senderNum`,`text`,`createdAtMs`) VALUES (?,?,?,?,?)";
+      }
+
+      @Override
+      protected void bind(@NonNull final SupportSQLiteStatement statement,
+          @NonNull final MessageEntity entity) {
+        statement.bindString(1, entity.getId());
+        statement.bindString(2, entity.getMatchId());
+        statement.bindLong(3, entity.getSenderNumero());
+        statement.bindString(4, entity.getText());
+        statement.bindLong(5, entity.getCreatedAtMs());
       }
     };
     this.__preparedStmtOfDeleteByMatch = new SharedSQLiteStatement(__db) {
@@ -120,6 +144,25 @@ public final class IMessageDao_Impl implements IMessageDao {
   }
 
   @Override
+  public Object insertar(final MessageEntity message,
+      final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        __db.beginTransaction();
+        try {
+          __insertionAdapterOfMessageEntity_1.insert(message);
+          __db.setTransactionSuccessful();
+          return Unit.INSTANCE;
+        } finally {
+          __db.endTransaction();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
   public Completable deleteByMatch(final long matchId) {
     return Completable.fromCallable(new Callable<Void>() {
       @Override
@@ -158,22 +201,22 @@ public final class IMessageDao_Impl implements IMessageDao {
         try {
           final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
           final int _cursorIndexOfMatchId = CursorUtil.getColumnIndexOrThrow(_cursor, "matchId");
-          final int _cursorIndexOfRemitenteId = CursorUtil.getColumnIndexOrThrow(_cursor, "remitenteId");
-          final int _cursorIndexOfContenido = CursorUtil.getColumnIndexOrThrow(_cursor, "contenido");
-          final int _cursorIndexOfTimestamp = CursorUtil.getColumnIndexOrThrow(_cursor, "timestamp");
+          final int _cursorIndexOfSenderNumero = CursorUtil.getColumnIndexOrThrow(_cursor, "senderNum");
+          final int _cursorIndexOfText = CursorUtil.getColumnIndexOrThrow(_cursor, "text");
+          final int _cursorIndexOfCreatedAtMs = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAtMs");
           final MessageEntity _result;
           if (_cursor.moveToFirst()) {
             final String _tmpId;
             _tmpId = _cursor.getString(_cursorIndexOfId);
             final String _tmpMatchId;
             _tmpMatchId = _cursor.getString(_cursorIndexOfMatchId);
-            final String _tmpRemitenteId;
-            _tmpRemitenteId = _cursor.getString(_cursorIndexOfRemitenteId);
-            final String _tmpContenido;
-            _tmpContenido = _cursor.getString(_cursorIndexOfContenido);
-            final long _tmpTimestamp;
-            _tmpTimestamp = _cursor.getLong(_cursorIndexOfTimestamp);
-            _result = new MessageEntity(_tmpId,_tmpMatchId,_tmpRemitenteId,_tmpContenido,_tmpTimestamp);
+            final long _tmpSenderNumero;
+            _tmpSenderNumero = _cursor.getLong(_cursorIndexOfSenderNumero);
+            final String _tmpText;
+            _tmpText = _cursor.getString(_cursorIndexOfText);
+            final long _tmpCreatedAtMs;
+            _tmpCreatedAtMs = _cursor.getLong(_cursorIndexOfCreatedAtMs);
+            _result = new MessageEntity(_tmpId,_tmpMatchId,_tmpSenderNumero,_tmpText,_tmpCreatedAtMs);
           } else {
             _result = null;
           }
@@ -202,27 +245,6 @@ public final class IMessageDao_Impl implements IMessageDao {
       public List<MessageEntity> call() throws Exception {
         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
         try {
-          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
-          final int _cursorIndexOfMatchId = CursorUtil.getColumnIndexOrThrow(_cursor, "matchId");
-          final int _cursorIndexOfRemitenteId = CursorUtil.getColumnIndexOrThrow(_cursor, "remitenteId");
-          final int _cursorIndexOfContenido = CursorUtil.getColumnIndexOrThrow(_cursor, "contenido");
-          final int _cursorIndexOfTimestamp = CursorUtil.getColumnIndexOrThrow(_cursor, "timestamp");
-          final List<MessageEntity> _result = new ArrayList<MessageEntity>(_cursor.getCount());
-          while (_cursor.moveToNext()) {
-            final MessageEntity _item;
-            final String _tmpId;
-            _tmpId = _cursor.getString(_cursorIndexOfId);
-            final String _tmpMatchId;
-            _tmpMatchId = _cursor.getString(_cursorIndexOfMatchId);
-            final String _tmpRemitenteId;
-            _tmpRemitenteId = _cursor.getString(_cursorIndexOfRemitenteId);
-            final String _tmpContenido;
-            _tmpContenido = _cursor.getString(_cursorIndexOfContenido);
-            final long _tmpTimestamp;
-            _tmpTimestamp = _cursor.getLong(_cursorIndexOfTimestamp);
-            _item = new MessageEntity(_tmpId,_tmpMatchId,_tmpRemitenteId,_tmpContenido,_tmpTimestamp);
-            _result.add(_item);
-          }
           return _result;
         } finally {
           _cursor.close();
@@ -250,27 +272,6 @@ public final class IMessageDao_Impl implements IMessageDao {
       public List<MessageEntity> call() throws Exception {
         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
         try {
-          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
-          final int _cursorIndexOfMatchId = CursorUtil.getColumnIndexOrThrow(_cursor, "matchId");
-          final int _cursorIndexOfRemitenteId = CursorUtil.getColumnIndexOrThrow(_cursor, "remitenteId");
-          final int _cursorIndexOfContenido = CursorUtil.getColumnIndexOrThrow(_cursor, "contenido");
-          final int _cursorIndexOfTimestamp = CursorUtil.getColumnIndexOrThrow(_cursor, "timestamp");
-          final List<MessageEntity> _result = new ArrayList<MessageEntity>(_cursor.getCount());
-          while (_cursor.moveToNext()) {
-            final MessageEntity _item;
-            final String _tmpId;
-            _tmpId = _cursor.getString(_cursorIndexOfId);
-            final String _tmpMatchId;
-            _tmpMatchId = _cursor.getString(_cursorIndexOfMatchId);
-            final String _tmpRemitenteId;
-            _tmpRemitenteId = _cursor.getString(_cursorIndexOfRemitenteId);
-            final String _tmpContenido;
-            _tmpContenido = _cursor.getString(_cursorIndexOfContenido);
-            final long _tmpTimestamp;
-            _tmpTimestamp = _cursor.getLong(_cursorIndexOfTimestamp);
-            _item = new MessageEntity(_tmpId,_tmpMatchId,_tmpRemitenteId,_tmpContenido,_tmpTimestamp);
-            _result.add(_item);
-          }
           return _result;
         } finally {
           _cursor.close();
@@ -296,27 +297,6 @@ public final class IMessageDao_Impl implements IMessageDao {
       public List<MessageEntity> call() throws Exception {
         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
         try {
-          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
-          final int _cursorIndexOfMatchId = CursorUtil.getColumnIndexOrThrow(_cursor, "matchId");
-          final int _cursorIndexOfRemitenteId = CursorUtil.getColumnIndexOrThrow(_cursor, "remitenteId");
-          final int _cursorIndexOfContenido = CursorUtil.getColumnIndexOrThrow(_cursor, "contenido");
-          final int _cursorIndexOfTimestamp = CursorUtil.getColumnIndexOrThrow(_cursor, "timestamp");
-          final List<MessageEntity> _result = new ArrayList<MessageEntity>(_cursor.getCount());
-          while (_cursor.moveToNext()) {
-            final MessageEntity _item;
-            final String _tmpId;
-            _tmpId = _cursor.getString(_cursorIndexOfId);
-            final String _tmpMatchId;
-            _tmpMatchId = _cursor.getString(_cursorIndexOfMatchId);
-            final String _tmpRemitenteId;
-            _tmpRemitenteId = _cursor.getString(_cursorIndexOfRemitenteId);
-            final String _tmpContenido;
-            _tmpContenido = _cursor.getString(_cursorIndexOfContenido);
-            final long _tmpTimestamp;
-            _tmpTimestamp = _cursor.getLong(_cursorIndexOfTimestamp);
-            _item = new MessageEntity(_tmpId,_tmpMatchId,_tmpRemitenteId,_tmpContenido,_tmpTimestamp);
-            _result.add(_item);
-          }
           return _result;
         } finally {
           _cursor.close();
@@ -328,6 +308,52 @@ public final class IMessageDao_Impl implements IMessageDao {
         _statement.release();
       }
     });
+  }
+
+  @Override
+  public Object listarRecientes(final String matchId, final int limite,
+      final Continuation<? super List<MessageEntity>> $completion) {
+    final String _sql = "SELECT * FROM Message WHERE matchId = ? ORDER BY createdAtMs DESC LIMIT ?";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
+    int _argIndex = 1;
+    _statement.bindString(_argIndex, matchId);
+    _argIndex = 2;
+    _statement.bindLong(_argIndex, limite);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<List<MessageEntity>>() {
+      @Override
+      @NonNull
+      public List<MessageEntity> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfMatchId = CursorUtil.getColumnIndexOrThrow(_cursor, "matchId");
+          final int _cursorIndexOfSenderNumero = CursorUtil.getColumnIndexOrThrow(_cursor, "senderNum");
+          final int _cursorIndexOfText = CursorUtil.getColumnIndexOrThrow(_cursor, "text");
+          final int _cursorIndexOfCreatedAtMs = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAtMs");
+          final List<MessageEntity> _result = new ArrayList<MessageEntity>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final MessageEntity _item;
+            final String _tmpId;
+            _tmpId = _cursor.getString(_cursorIndexOfId);
+            final String _tmpMatchId;
+            _tmpMatchId = _cursor.getString(_cursorIndexOfMatchId);
+            final long _tmpSenderNumero;
+            _tmpSenderNumero = _cursor.getLong(_cursorIndexOfSenderNumero);
+            final String _tmpText;
+            _tmpText = _cursor.getString(_cursorIndexOfText);
+            final long _tmpCreatedAtMs;
+            _tmpCreatedAtMs = _cursor.getLong(_cursorIndexOfCreatedAtMs);
+            _item = new MessageEntity(_tmpId,_tmpMatchId,_tmpSenderNumero,_tmpText,_tmpCreatedAtMs);
+            _result.add(_item);
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
   }
 
   @NonNull

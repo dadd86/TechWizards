@@ -85,57 +85,51 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
     final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(1) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
-        db.execSQL("CREATE TABLE IF NOT EXISTS `usuario` (`id` TEXT NOT NULL, `nombre` TEXT NOT NULL, `monedas` INTEGER NOT NULL, PRIMARY KEY(`id`))");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `Usuario` (`numero` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `usuario` TEXT NOT NULL, `fechaAlta` INTEGER NOT NULL, `monedas` INTEGER NOT NULL, `gano` INTEGER NOT NULL, `firebaseUid` TEXT)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `monedero` (`id` TEXT NOT NULL, `usuarioId` TEXT NOT NULL, `saldo` INTEGER NOT NULL, PRIMARY KEY(`id`))");
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_monedero_usuarioId` ON `monedero` (`usuarioId`)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `partida` (`id` TEXT NOT NULL, `usuarioId` TEXT NOT NULL, `fecha` INTEGER NOT NULL, `resultado` TEXT NOT NULL, `cambioMonedas` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`usuarioId`) REFERENCES `usuario`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `partida` (`id` TEXT NOT NULL, `usuarioId` TEXT NOT NULL, `fecha` INTEGER NOT NULL, `resultado` TEXT NOT NULL, `cambioMonedas` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`usuarioId`) REFERENCES `Usuario`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_partida_usuarioId` ON `partida` (`usuarioId`)");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_partida_fecha` ON `partida` (`fecha`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `evento` (`id` TEXT NOT NULL, `nombre` TEXT NOT NULL, `descripcion` TEXT NOT NULL, `fechaInicio` INTEGER NOT NULL, `fechaFin` INTEGER NOT NULL, `completado` INTEGER NOT NULL, PRIMARY KEY(`id`))");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `lobby` (`id` TEXT NOT NULL, `nombre` TEXT NOT NULL, `capacidad` INTEGER NOT NULL, `abierta` INTEGER NOT NULL, PRIMARY KEY(`id`))");
-        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_lobby_nombre` ON `lobby` (`nombre`)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `match` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `lobbyId` INTEGER, `status` TEXT NOT NULL, `inicioEn` INTEGER NOT NULL, `finEn` INTEGER, FOREIGN KEY(`lobbyId`) REFERENCES `lobby`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_match_lobbyId` ON `match` (`lobbyId`)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `match_event` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `matchId` INTEGER NOT NULL, `tipo` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `actorParticipantId` INTEGER, `payload` TEXT, FOREIGN KEY(`matchId`) REFERENCES `match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`actorParticipantId`) REFERENCES `match_participant`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_match_event_matchId` ON `match_event` (`matchId`)");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_match_event_actorParticipantId` ON `match_event` (`actorParticipantId`)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `match_participant` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `matchId` INTEGER NOT NULL, `userId` INTEGER NOT NULL, `apodo` TEXT, `joinedAt` INTEGER NOT NULL, `esGanador` INTEGER NOT NULL, FOREIGN KEY(`matchId`) REFERENCES `match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`userId`) REFERENCES `usuario`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_match_participant_matchId` ON `match_participant` (`matchId`)");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_match_participant_userId` ON `match_participant` (`userId`)");
-        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_match_participant_matchId_userId` ON `match_participant` (`matchId`, `userId`)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `match_score` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `matchId` INTEGER NOT NULL, `participantId` INTEGER NOT NULL, `puntos` INTEGER NOT NULL, FOREIGN KEY(`matchId`) REFERENCES `match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`participantId`) REFERENCES `match_participant`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_match_score_matchId` ON `match_score` (`matchId`)");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_match_score_participantId` ON `match_score` (`participantId`)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `message` (`id` TEXT NOT NULL, `matchId` TEXT NOT NULL, `remitenteId` TEXT NOT NULL, `contenido` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`matchId`) REFERENCES `match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`remitenteId`) REFERENCES `usuario`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_message_matchId` ON `message` (`matchId`)");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_message_remitenteId` ON `message` (`remitenteId`)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `outbox` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tipo` TEXT NOT NULL, `payload` TEXT NOT NULL, `creadoEn` INTEGER NOT NULL, `entregado` INTEGER NOT NULL, `reintentos` INTEGER NOT NULL)");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_outbox_tipo` ON `outbox` (`tipo`)");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_outbox_entregado` ON `outbox` (`entregado`)");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_outbox_creadoEn` ON `outbox` (`creadoEn`)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `id_map` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `localId` TEXT NOT NULL, `remoteId` TEXT, `updatedAt` INTEGER NOT NULL)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `tombstone` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `deletedId` TEXT NOT NULL, `deletedAt` INTEGER NOT NULL)");
-        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_tombstone_type_deletedId` ON `tombstone` (`type`, `deletedId`)");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_tombstone_deletedAt` ON `tombstone` (`deletedAt`)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `Lobby` (`nombre` TEXT NOT NULL, `id` TEXT NOT NULL, `codigo` TEXT, `modo` TEXT NOT NULL, `estado` TEXT NOT NULL, `creadorNum` INTEGER NOT NULL, `createdAtMs` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`creadorNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Lobby_estado` ON `Lobby` (`estado`)");
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_Lobby_codigo` ON `Lobby` (`codigo`)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `Match` (`id` TEXT NOT NULL, `lobbyId` TEXT, `modo` TEXT NOT NULL, `estado` TEXT NOT NULL, `createdByNum` INTEGER NOT NULL, `createdAtMs` INTEGER NOT NULL, `startedAtMs` INTEGER, `finishedAtMs` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`lobbyId`) REFERENCES `Lobby`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`createdByNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Match_estado_createdAtMs` ON `Match` (`estado`, `createdAtMs`)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Match_lobbyId` ON `Match` (`lobbyId`)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `MatchEvent` (`id` TEXT NOT NULL, `matchId` TEXT NOT NULL, `seq` INTEGER NOT NULL, `type` TEXT NOT NULL, `actorNum` INTEGER NOT NULL, `payloadJson` TEXT, `createdAtMs` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`matchId`) REFERENCES `Match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`actorNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_MatchEvent_matchId_seq` ON `MatchEvent` (`matchId`, `seq`)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `MatchParticipant` (`matchId` TEXT NOT NULL, `usuarioNum` INTEGER NOT NULL, `rol` TEXT, `teamId` TEXT, `joinedAtMs` INTEGER NOT NULL, `leftAtMs` INTEGER, `score` INTEGER NOT NULL, PRIMARY KEY(`matchId`, `usuarioNum`), FOREIGN KEY(`matchId`) REFERENCES `Match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`usuarioNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_MatchParticipant_matchId` ON `MatchParticipant` (`matchId`)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_MatchParticipant_usuarioNum` ON `MatchParticipant` (`usuarioNum`)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `MatchScore` (`matchId` TEXT NOT NULL, `usuarioNum` INTEGER NOT NULL, `score` INTEGER NOT NULL, PRIMARY KEY(`matchId`, `usuarioNum`), FOREIGN KEY(`matchId`) REFERENCES `Match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`usuarioNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `Message` (`id` TEXT NOT NULL, `matchId` TEXT NOT NULL, `senderNum` INTEGER NOT NULL, `text` TEXT NOT NULL, `createdAtMs` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`matchId`) REFERENCES `Match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`senderNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Message_matchId_createdAtMs` ON `Message` (`matchId`, `createdAtMs`)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Message_senderNum` ON `Message` (`senderNum`)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `Outbox` (`operationId` TEXT NOT NULL, `entityType` TEXT NOT NULL, `entityId` TEXT NOT NULL, `op` TEXT NOT NULL, `payloadJson` TEXT NOT NULL, `attempt` INTEGER NOT NULL, `lastError` TEXT, `createdAtMs` INTEGER NOT NULL, `updatedAtMs` INTEGER NOT NULL, PRIMARY KEY(`operationId`))");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `IdMap` (`localTable` TEXT NOT NULL, `localId` TEXT NOT NULL, `remoteCollection` TEXT NOT NULL, `remoteId` TEXT NOT NULL, PRIMARY KEY(`localTable`, `localId`))");
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_IdMap_remoteCollection_remoteId` ON `IdMap` (`remoteCollection`, `remoteId`)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `Tombstone` (`tableName` TEXT NOT NULL, `entityId` TEXT NOT NULL, `deletedAtMs` INTEGER NOT NULL, PRIMARY KEY(`tableName`, `entityId`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e15831b177d96b3760af55850a299224')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '83596fa53c3783ca24e0aa0be4e5c7e3')");
       }
 
       @Override
       public void dropAllTables(@NonNull final SupportSQLiteDatabase db) {
-        db.execSQL("DROP TABLE IF EXISTS `usuario`");
+        db.execSQL("DROP TABLE IF EXISTS `Usuario`");
         db.execSQL("DROP TABLE IF EXISTS `monedero`");
         db.execSQL("DROP TABLE IF EXISTS `partida`");
         db.execSQL("DROP TABLE IF EXISTS `evento`");
-        db.execSQL("DROP TABLE IF EXISTS `lobby`");
-        db.execSQL("DROP TABLE IF EXISTS `match`");
-        db.execSQL("DROP TABLE IF EXISTS `match_event`");
-        db.execSQL("DROP TABLE IF EXISTS `match_participant`");
-        db.execSQL("DROP TABLE IF EXISTS `match_score`");
-        db.execSQL("DROP TABLE IF EXISTS `message`");
-        db.execSQL("DROP TABLE IF EXISTS `outbox`");
-        db.execSQL("DROP TABLE IF EXISTS `id_map`");
-        db.execSQL("DROP TABLE IF EXISTS `tombstone`");
+        db.execSQL("DROP TABLE IF EXISTS `Lobby`");
+        db.execSQL("DROP TABLE IF EXISTS `Match`");
+        db.execSQL("DROP TABLE IF EXISTS `MatchEvent`");
+        db.execSQL("DROP TABLE IF EXISTS `MatchParticipant`");
+        db.execSQL("DROP TABLE IF EXISTS `MatchScore`");
+        db.execSQL("DROP TABLE IF EXISTS `Message`");
+        db.execSQL("DROP TABLE IF EXISTS `Outbox`");
+        db.execSQL("DROP TABLE IF EXISTS `IdMap`");
+        db.execSQL("DROP TABLE IF EXISTS `Tombstone`");
         final List<? extends RoomDatabase.Callback> _callbacks = mCallbacks;
         if (_callbacks != null) {
           for (RoomDatabase.Callback _callback : _callbacks) {
@@ -180,16 +174,19 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
       @NonNull
       public RoomOpenHelper.ValidationResult onValidateSchema(
           @NonNull final SupportSQLiteDatabase db) {
-        final HashMap<String, TableInfo.Column> _columnsUsuario = new HashMap<String, TableInfo.Column>(3);
-        _columnsUsuario.put("id", new TableInfo.Column("id", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsUsuario.put("nombre", new TableInfo.Column("nombre", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashMap<String, TableInfo.Column> _columnsUsuario = new HashMap<String, TableInfo.Column>(6);
+        _columnsUsuario.put("numero", new TableInfo.Column("numero", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUsuario.put("usuario", new TableInfo.Column("usuario", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUsuario.put("fechaAlta", new TableInfo.Column("fechaAlta", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsUsuario.put("monedas", new TableInfo.Column("monedas", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUsuario.put("gano", new TableInfo.Column("gano", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUsuario.put("firebaseUid", new TableInfo.Column("firebaseUid", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysUsuario = new HashSet<TableInfo.ForeignKey>(0);
         final HashSet<TableInfo.Index> _indicesUsuario = new HashSet<TableInfo.Index>(0);
-        final TableInfo _infoUsuario = new TableInfo("usuario", _columnsUsuario, _foreignKeysUsuario, _indicesUsuario);
-        final TableInfo _existingUsuario = TableInfo.read(db, "usuario");
+        final TableInfo _infoUsuario = new TableInfo("Usuario", _columnsUsuario, _foreignKeysUsuario, _indicesUsuario);
+        final TableInfo _existingUsuario = TableInfo.read(db, "Usuario");
         if (!_infoUsuario.equals(_existingUsuario)) {
-          return new RoomOpenHelper.ValidationResult(false, "usuario(com.diegodiaz.techwizards.data.local.entity.UsuarioEntity).\n"
+          return new RoomOpenHelper.ValidationResult(false, "Usuario(com.diegodiaz.techwizards.data.local.entity.UsuarioEntity).\n"
                   + " Expected:\n" + _infoUsuario + "\n"
                   + " Found:\n" + _existingUsuario);
         }
@@ -214,7 +211,7 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
         _columnsPartida.put("resultado", new TableInfo.Column("resultado", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsPartida.put("cambioMonedas", new TableInfo.Column("cambioMonedas", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysPartida = new HashSet<TableInfo.ForeignKey>(1);
-        _foreignKeysPartida.add(new TableInfo.ForeignKey("usuario", "CASCADE", "NO ACTION", Arrays.asList("usuarioId"), Arrays.asList("id")));
+        _foreignKeysPartida.add(new TableInfo.ForeignKey("Usuario", "CASCADE", "NO ACTION", Arrays.asList("usuarioId"), Arrays.asList("id")));
         final HashSet<TableInfo.Index> _indicesPartida = new HashSet<TableInfo.Index>(2);
         _indicesPartida.add(new TableInfo.Index("index_partida_usuarioId", false, Arrays.asList("usuarioId"), Arrays.asList("ASC")));
         _indicesPartida.add(new TableInfo.Index("index_partida_fecha", false, Arrays.asList("fecha"), Arrays.asList("ASC")));
@@ -241,169 +238,173 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
                   + " Expected:\n" + _infoEvento + "\n"
                   + " Found:\n" + _existingEvento);
         }
-        final HashMap<String, TableInfo.Column> _columnsLobby = new HashMap<String, TableInfo.Column>(4);
-        _columnsLobby.put("id", new TableInfo.Column("id", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashMap<String, TableInfo.Column> _columnsLobby = new HashMap<String, TableInfo.Column>(7);
         _columnsLobby.put("nombre", new TableInfo.Column("nombre", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsLobby.put("capacidad", new TableInfo.Column("capacidad", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsLobby.put("abierta", new TableInfo.Column("abierta", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        final HashSet<TableInfo.ForeignKey> _foreignKeysLobby = new HashSet<TableInfo.ForeignKey>(0);
-        final HashSet<TableInfo.Index> _indicesLobby = new HashSet<TableInfo.Index>(1);
-        _indicesLobby.add(new TableInfo.Index("index_lobby_nombre", true, Arrays.asList("nombre"), Arrays.asList("ASC")));
-        final TableInfo _infoLobby = new TableInfo("lobby", _columnsLobby, _foreignKeysLobby, _indicesLobby);
-        final TableInfo _existingLobby = TableInfo.read(db, "lobby");
+        _columnsLobby.put("id", new TableInfo.Column("id", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsLobby.put("codigo", new TableInfo.Column("codigo", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsLobby.put("modo", new TableInfo.Column("modo", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsLobby.put("estado", new TableInfo.Column("estado", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsLobby.put("creadorNum", new TableInfo.Column("creadorNum", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsLobby.put("createdAtMs", new TableInfo.Column("createdAtMs", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysLobby = new HashSet<TableInfo.ForeignKey>(1);
+        _foreignKeysLobby.add(new TableInfo.ForeignKey("Usuario", "CASCADE", "NO ACTION", Arrays.asList("creadorNum"), Arrays.asList("numero")));
+        final HashSet<TableInfo.Index> _indicesLobby = new HashSet<TableInfo.Index>(2);
+        _indicesLobby.add(new TableInfo.Index("index_Lobby_estado", false, Arrays.asList("estado"), Arrays.asList("ASC")));
+        _indicesLobby.add(new TableInfo.Index("index_Lobby_codigo", true, Arrays.asList("codigo"), Arrays.asList("ASC")));
+        final TableInfo _infoLobby = new TableInfo("Lobby", _columnsLobby, _foreignKeysLobby, _indicesLobby);
+        final TableInfo _existingLobby = TableInfo.read(db, "Lobby");
         if (!_infoLobby.equals(_existingLobby)) {
-          return new RoomOpenHelper.ValidationResult(false, "lobby(com.diegodiaz.techwizards.data.local.entity.LobbyEntity).\n"
+          return new RoomOpenHelper.ValidationResult(false, "Lobby(com.diegodiaz.techwizards.data.local.entity.LobbyEntity).\n"
                   + " Expected:\n" + _infoLobby + "\n"
                   + " Found:\n" + _existingLobby);
         }
-        final HashMap<String, TableInfo.Column> _columnsMatch = new HashMap<String, TableInfo.Column>(5);
-        _columnsMatch.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatch.put("lobbyId", new TableInfo.Column("lobbyId", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatch.put("status", new TableInfo.Column("status", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatch.put("inicioEn", new TableInfo.Column("inicioEn", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatch.put("finEn", new TableInfo.Column("finEn", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        final HashSet<TableInfo.ForeignKey> _foreignKeysMatch = new HashSet<TableInfo.ForeignKey>(1);
-        _foreignKeysMatch.add(new TableInfo.ForeignKey("lobby", "SET NULL", "NO ACTION", Arrays.asList("lobbyId"), Arrays.asList("id")));
-        final HashSet<TableInfo.Index> _indicesMatch = new HashSet<TableInfo.Index>(1);
-        _indicesMatch.add(new TableInfo.Index("index_match_lobbyId", false, Arrays.asList("lobbyId"), Arrays.asList("ASC")));
-        final TableInfo _infoMatch = new TableInfo("match", _columnsMatch, _foreignKeysMatch, _indicesMatch);
-        final TableInfo _existingMatch = TableInfo.read(db, "match");
+        final HashMap<String, TableInfo.Column> _columnsMatch = new HashMap<String, TableInfo.Column>(8);
+        _columnsMatch.put("id", new TableInfo.Column("id", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatch.put("lobbyId", new TableInfo.Column("lobbyId", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatch.put("modo", new TableInfo.Column("modo", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatch.put("estado", new TableInfo.Column("estado", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatch.put("createdByNum", new TableInfo.Column("createdByNum", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatch.put("createdAtMs", new TableInfo.Column("createdAtMs", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatch.put("startedAtMs", new TableInfo.Column("startedAtMs", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatch.put("finishedAtMs", new TableInfo.Column("finishedAtMs", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysMatch = new HashSet<TableInfo.ForeignKey>(2);
+        _foreignKeysMatch.add(new TableInfo.ForeignKey("Lobby", "SET NULL", "NO ACTION", Arrays.asList("lobbyId"), Arrays.asList("id")));
+        _foreignKeysMatch.add(new TableInfo.ForeignKey("Usuario", "CASCADE", "NO ACTION", Arrays.asList("createdByNum"), Arrays.asList("numero")));
+        final HashSet<TableInfo.Index> _indicesMatch = new HashSet<TableInfo.Index>(2);
+        _indicesMatch.add(new TableInfo.Index("index_Match_estado_createdAtMs", false, Arrays.asList("estado", "createdAtMs"), Arrays.asList("ASC", "ASC")));
+        _indicesMatch.add(new TableInfo.Index("index_Match_lobbyId", false, Arrays.asList("lobbyId"), Arrays.asList("ASC")));
+        final TableInfo _infoMatch = new TableInfo("Match", _columnsMatch, _foreignKeysMatch, _indicesMatch);
+        final TableInfo _existingMatch = TableInfo.read(db, "Match");
         if (!_infoMatch.equals(_existingMatch)) {
-          return new RoomOpenHelper.ValidationResult(false, "match(com.diegodiaz.techwizards.data.local.entity.MatchEntity).\n"
+          return new RoomOpenHelper.ValidationResult(false, "Match(com.diegodiaz.techwizards.data.local.entity.MatchEntity).\n"
                   + " Expected:\n" + _infoMatch + "\n"
                   + " Found:\n" + _existingMatch);
         }
-        final HashMap<String, TableInfo.Column> _columnsMatchEvent = new HashMap<String, TableInfo.Column>(6);
-        _columnsMatchEvent.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatchEvent.put("matchId", new TableInfo.Column("matchId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatchEvent.put("tipo", new TableInfo.Column("tipo", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatchEvent.put("timestamp", new TableInfo.Column("timestamp", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatchEvent.put("actorParticipantId", new TableInfo.Column("actorParticipantId", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatchEvent.put("payload", new TableInfo.Column("payload", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashMap<String, TableInfo.Column> _columnsMatchEvent = new HashMap<String, TableInfo.Column>(7);
+        _columnsMatchEvent.put("id", new TableInfo.Column("id", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchEvent.put("matchId", new TableInfo.Column("matchId", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchEvent.put("seq", new TableInfo.Column("seq", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchEvent.put("type", new TableInfo.Column("type", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchEvent.put("actorNum", new TableInfo.Column("actorNum", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchEvent.put("payloadJson", new TableInfo.Column("payloadJson", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchEvent.put("createdAtMs", new TableInfo.Column("createdAtMs", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysMatchEvent = new HashSet<TableInfo.ForeignKey>(2);
-        _foreignKeysMatchEvent.add(new TableInfo.ForeignKey("match", "CASCADE", "NO ACTION", Arrays.asList("matchId"), Arrays.asList("id")));
-        _foreignKeysMatchEvent.add(new TableInfo.ForeignKey("match_participant", "SET NULL", "NO ACTION", Arrays.asList("actorParticipantId"), Arrays.asList("id")));
-        final HashSet<TableInfo.Index> _indicesMatchEvent = new HashSet<TableInfo.Index>(2);
-        _indicesMatchEvent.add(new TableInfo.Index("index_match_event_matchId", false, Arrays.asList("matchId"), Arrays.asList("ASC")));
-        _indicesMatchEvent.add(new TableInfo.Index("index_match_event_actorParticipantId", false, Arrays.asList("actorParticipantId"), Arrays.asList("ASC")));
-        final TableInfo _infoMatchEvent = new TableInfo("match_event", _columnsMatchEvent, _foreignKeysMatchEvent, _indicesMatchEvent);
-        final TableInfo _existingMatchEvent = TableInfo.read(db, "match_event");
+        _foreignKeysMatchEvent.add(new TableInfo.ForeignKey("Match", "CASCADE", "NO ACTION", Arrays.asList("matchId"), Arrays.asList("id")));
+        _foreignKeysMatchEvent.add(new TableInfo.ForeignKey("Usuario", "CASCADE", "NO ACTION", Arrays.asList("actorNum"), Arrays.asList("numero")));
+        final HashSet<TableInfo.Index> _indicesMatchEvent = new HashSet<TableInfo.Index>(1);
+        _indicesMatchEvent.add(new TableInfo.Index("index_MatchEvent_matchId_seq", true, Arrays.asList("matchId", "seq"), Arrays.asList("ASC", "ASC")));
+        final TableInfo _infoMatchEvent = new TableInfo("MatchEvent", _columnsMatchEvent, _foreignKeysMatchEvent, _indicesMatchEvent);
+        final TableInfo _existingMatchEvent = TableInfo.read(db, "MatchEvent");
         if (!_infoMatchEvent.equals(_existingMatchEvent)) {
-          return new RoomOpenHelper.ValidationResult(false, "match_event(com.diegodiaz.techwizards.data.local.entity.MatchEventEntity).\n"
+          return new RoomOpenHelper.ValidationResult(false, "MatchEvent(com.diegodiaz.techwizards.data.local.entity.MatchEventEntity).\n"
                   + " Expected:\n" + _infoMatchEvent + "\n"
                   + " Found:\n" + _existingMatchEvent);
         }
-        final HashMap<String, TableInfo.Column> _columnsMatchParticipant = new HashMap<String, TableInfo.Column>(6);
-        _columnsMatchParticipant.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatchParticipant.put("matchId", new TableInfo.Column("matchId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatchParticipant.put("userId", new TableInfo.Column("userId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatchParticipant.put("apodo", new TableInfo.Column("apodo", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatchParticipant.put("joinedAt", new TableInfo.Column("joinedAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatchParticipant.put("esGanador", new TableInfo.Column("esGanador", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashMap<String, TableInfo.Column> _columnsMatchParticipant = new HashMap<String, TableInfo.Column>(7);
+        _columnsMatchParticipant.put("matchId", new TableInfo.Column("matchId", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchParticipant.put("usuarioNum", new TableInfo.Column("usuarioNum", "INTEGER", true, 2, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchParticipant.put("rol", new TableInfo.Column("rol", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchParticipant.put("teamId", new TableInfo.Column("teamId", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchParticipant.put("joinedAtMs", new TableInfo.Column("joinedAtMs", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchParticipant.put("leftAtMs", new TableInfo.Column("leftAtMs", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchParticipant.put("score", new TableInfo.Column("score", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysMatchParticipant = new HashSet<TableInfo.ForeignKey>(2);
-        _foreignKeysMatchParticipant.add(new TableInfo.ForeignKey("match", "CASCADE", "NO ACTION", Arrays.asList("matchId"), Arrays.asList("id")));
-        _foreignKeysMatchParticipant.add(new TableInfo.ForeignKey("usuario", "CASCADE", "NO ACTION", Arrays.asList("userId"), Arrays.asList("id")));
-        final HashSet<TableInfo.Index> _indicesMatchParticipant = new HashSet<TableInfo.Index>(3);
-        _indicesMatchParticipant.add(new TableInfo.Index("index_match_participant_matchId", false, Arrays.asList("matchId"), Arrays.asList("ASC")));
-        _indicesMatchParticipant.add(new TableInfo.Index("index_match_participant_userId", false, Arrays.asList("userId"), Arrays.asList("ASC")));
-        _indicesMatchParticipant.add(new TableInfo.Index("index_match_participant_matchId_userId", true, Arrays.asList("matchId", "userId"), Arrays.asList("ASC", "ASC")));
-        final TableInfo _infoMatchParticipant = new TableInfo("match_participant", _columnsMatchParticipant, _foreignKeysMatchParticipant, _indicesMatchParticipant);
-        final TableInfo _existingMatchParticipant = TableInfo.read(db, "match_participant");
+        _foreignKeysMatchParticipant.add(new TableInfo.ForeignKey("Match", "CASCADE", "NO ACTION", Arrays.asList("matchId"), Arrays.asList("id")));
+        _foreignKeysMatchParticipant.add(new TableInfo.ForeignKey("Usuario", "CASCADE", "NO ACTION", Arrays.asList("usuarioNum"), Arrays.asList("numero")));
+        final HashSet<TableInfo.Index> _indicesMatchParticipant = new HashSet<TableInfo.Index>(2);
+        _indicesMatchParticipant.add(new TableInfo.Index("index_MatchParticipant_matchId", false, Arrays.asList("matchId"), Arrays.asList("ASC")));
+        _indicesMatchParticipant.add(new TableInfo.Index("index_MatchParticipant_usuarioNum", false, Arrays.asList("usuarioNum"), Arrays.asList("ASC")));
+        final TableInfo _infoMatchParticipant = new TableInfo("MatchParticipant", _columnsMatchParticipant, _foreignKeysMatchParticipant, _indicesMatchParticipant);
+        final TableInfo _existingMatchParticipant = TableInfo.read(db, "MatchParticipant");
         if (!_infoMatchParticipant.equals(_existingMatchParticipant)) {
-          return new RoomOpenHelper.ValidationResult(false, "match_participant(com.diegodiaz.techwizards.data.local.entity.MatchParticipantEntity).\n"
+          return new RoomOpenHelper.ValidationResult(false, "MatchParticipant(com.diegodiaz.techwizards.data.local.entity.MatchParticipantEntity).\n"
                   + " Expected:\n" + _infoMatchParticipant + "\n"
                   + " Found:\n" + _existingMatchParticipant);
         }
-        final HashMap<String, TableInfo.Column> _columnsMatchScore = new HashMap<String, TableInfo.Column>(4);
-        _columnsMatchScore.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatchScore.put("matchId", new TableInfo.Column("matchId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatchScore.put("participantId", new TableInfo.Column("participantId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMatchScore.put("puntos", new TableInfo.Column("puntos", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashMap<String, TableInfo.Column> _columnsMatchScore = new HashMap<String, TableInfo.Column>(3);
+        _columnsMatchScore.put("matchId", new TableInfo.Column("matchId", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchScore.put("usuarioNum", new TableInfo.Column("usuarioNum", "INTEGER", true, 2, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMatchScore.put("score", new TableInfo.Column("score", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysMatchScore = new HashSet<TableInfo.ForeignKey>(2);
-        _foreignKeysMatchScore.add(new TableInfo.ForeignKey("match", "CASCADE", "NO ACTION", Arrays.asList("matchId"), Arrays.asList("id")));
-        _foreignKeysMatchScore.add(new TableInfo.ForeignKey("match_participant", "CASCADE", "NO ACTION", Arrays.asList("participantId"), Arrays.asList("id")));
-        final HashSet<TableInfo.Index> _indicesMatchScore = new HashSet<TableInfo.Index>(2);
-        _indicesMatchScore.add(new TableInfo.Index("index_match_score_matchId", false, Arrays.asList("matchId"), Arrays.asList("ASC")));
-        _indicesMatchScore.add(new TableInfo.Index("index_match_score_participantId", false, Arrays.asList("participantId"), Arrays.asList("ASC")));
-        final TableInfo _infoMatchScore = new TableInfo("match_score", _columnsMatchScore, _foreignKeysMatchScore, _indicesMatchScore);
-        final TableInfo _existingMatchScore = TableInfo.read(db, "match_score");
+        _foreignKeysMatchScore.add(new TableInfo.ForeignKey("Match", "CASCADE", "NO ACTION", Arrays.asList("matchId"), Arrays.asList("id")));
+        _foreignKeysMatchScore.add(new TableInfo.ForeignKey("Usuario", "CASCADE", "NO ACTION", Arrays.asList("usuarioNum"), Arrays.asList("numero")));
+        final HashSet<TableInfo.Index> _indicesMatchScore = new HashSet<TableInfo.Index>(0);
+        final TableInfo _infoMatchScore = new TableInfo("MatchScore", _columnsMatchScore, _foreignKeysMatchScore, _indicesMatchScore);
+        final TableInfo _existingMatchScore = TableInfo.read(db, "MatchScore");
         if (!_infoMatchScore.equals(_existingMatchScore)) {
-          return new RoomOpenHelper.ValidationResult(false, "match_score(com.diegodiaz.techwizards.data.local.entity.MatchScoreEntity).\n"
+          return new RoomOpenHelper.ValidationResult(false, "MatchScore(com.diegodiaz.techwizards.data.local.entity.MatchScoreEntity).\n"
                   + " Expected:\n" + _infoMatchScore + "\n"
                   + " Found:\n" + _existingMatchScore);
         }
         final HashMap<String, TableInfo.Column> _columnsMessage = new HashMap<String, TableInfo.Column>(5);
         _columnsMessage.put("id", new TableInfo.Column("id", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsMessage.put("matchId", new TableInfo.Column("matchId", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMessage.put("remitenteId", new TableInfo.Column("remitenteId", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMessage.put("contenido", new TableInfo.Column("contenido", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMessage.put("timestamp", new TableInfo.Column("timestamp", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMessage.put("senderNum", new TableInfo.Column("senderNum", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMessage.put("text", new TableInfo.Column("text", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMessage.put("createdAtMs", new TableInfo.Column("createdAtMs", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysMessage = new HashSet<TableInfo.ForeignKey>(2);
-        _foreignKeysMessage.add(new TableInfo.ForeignKey("match", "CASCADE", "NO ACTION", Arrays.asList("matchId"), Arrays.asList("id")));
-        _foreignKeysMessage.add(new TableInfo.ForeignKey("usuario", "CASCADE", "NO ACTION", Arrays.asList("remitenteId"), Arrays.asList("id")));
+        _foreignKeysMessage.add(new TableInfo.ForeignKey("Match", "CASCADE", "NO ACTION", Arrays.asList("matchId"), Arrays.asList("id")));
+        _foreignKeysMessage.add(new TableInfo.ForeignKey("Usuario", "CASCADE", "NO ACTION", Arrays.asList("senderNum"), Arrays.asList("numero")));
         final HashSet<TableInfo.Index> _indicesMessage = new HashSet<TableInfo.Index>(2);
-        _indicesMessage.add(new TableInfo.Index("index_message_matchId", false, Arrays.asList("matchId"), Arrays.asList("ASC")));
-        _indicesMessage.add(new TableInfo.Index("index_message_remitenteId", false, Arrays.asList("remitenteId"), Arrays.asList("ASC")));
-        final TableInfo _infoMessage = new TableInfo("message", _columnsMessage, _foreignKeysMessage, _indicesMessage);
-        final TableInfo _existingMessage = TableInfo.read(db, "message");
+        _indicesMessage.add(new TableInfo.Index("index_Message_matchId_createdAtMs", false, Arrays.asList("matchId", "createdAtMs"), Arrays.asList("ASC", "ASC")));
+        _indicesMessage.add(new TableInfo.Index("index_Message_senderNum", false, Arrays.asList("senderNum"), Arrays.asList("ASC")));
+        final TableInfo _infoMessage = new TableInfo("Message", _columnsMessage, _foreignKeysMessage, _indicesMessage);
+        final TableInfo _existingMessage = TableInfo.read(db, "Message");
         if (!_infoMessage.equals(_existingMessage)) {
-          return new RoomOpenHelper.ValidationResult(false, "message(com.diegodiaz.techwizards.data.local.entity.MessageEntity).\n"
+          return new RoomOpenHelper.ValidationResult(false, "Message(com.diegodiaz.techwizards.data.local.entity.MessageEntity).\n"
                   + " Expected:\n" + _infoMessage + "\n"
                   + " Found:\n" + _existingMessage);
         }
-        final HashMap<String, TableInfo.Column> _columnsOutbox = new HashMap<String, TableInfo.Column>(6);
-        _columnsOutbox.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsOutbox.put("tipo", new TableInfo.Column("tipo", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsOutbox.put("payload", new TableInfo.Column("payload", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsOutbox.put("creadoEn", new TableInfo.Column("creadoEn", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsOutbox.put("entregado", new TableInfo.Column("entregado", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsOutbox.put("reintentos", new TableInfo.Column("reintentos", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashMap<String, TableInfo.Column> _columnsOutbox = new HashMap<String, TableInfo.Column>(9);
+        _columnsOutbox.put("operationId", new TableInfo.Column("operationId", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsOutbox.put("entityType", new TableInfo.Column("entityType", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsOutbox.put("entityId", new TableInfo.Column("entityId", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsOutbox.put("op", new TableInfo.Column("op", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsOutbox.put("payloadJson", new TableInfo.Column("payloadJson", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsOutbox.put("attempt", new TableInfo.Column("attempt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsOutbox.put("lastError", new TableInfo.Column("lastError", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsOutbox.put("createdAtMs", new TableInfo.Column("createdAtMs", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsOutbox.put("updatedAtMs", new TableInfo.Column("updatedAtMs", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysOutbox = new HashSet<TableInfo.ForeignKey>(0);
-        final HashSet<TableInfo.Index> _indicesOutbox = new HashSet<TableInfo.Index>(3);
-        _indicesOutbox.add(new TableInfo.Index("index_outbox_tipo", false, Arrays.asList("tipo"), Arrays.asList("ASC")));
-        _indicesOutbox.add(new TableInfo.Index("index_outbox_entregado", false, Arrays.asList("entregado"), Arrays.asList("ASC")));
-        _indicesOutbox.add(new TableInfo.Index("index_outbox_creadoEn", false, Arrays.asList("creadoEn"), Arrays.asList("ASC")));
-        final TableInfo _infoOutbox = new TableInfo("outbox", _columnsOutbox, _foreignKeysOutbox, _indicesOutbox);
-        final TableInfo _existingOutbox = TableInfo.read(db, "outbox");
+        final HashSet<TableInfo.Index> _indicesOutbox = new HashSet<TableInfo.Index>(0);
+        final TableInfo _infoOutbox = new TableInfo("Outbox", _columnsOutbox, _foreignKeysOutbox, _indicesOutbox);
+        final TableInfo _existingOutbox = TableInfo.read(db, "Outbox");
         if (!_infoOutbox.equals(_existingOutbox)) {
-          return new RoomOpenHelper.ValidationResult(false, "outbox(com.diegodiaz.techwizards.data.local.entity.OutboxEntity).\n"
+          return new RoomOpenHelper.ValidationResult(false, "Outbox(com.diegodiaz.techwizards.data.local.entity.OutboxEntity).\n"
                   + " Expected:\n" + _infoOutbox + "\n"
                   + " Found:\n" + _existingOutbox);
         }
-        final HashMap<String, TableInfo.Column> _columnsIdMap = new HashMap<String, TableInfo.Column>(5);
-        _columnsIdMap.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsIdMap.put("type", new TableInfo.Column("type", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsIdMap.put("localId", new TableInfo.Column("localId", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsIdMap.put("remoteId", new TableInfo.Column("remoteId", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsIdMap.put("updatedAt", new TableInfo.Column("updatedAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashMap<String, TableInfo.Column> _columnsIdMap = new HashMap<String, TableInfo.Column>(4);
+        _columnsIdMap.put("localTable", new TableInfo.Column("localTable", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsIdMap.put("localId", new TableInfo.Column("localId", "TEXT", true, 2, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsIdMap.put("remoteCollection", new TableInfo.Column("remoteCollection", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsIdMap.put("remoteId", new TableInfo.Column("remoteId", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysIdMap = new HashSet<TableInfo.ForeignKey>(0);
-        final HashSet<TableInfo.Index> _indicesIdMap = new HashSet<TableInfo.Index>(0);
-        final TableInfo _infoIdMap = new TableInfo("id_map", _columnsIdMap, _foreignKeysIdMap, _indicesIdMap);
-        final TableInfo _existingIdMap = TableInfo.read(db, "id_map");
+        final HashSet<TableInfo.Index> _indicesIdMap = new HashSet<TableInfo.Index>(1);
+        _indicesIdMap.add(new TableInfo.Index("index_IdMap_remoteCollection_remoteId", true, Arrays.asList("remoteCollection", "remoteId"), Arrays.asList("ASC", "ASC")));
+        final TableInfo _infoIdMap = new TableInfo("IdMap", _columnsIdMap, _foreignKeysIdMap, _indicesIdMap);
+        final TableInfo _existingIdMap = TableInfo.read(db, "IdMap");
         if (!_infoIdMap.equals(_existingIdMap)) {
-          return new RoomOpenHelper.ValidationResult(false, "id_map(com.diegodiaz.techwizards.data.local.entity.IdMapEntity).\n"
+          return new RoomOpenHelper.ValidationResult(false, "IdMap(com.diegodiaz.techwizards.data.local.entity.IdMapEntity).\n"
                   + " Expected:\n" + _infoIdMap + "\n"
                   + " Found:\n" + _existingIdMap);
         }
-        final HashMap<String, TableInfo.Column> _columnsTombstone = new HashMap<String, TableInfo.Column>(4);
-        _columnsTombstone.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTombstone.put("type", new TableInfo.Column("type", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTombstone.put("deletedId", new TableInfo.Column("deletedId", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTombstone.put("deletedAt", new TableInfo.Column("deletedAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashMap<String, TableInfo.Column> _columnsTombstone = new HashMap<String, TableInfo.Column>(3);
+        _columnsTombstone.put("tableName", new TableInfo.Column("tableName", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTombstone.put("entityId", new TableInfo.Column("entityId", "TEXT", true, 2, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTombstone.put("deletedAtMs", new TableInfo.Column("deletedAtMs", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysTombstone = new HashSet<TableInfo.ForeignKey>(0);
-        final HashSet<TableInfo.Index> _indicesTombstone = new HashSet<TableInfo.Index>(2);
-        _indicesTombstone.add(new TableInfo.Index("index_tombstone_type_deletedId", true, Arrays.asList("type", "deletedId"), Arrays.asList("ASC", "ASC")));
-        _indicesTombstone.add(new TableInfo.Index("index_tombstone_deletedAt", false, Arrays.asList("deletedAt"), Arrays.asList("ASC")));
-        final TableInfo _infoTombstone = new TableInfo("tombstone", _columnsTombstone, _foreignKeysTombstone, _indicesTombstone);
-        final TableInfo _existingTombstone = TableInfo.read(db, "tombstone");
+        final HashSet<TableInfo.Index> _indicesTombstone = new HashSet<TableInfo.Index>(0);
+        final TableInfo _infoTombstone = new TableInfo("Tombstone", _columnsTombstone, _foreignKeysTombstone, _indicesTombstone);
+        final TableInfo _existingTombstone = TableInfo.read(db, "Tombstone");
         if (!_infoTombstone.equals(_existingTombstone)) {
-          return new RoomOpenHelper.ValidationResult(false, "tombstone(com.diegodiaz.techwizards.data.local.entity.TombstoneEntity).\n"
+          return new RoomOpenHelper.ValidationResult(false, "Tombstone(com.diegodiaz.techwizards.data.local.entity.TombstoneEntity).\n"
                   + " Expected:\n" + _infoTombstone + "\n"
                   + " Found:\n" + _existingTombstone);
         }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "e15831b177d96b3760af55850a299224", "4b3449d8ffc6ed229cfead816926adfc");
+    }, "83596fa53c3783ca24e0aa0be4e5c7e3", "84d9c04376a21eafdf539e238eeb72c1");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;
@@ -414,7 +415,7 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
   protected InvalidationTracker createInvalidationTracker() {
     final HashMap<String, String> _shadowTablesMap = new HashMap<String, String>(0);
     final HashMap<String, Set<String>> _viewTables = new HashMap<String, Set<String>>(0);
-    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "usuario","monedero","partida","evento","lobby","match","match_event","match_participant","match_score","message","outbox","id_map","tombstone");
+    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "Usuario","monedero","partida","evento","Lobby","Match","MatchEvent","MatchParticipant","MatchScore","Message","Outbox","IdMap","Tombstone");
   }
 
   @Override
@@ -430,19 +431,19 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
       if (_supportsDeferForeignKeys) {
         _db.execSQL("PRAGMA defer_foreign_keys = TRUE");
       }
-      _db.execSQL("DELETE FROM `usuario`");
+      _db.execSQL("DELETE FROM `Usuario`");
       _db.execSQL("DELETE FROM `monedero`");
       _db.execSQL("DELETE FROM `partida`");
       _db.execSQL("DELETE FROM `evento`");
-      _db.execSQL("DELETE FROM `lobby`");
-      _db.execSQL("DELETE FROM `match`");
-      _db.execSQL("DELETE FROM `match_event`");
-      _db.execSQL("DELETE FROM `match_participant`");
-      _db.execSQL("DELETE FROM `match_score`");
-      _db.execSQL("DELETE FROM `message`");
-      _db.execSQL("DELETE FROM `outbox`");
-      _db.execSQL("DELETE FROM `id_map`");
-      _db.execSQL("DELETE FROM `tombstone`");
+      _db.execSQL("DELETE FROM `Lobby`");
+      _db.execSQL("DELETE FROM `Match`");
+      _db.execSQL("DELETE FROM `MatchEvent`");
+      _db.execSQL("DELETE FROM `MatchParticipant`");
+      _db.execSQL("DELETE FROM `MatchScore`");
+      _db.execSQL("DELETE FROM `Message`");
+      _db.execSQL("DELETE FROM `Outbox`");
+      _db.execSQL("DELETE FROM `IdMap`");
+      _db.execSQL("DELETE FROM `Tombstone`");
       super.setTransactionSuccessful();
     } finally {
       super.endTransaction();

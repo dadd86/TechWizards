@@ -10,6 +10,13 @@ import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
 import io.reactivex.rxjava3.core.Single
 
+/**
+ * DAO para `Tombstone`.
+ *
+ * @security
+ * - Mantiene registros de borrado sin exponer datos sensibles.
+ * - Consultas parametrizadas evitan inyección SQL.
+ */
 @Dao
 interface ITombstoneDao {
 
@@ -35,5 +42,11 @@ interface ITombstoneDao {
 
     @Query("DELETE FROM tombstone")
     fun clearAll(): Completable
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(entity: TombstoneEntity)
+
+    @Query("SELECT * FROM Tombstone WHERE tableName = :tableName")
+    suspend fun listarPorTabla(tableName: String): List<TombstoneEntity>
 }
 

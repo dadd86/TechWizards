@@ -10,6 +10,13 @@ import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
 import io.reactivex.rxjava3.core.Single
 
+/**
+ * DAO para `MatchParticipant`.
+ *
+ * @security
+ * - Consultas parametrizadas protegen contra inyección.
+ * - Solo manipula identificadores técnicos de jugadores.
+ */
 @Dao
 interface IMatchParticipantDao {
 
@@ -49,5 +56,8 @@ interface IMatchParticipantDao {
 
     @Query("DELETE FROM match_participant WHERE matchId = :matchId")
     fun deleteByMatch(matchId: Long): Completable
+
+    @Query("SELECT * FROM MatchParticipant WHERE matchId = :matchId")
+    suspend fun listarPorMatch(matchId: String): List<MatchParticipantEntity>
 }
 

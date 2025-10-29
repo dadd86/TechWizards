@@ -9,6 +9,13 @@ import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
 
+/**
+ * DAO para `MatchScore`.
+ *
+ * @security
+ * - Opera solo con enteros y claves técnicas evitando PII.
+ * - Consultas parametrizadas mitigan inyección SQL.
+ */
 @Dao
 interface IMatchScoreDao {
 
@@ -34,5 +41,8 @@ interface IMatchScoreDao {
 
     @Query("DELETE FROM match_score WHERE matchId = :matchId")
     fun deleteByMatch(matchId: Long): Completable
+
+    @Query("SELECT * FROM MatchScore WHERE matchId = :matchId")
+    suspend fun listarPorMatch(matchId: String): List<MatchScoreEntity>
 }
 

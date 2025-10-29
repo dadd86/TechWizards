@@ -9,7 +9,6 @@ import androidx.room.RoomSQLiteQuery;
 import androidx.room.SharedSQLiteStatement;
 import androidx.room.rxjava3.EmptyResultSetException;
 import androidx.room.rxjava3.RxRoom;
-import androidx.room.util.CursorUtil;
 import androidx.room.util.DBUtil;
 import androidx.sqlite.db.SupportSQLiteStatement;
 import com.diegodiaz.techwizards.data.local.entity.IdMapEntity;
@@ -22,7 +21,6 @@ import java.lang.Override;
 import java.lang.String;
 import java.lang.SuppressWarnings;
 import java.lang.Void;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -43,21 +41,16 @@ public final class IIdMapDao_Impl implements IIdMapDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `id_map` (`id`,`type`,`localId`,`remoteId`,`updatedAt`) VALUES (nullif(?, 0),?,?,?,?)";
+        return "INSERT OR REPLACE INTO `IdMap` (`localTable`,`localId`,`remoteCollection`,`remoteId`) VALUES (?,?,?,?)";
       }
 
       @Override
       protected void bind(@NonNull final SupportSQLiteStatement statement,
           @NonNull final IdMapEntity entity) {
-        statement.bindLong(1, entity.getId());
-        statement.bindString(2, entity.getType());
-        statement.bindString(3, entity.getLocalId());
-        if (entity.getRemoteId() == null) {
-          statement.bindNull(4);
-        } else {
-          statement.bindString(4, entity.getRemoteId());
-        }
-        statement.bindLong(5, entity.getUpdatedAt());
+        statement.bindString(1, entity.getLocalTable());
+        statement.bindString(2, entity.getLocalId());
+        statement.bindString(3, entity.getRemoteCollection());
+        statement.bindString(4, entity.getRemoteId());
       }
     };
     this.__preparedStmtOfDeleteByLocal = new SharedSQLiteStatement(__db) {
@@ -147,31 +140,6 @@ public final class IIdMapDao_Impl implements IIdMapDao {
       public IdMapEntity call() throws Exception {
         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
         try {
-          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
-          final int _cursorIndexOfType = CursorUtil.getColumnIndexOrThrow(_cursor, "type");
-          final int _cursorIndexOfLocalId = CursorUtil.getColumnIndexOrThrow(_cursor, "localId");
-          final int _cursorIndexOfRemoteId = CursorUtil.getColumnIndexOrThrow(_cursor, "remoteId");
-          final int _cursorIndexOfUpdatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "updatedAt");
-          final IdMapEntity _result;
-          if (_cursor.moveToFirst()) {
-            final long _tmpId;
-            _tmpId = _cursor.getLong(_cursorIndexOfId);
-            final String _tmpType;
-            _tmpType = _cursor.getString(_cursorIndexOfType);
-            final String _tmpLocalId;
-            _tmpLocalId = _cursor.getString(_cursorIndexOfLocalId);
-            final String _tmpRemoteId;
-            if (_cursor.isNull(_cursorIndexOfRemoteId)) {
-              _tmpRemoteId = null;
-            } else {
-              _tmpRemoteId = _cursor.getString(_cursorIndexOfRemoteId);
-            }
-            final long _tmpUpdatedAt;
-            _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _result = new IdMapEntity(_tmpId,_tmpType,_tmpLocalId,_tmpRemoteId,_tmpUpdatedAt);
-          } else {
-            _result = null;
-          }
           return _result;
         } finally {
           _cursor.close();
@@ -199,31 +167,6 @@ public final class IIdMapDao_Impl implements IIdMapDao {
       public IdMapEntity call() throws Exception {
         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
         try {
-          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
-          final int _cursorIndexOfType = CursorUtil.getColumnIndexOrThrow(_cursor, "type");
-          final int _cursorIndexOfLocalId = CursorUtil.getColumnIndexOrThrow(_cursor, "localId");
-          final int _cursorIndexOfRemoteId = CursorUtil.getColumnIndexOrThrow(_cursor, "remoteId");
-          final int _cursorIndexOfUpdatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "updatedAt");
-          final IdMapEntity _result;
-          if (_cursor.moveToFirst()) {
-            final long _tmpId;
-            _tmpId = _cursor.getLong(_cursorIndexOfId);
-            final String _tmpType;
-            _tmpType = _cursor.getString(_cursorIndexOfType);
-            final String _tmpLocalId;
-            _tmpLocalId = _cursor.getString(_cursorIndexOfLocalId);
-            final String _tmpRemoteId;
-            if (_cursor.isNull(_cursorIndexOfRemoteId)) {
-              _tmpRemoteId = null;
-            } else {
-              _tmpRemoteId = _cursor.getString(_cursorIndexOfRemoteId);
-            }
-            final long _tmpUpdatedAt;
-            _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _result = new IdMapEntity(_tmpId,_tmpType,_tmpLocalId,_tmpRemoteId,_tmpUpdatedAt);
-          } else {
-            _result = null;
-          }
           return _result;
         } finally {
           _cursor.close();
@@ -249,31 +192,6 @@ public final class IIdMapDao_Impl implements IIdMapDao {
       public List<IdMapEntity> call() throws Exception {
         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
         try {
-          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
-          final int _cursorIndexOfType = CursorUtil.getColumnIndexOrThrow(_cursor, "type");
-          final int _cursorIndexOfLocalId = CursorUtil.getColumnIndexOrThrow(_cursor, "localId");
-          final int _cursorIndexOfRemoteId = CursorUtil.getColumnIndexOrThrow(_cursor, "remoteId");
-          final int _cursorIndexOfUpdatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "updatedAt");
-          final List<IdMapEntity> _result = new ArrayList<IdMapEntity>(_cursor.getCount());
-          while (_cursor.moveToNext()) {
-            final IdMapEntity _item;
-            final long _tmpId;
-            _tmpId = _cursor.getLong(_cursorIndexOfId);
-            final String _tmpType;
-            _tmpType = _cursor.getString(_cursorIndexOfType);
-            final String _tmpLocalId;
-            _tmpLocalId = _cursor.getString(_cursorIndexOfLocalId);
-            final String _tmpRemoteId;
-            if (_cursor.isNull(_cursorIndexOfRemoteId)) {
-              _tmpRemoteId = null;
-            } else {
-              _tmpRemoteId = _cursor.getString(_cursorIndexOfRemoteId);
-            }
-            final long _tmpUpdatedAt;
-            _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _item = new IdMapEntity(_tmpId,_tmpType,_tmpLocalId,_tmpRemoteId,_tmpUpdatedAt);
-            _result.add(_item);
-          }
           if (_result == null) {
             throw new EmptyResultSetException("Query returned empty result set: " + _statement.getSql());
           }

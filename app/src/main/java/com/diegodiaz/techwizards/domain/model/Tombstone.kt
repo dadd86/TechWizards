@@ -1,16 +1,16 @@
 package com.diegodiaz.techwizards.domain.model
 
 /**
- * Marca de borrado (soft-delete) para sincronización.
+ * Registro de borrado lógico para replicación confiable.
  *
- * @property id         Identificador interno (nullable en dominio; en Room es autogenerado).
- * @property type       Tipo de recurso borrado ("match", "message", "lobby", etc.).
- * @property deletedId  ID del recurso borrado (puede ser local o remoto).
- * @property deletedAt  Momento del borrado en epoch millis.
+ * @property tableName Nombre de la tabla local afectada.
+ * @property entityId Identificador de la entidad eliminada.
+ * @property deletedAtMs Marca temporal del borrado lógico.
+ * @security
+ * - No contiene datos sensibles; solo metadatos de eliminación.
  */
 data class Tombstone(
-    val id: Long? = null,
-    val type: String,
-    val deletedId: String,
-    val deletedAt: Long
+    val tableName: String,
+    val entityId: String,
+    val deletedAtMs: Long,
 )

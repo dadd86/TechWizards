@@ -1,8 +1,10 @@
 package com.diegodiaz.techwizards.data.local.dao;
 
 import android.database.Cursor;
+import android.os.CancellationSignal;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.room.CoroutinesRoom;
 import androidx.room.EntityInsertionAdapter;
 import androidx.room.RoomDatabase;
 import androidx.room.RoomSQLiteQuery;
@@ -17,6 +19,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import java.lang.Class;
 import java.lang.Exception;
+import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.lang.SuppressWarnings;
@@ -26,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import javax.annotation.processing.Generated;
+import kotlin.coroutines.Continuation;
 
 @Generated("androidx.room.RoomProcessor")
 @SuppressWarnings({"unchecked", "deprecation"})
@@ -46,16 +50,15 @@ public final class IMatchScoreDao_Impl implements IMatchScoreDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `match_score` (`id`,`matchId`,`participantId`,`puntos`) VALUES (nullif(?, 0),?,?,?)";
+        return "INSERT OR REPLACE INTO `MatchScore` (`matchId`,`usuarioNum`,`score`) VALUES (?,?,?)";
       }
 
       @Override
       protected void bind(@NonNull final SupportSQLiteStatement statement,
           @NonNull final MatchScoreEntity entity) {
-        statement.bindLong(1, entity.getId());
-        statement.bindLong(2, entity.getMatchId());
-        statement.bindLong(3, entity.getParticipantId());
-        statement.bindLong(4, entity.getPuntos());
+        statement.bindString(1, entity.getMatchId());
+        statement.bindLong(2, entity.getUsuarioNumero());
+        statement.bindLong(3, entity.getScore());
       }
     };
     this.__preparedStmtOfUpdateScore = new SharedSQLiteStatement(__db) {
@@ -209,24 +212,6 @@ public final class IMatchScoreDao_Impl implements IMatchScoreDao {
       public MatchScoreEntity call() throws Exception {
         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
         try {
-          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
-          final int _cursorIndexOfMatchId = CursorUtil.getColumnIndexOrThrow(_cursor, "matchId");
-          final int _cursorIndexOfParticipantId = CursorUtil.getColumnIndexOrThrow(_cursor, "participantId");
-          final int _cursorIndexOfPuntos = CursorUtil.getColumnIndexOrThrow(_cursor, "puntos");
-          final MatchScoreEntity _result;
-          if (_cursor.moveToFirst()) {
-            final long _tmpId;
-            _tmpId = _cursor.getLong(_cursorIndexOfId);
-            final long _tmpMatchId;
-            _tmpMatchId = _cursor.getLong(_cursorIndexOfMatchId);
-            final long _tmpParticipantId;
-            _tmpParticipantId = _cursor.getLong(_cursorIndexOfParticipantId);
-            final int _tmpPuntos;
-            _tmpPuntos = _cursor.getInt(_cursorIndexOfPuntos);
-            _result = new MatchScoreEntity(_tmpId,_tmpMatchId,_tmpParticipantId,_tmpPuntos);
-          } else {
-            _result = null;
-          }
           return _result;
         } finally {
           _cursor.close();
@@ -252,24 +237,6 @@ public final class IMatchScoreDao_Impl implements IMatchScoreDao {
       public List<MatchScoreEntity> call() throws Exception {
         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
         try {
-          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
-          final int _cursorIndexOfMatchId = CursorUtil.getColumnIndexOrThrow(_cursor, "matchId");
-          final int _cursorIndexOfParticipantId = CursorUtil.getColumnIndexOrThrow(_cursor, "participantId");
-          final int _cursorIndexOfPuntos = CursorUtil.getColumnIndexOrThrow(_cursor, "puntos");
-          final List<MatchScoreEntity> _result = new ArrayList<MatchScoreEntity>(_cursor.getCount());
-          while (_cursor.moveToNext()) {
-            final MatchScoreEntity _item;
-            final long _tmpId;
-            _tmpId = _cursor.getLong(_cursorIndexOfId);
-            final long _tmpMatchId;
-            _tmpMatchId = _cursor.getLong(_cursorIndexOfMatchId);
-            final long _tmpParticipantId;
-            _tmpParticipantId = _cursor.getLong(_cursorIndexOfParticipantId);
-            final int _tmpPuntos;
-            _tmpPuntos = _cursor.getInt(_cursorIndexOfPuntos);
-            _item = new MatchScoreEntity(_tmpId,_tmpMatchId,_tmpParticipantId,_tmpPuntos);
-            _result.add(_item);
-          }
           return _result;
         } finally {
           _cursor.close();
@@ -281,6 +248,44 @@ public final class IMatchScoreDao_Impl implements IMatchScoreDao {
         _statement.release();
       }
     });
+  }
+
+  @Override
+  public Object listarPorMatch(final String matchId,
+      final Continuation<? super List<MatchScoreEntity>> $completion) {
+    final String _sql = "SELECT * FROM MatchScore WHERE matchId = ?";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    _statement.bindString(_argIndex, matchId);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<List<MatchScoreEntity>>() {
+      @Override
+      @NonNull
+      public List<MatchScoreEntity> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfMatchId = CursorUtil.getColumnIndexOrThrow(_cursor, "matchId");
+          final int _cursorIndexOfUsuarioNumero = CursorUtil.getColumnIndexOrThrow(_cursor, "usuarioNum");
+          final int _cursorIndexOfScore = CursorUtil.getColumnIndexOrThrow(_cursor, "score");
+          final List<MatchScoreEntity> _result = new ArrayList<MatchScoreEntity>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final MatchScoreEntity _item;
+            final String _tmpMatchId;
+            _tmpMatchId = _cursor.getString(_cursorIndexOfMatchId);
+            final long _tmpUsuarioNumero;
+            _tmpUsuarioNumero = _cursor.getLong(_cursorIndexOfUsuarioNumero);
+            final int _tmpScore;
+            _tmpScore = _cursor.getInt(_cursorIndexOfScore);
+            _item = new MatchScoreEntity(_tmpMatchId,_tmpUsuarioNumero,_tmpScore);
+            _result.add(_item);
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
   }
 
   @NonNull

@@ -1,19 +1,25 @@
 package com.diegodiaz.techwizards.data.local.entity
 
-import androidx.room.Entity
-import androidx.room.Index
-import androidx.room.PrimaryKey
 
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+
+/**
+ * Entidad Room para la tabla `Tombstone`.
+ *
+ * @security
+ * - Conserva solo metadatos de eliminación evitando exposición de datos.
+ * - Clave compuesta impide duplicados para la misma entidad.
+ */
 @Entity(
-    tableName = "tombstone",
-    indices = [
-        Index(value = ["type", "deletedId"], unique = true), // evita duplicados por recurso
-        Index("deletedAt")
-    ]
+    tableName = "Tombstone",
+    primaryKeys = ["tableName", "entityId"],
 )
 data class TombstoneEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0L,
-    val type: String,
-    val deletedId: String,
-    val deletedAt: Long
+    @ColumnInfo(name = "tableName")
+    val tableName: String,
+    @ColumnInfo(name = "entityId")
+    val entityId: String,
+    @ColumnInfo(name = "deletedAtMs")
+    val deletedAtMs: Long,
 )

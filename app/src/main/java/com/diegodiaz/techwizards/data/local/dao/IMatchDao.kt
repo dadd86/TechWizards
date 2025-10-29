@@ -10,6 +10,13 @@ import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
 import io.reactivex.rxjava3.core.Single
 
+/**
+ * DAO para la tabla `Match`.
+ *
+ * @security
+ * - Todas las consultas están parametrizadas evitando SQL injection.
+ * - Se recomienda enmascarar IDs al loguear desde capas superiores.
+ */
 @Dao
 interface IMatchDao {
 
@@ -48,4 +55,10 @@ interface IMatchDao {
     /** Borra un match por id. */
     @Query("DELETE FROM `match` WHERE id = :id")
     fun deleteById(id: String): Completable
+
+    @Query("SELECT * FROM Match WHERE estado = :estado ORDER BY finishedAtMs DESC, createdAtMs DESC LIMIT :limite")
+    suspend fun listarPorEstado(estado: String, limite: Int): List<MatchEntity>
+
+    @Query("SELECT * FROM Match WHERE id = :matchId LIMIT 1")
+    suspend fun obtenerPorId(matchId: String): MatchEntity?
 }

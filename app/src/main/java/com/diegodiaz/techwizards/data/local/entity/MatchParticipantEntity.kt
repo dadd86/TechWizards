@@ -1,37 +1,53 @@
 package com.diegodiaz.techwizards.data.local.entity
 
+
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import androidx.room.PrimaryKey
 
+/**
+ * Entidad Room para la tabla `MatchParticipant`.
+ *
+ * @security
+ * - Claves compuestas evitan duplicidad por jugador y match.
+ * - No expone información personal adicional al número interno.
+ */
 @Entity(
-    tableName = "match_participant",
+    tableName = "MatchParticipant",
+    primaryKeys = ["matchId", "usuarioNum"],
+    indices = [
+        Index(value = ["matchId"]),
+        Index(value = ["usuarioNum"]),
+    ],
     foreignKeys = [
         ForeignKey(
             entity = MatchEntity::class,
             parentColumns = ["id"],
             childColumns = ["matchId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = UsuarioEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["userId"],
-            onDelete = ForeignKey.CASCADE
-        )
+            parentColumns = ["numero"],
+            childColumns = ["usuarioNum"],
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
-    indices = [
-        Index("matchId"),
-        Index("userId"),
-        Index(value = ["matchId", "userId"], unique = true) // 1 usuario por match
-    ]
 )
 data class MatchParticipantEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long,
-    val matchId: Long,
-    val userId: Long,
-    val apodo: String?,
-    val joinedAt: Long,
-    val esGanador: Boolean
+    @ColumnInfo(name = "matchId")
+    val matchId: String,
+    @ColumnInfo(name = "usuarioNum")
+    val usuarioNumero: Long,
+    @ColumnInfo(name = "rol")
+    val rol: String?,
+    @ColumnInfo(name = "teamId")
+    val teamId: String?,
+    @ColumnInfo(name = "joinedAtMs")
+    val joinedAtMs: Long,
+    @ColumnInfo(name = "leftAtMs")
+    val leftAtMs: Long?,
+    @ColumnInfo(name = "score")
+    val score: Int,
 )

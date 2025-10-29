@@ -10,6 +10,13 @@ import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
 import io.reactivex.rxjava3.core.Single
 
+/**
+ * DAO para la tabla `Outbox`.
+ *
+ * @security
+ * - Consultas parametrizadas para prevenir inyección SQL.
+ * - Solo almacena metadatos de sincronización, sin PII.
+ */
 @Dao
 interface IOutboxDao {
 
@@ -46,5 +53,11 @@ interface IOutboxDao {
 
     @Query("DELETE FROM outbox WHERE entregado = 1")
     fun purgeDelivered(): Completable
+
+    @Query("SELECT * FROM Outbox ORDER BY createdAtMs ASC LIMIT :limit")
+    suspend fun obtenerPendientes(limit: Int): List<OutboxEntity>
+
+    @Query("UPDATE Outbox SET attempt = :attempt, lastError = :lastError, updatedAtMs = :updatedAtMs WHERE operationId = :operationId")
+    suspend fun actualizarIntento(operationId: String, attempt: Int, lastError: String?, updatedAtMs: Long): Int
 }
 
