@@ -36,6 +36,14 @@ import com.diegodiaz.techwizards.data.local.entity.MessageEntity
 import com.diegodiaz.techwizards.data.local.entity.MatchParticipantEntity
 import com.diegodiaz.techwizards.data.local.entity.OutboxEntity
 
+
+/**
+ * Configuración principal de la base de datos Room.
+ *
+ * @security
+ * - Exporta el esquema para auditoría y aplica pragmas definidos en `PrimerSQL.sql`.
+ * - Ejecuta migraciones incrementales para evitar pérdidas de datos.
+ */
 @Database(
     version = 1, // Primera ejecución: si cambias el esquema más adelante, sube versión y añade Migration.
     exportSchema = true,

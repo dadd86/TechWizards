@@ -32,4 +32,11 @@ interface IMessageDao {
 
     @Query("DELETE FROM message WHERE matchId = :matchId")
     fun deleteByMatch(matchId: Long): Completable
+
+    @Query("SELECT * FROM message WHERE matchId = :lobbyId ORDER BY timestamp ASC")
+    fun getMensajes(lobbyId: String): Flowable<List<MessageEntity>>
+
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(entity: MessageEntity): Completable
 }
