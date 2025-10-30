@@ -5,6 +5,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.diegodiaz.techwizards.ui.view.*
+
 
 /**
  * NavGraph.kt
@@ -51,4 +53,14 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
             PantallaAjustes(onBack = { navController.popBackStack() })
         }
     }
+}
+
+@Composable
+fun PantallaAjustes(onBack: () -> Boolean) {
+    TODO("Not yet implemented")
+}
+
+@Composable
+fun PantallaHistorial(onBack: () -> Boolean) {
+    TODO("Not yet implemented")
 }

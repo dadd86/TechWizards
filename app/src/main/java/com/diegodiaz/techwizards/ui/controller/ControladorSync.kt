@@ -18,21 +18,45 @@ class ControladorSync : ViewModel() {
     private val _ui = MutableStateFlow(SyncUiState())
     val ui: StateFlow<SyncUiState> = _ui.asStateFlow()
 
-    fun enqueue(tipo: String, payload: String) {
+    fun enqueue(
+        entityType: String,
+        entityId: String,
+        op: String,
+        payloadJson: String,
+    ) {
+        val now = System.currentTimeMillis()
         val item = Outbox(
-            id = System.currentTimeMillis(),
-            tipo = tipo,
-            payload = payload
+            operationId = now.toString(),
+            entityType = entityType,
+            entityId = entityId,
+            op = op,
+            payloadJson = payloadJson,
+            attempt = 0,
+            lastError = null,
+            createdAtMs = now,
+            updatedAtMs = now
         )
         _ui.value = _ui.value.copy(outbox = _ui.value.outbox + item)
     }
 
-    fun marcarEntregado(id: Long) {
-        _ui.value = _ui.value.copy(outbox = _ui.value.outbox.map { if (it.id == id) it.copy(entregado = true) else it })
+    fun marcarExitoso(operationId: String) {
+        _ui.value = _ui.value.copy(
+            outbox = _ui.value.outbox.map {
+                if (it.operationId == operationId) it.copy(lastError = null) else it
+            }
+        )
     }
 
-    fun limpiarEntregados() {
-        _ui.value = _ui.value.copy(outbox = _ui.value.outbox.filterNot { it.entregado })
+    fun marcarIntentoFallido(operationId: String, error: String) {
+        _ui.value = _ui.value.copy(
+            outbox = _ui.value.outbox.map {
+                if (it.operationId == operationId) it.copy(
+                    attempt = it.attempt + 1,
+                    lastError = error,
+                    updatedAtMs = System.currentTimeMillis()
+                ) else it
+            }
+        )
     }
 
     fun limpiarError() { _ui.value = _ui.value.copy(error = null) }

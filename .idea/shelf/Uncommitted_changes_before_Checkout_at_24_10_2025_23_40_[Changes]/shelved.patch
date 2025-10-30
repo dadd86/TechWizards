@@ -1,0 +1,36 @@
+Index: .idea/deploymentTargetSelector.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"deploymentTargetSelector\">\r\n    <selectionStates>\r\n      <SelectionState runConfigName=\"app\">\r\n        <option name=\"selectionMode\" value=\"DROPDOWN\" />\r\n        <DialogSelection>\r\n          <targets>\r\n            <Target type=\"DEFAULT_BOOT\">\r\n              <handle>\r\n                <DeviceId pluginId=\"LocalEmulator\" identifier=\"path=C:\\Users\\Admin\\.android\\avd\\Pixel_3a_API_34_extension_level_7_x86_64.avd\" />\r\n              </handle>\r\n            </Target>\r\n          </targets>\r\n        </DialogSelection>\r\n      </SelectionState>\r\n      <SelectionState runConfigName=\"MainActivity\">\r\n        <option name=\"selectionMode\" value=\"DROPDOWN\" />\r\n      </SelectionState>\r\n    </selectionStates>\r\n  </component>\r\n</project>
+===================================================================
+diff --git a/.idea/deploymentTargetSelector.xml b/.idea/deploymentTargetSelector.xml
+--- a/.idea/deploymentTargetSelector.xml	(revision e2c5b52580858864d5a0a09700889b89a0851cc2)
++++ b/.idea/deploymentTargetSelector.xml	(date 1760775872646)
+@@ -14,9 +14,6 @@
+           </targets>
+         </DialogSelection>
+       </SelectionState>
+-      <SelectionState runConfigName="MainActivity">
+-        <option name="selectionMode" value="DROPDOWN" />
+-      </SelectionState>
+     </selectionStates>
+   </component>
+ </project>
+\ No newline at end of file
+Index: .idea/gradle.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"GradleMigrationSettings\" migrationVersion=\"1\" />\r\n  <component name=\"GradleSettings\">\r\n    <option name=\"linkedExternalProjectsSettings\">\r\n      <GradleProjectSettings>\r\n        <option name=\"testRunner\" value=\"CHOOSE_PER_TEST\" />\r\n        <option name=\"externalProjectPath\" value=\"$PROJECT_DIR$\" />\r\n        <option name=\"gradleJvm\" value=\"ms-17 (2)\" />\r\n        <option name=\"modules\">\r\n          <set>\r\n            <option value=\"$PROJECT_DIR$\" />\r\n            <option value=\"$PROJECT_DIR$/app\" />\r\n          </set>\r\n        </option>\r\n      </GradleProjectSettings>\r\n    </option>\r\n  </component>\r\n</project>
+===================================================================
+diff --git a/.idea/gradle.xml b/.idea/gradle.xml
+--- a/.idea/gradle.xml	(revision e2c5b52580858864d5a0a09700889b89a0851cc2)
++++ b/.idea/gradle.xml	(date 1760775872635)
+@@ -6,7 +6,7 @@
+       <GradleProjectSettings>
+         <option name="testRunner" value="CHOOSE_PER_TEST" />
+         <option name="externalProjectPath" value="$PROJECT_DIR$" />
+-        <option name="gradleJvm" value="ms-17 (2)" />
++        <option name="gradleJvm" value="ms-17" />
+         <option name="modules">
+           <set>
+             <option value="$PROJECT_DIR$" />

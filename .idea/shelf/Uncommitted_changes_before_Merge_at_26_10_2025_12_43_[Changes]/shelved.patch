@@ -1,0 +1,55 @@
+Index: .idea/deploymentTargetSelector.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"deploymentTargetSelector\">\r\n    <selectionStates>\r\n      <SelectionState runConfigName=\"app\">\r\n        <option name=\"selectionMode\" value=\"DROPDOWN\" />\r\n        <DialogSelection>\r\n          <targets>\r\n            <Target type=\"DEFAULT_BOOT\">\r\n              <handle>\r\n                <DeviceId pluginId=\"LocalEmulator\" identifier=\"path=C:\\Users\\Admin\\.android\\avd\\Pixel_3a_API_34_extension_level_7_x86_64.avd\" />\r\n              </handle>\r\n            </Target>\r\n          </targets>\r\n        </DialogSelection>\r\n      </SelectionState>\r\n      <SelectionState runConfigName=\"MainActivity\">\r\n        <option name=\"selectionMode\" value=\"DROPDOWN\" />\r\n      </SelectionState>\r\n    </selectionStates>\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/deploymentTargetSelector.xml b/.idea/deploymentTargetSelector.xml
+--- a/.idea/deploymentTargetSelector.xml	(revision 5aab69273b62374f0815184f22265e84e6a5c6e1)
++++ b/.idea/deploymentTargetSelector.xml	(date 1761479027412)
+@@ -14,9 +14,6 @@
+           </targets>
+         </DialogSelection>
+       </SelectionState>
+-      <SelectionState runConfigName="MainActivity">
+-        <option name="selectionMode" value="DROPDOWN" />
+-      </SelectionState>
+     </selectionStates>
+   </component>
+ </project>
+\ No newline at end of file
+Index: .idea/gradle.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"GradleMigrationSettings\" migrationVersion=\"1\" />\r\n  <component name=\"GradleSettings\">\r\n    <option name=\"linkedExternalProjectsSettings\">\r\n      <GradleProjectSettings>\r\n        <option name=\"testRunner\" value=\"CHOOSE_PER_TEST\" />\r\n        <option name=\"externalProjectPath\" value=\"$PROJECT_DIR$\" />\r\n        <option name=\"gradleJvm\" value=\"ms-17 (2)\" />\r\n        <option name=\"modules\">\r\n          <set>\r\n            <option value=\"$PROJECT_DIR$\" />\r\n            <option value=\"$PROJECT_DIR$/app\" />\r\n          </set>\r\n        </option>\r\n      </GradleProjectSettings>\r\n    </option>\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/gradle.xml b/.idea/gradle.xml
+--- a/.idea/gradle.xml	(revision 5aab69273b62374f0815184f22265e84e6a5c6e1)
++++ b/.idea/gradle.xml	(date 1761479027413)
+@@ -6,7 +6,7 @@
+       <GradleProjectSettings>
+         <option name="testRunner" value="CHOOSE_PER_TEST" />
+         <option name="externalProjectPath" value="$PROJECT_DIR$" />
+-        <option name="gradleJvm" value="ms-17 (2)" />
++        <option name="gradleJvm" value="ms-17" />
+         <option name="modules">
+           <set>
+             <option value="$PROJECT_DIR$" />
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"ExternalStorageConfigurationManager\" enabled=\"true\" />\r\n  <component name=\"ProjectRootManager\" version=\"2\" languageLevel=\"JDK_17\" default=\"true\" project-jdk-name=\"ms-17\" project-jdk-type=\"JavaSDK\">\r\n    <output url=\"file://$PROJECT_DIR$/build/classes\" />\r\n  </component>\r\n  <component name=\"ProjectType\">\r\n    <option name=\"id\" value=\"Android\" />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/misc.xml b/.idea/misc.xml
+--- a/.idea/misc.xml	(revision 5aab69273b62374f0815184f22265e84e6a5c6e1)
++++ b/.idea/misc.xml	(date 1761479027413)
+@@ -1,4 +1,3 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+   <component name="ExternalStorageConfigurationManager" enabled="true" />
+   <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="ms-17" project-jdk-type="JavaSDK">

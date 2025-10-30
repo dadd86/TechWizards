@@ -1,4 +1,4 @@
-package com.diegodiaz.techwizards.ui.view
+/*package com.diegodiaz.techwizards.ui.view
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -66,3 +66,4 @@ fun PantallaAjustes(onBack: () -> Unit) {
         }
     }
 }
+*/

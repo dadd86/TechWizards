@@ -2,6 +2,7 @@ package com.diegodiaz.techwizards.ui.controller
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.diegodiaz.techwizards.data.local.entity.Resultado
 import com.diegodiaz.techwizards.domain.model.Partida
 import com.diegodiaz.techwizards.domain.repository.JuegoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,20 +20,21 @@ data class JuegoUiState(
 )
 
 class ControladorJuego(
-    private val repo: JuegoRepository
+    private val repo: JuegoRepository,
+    private val usuarioId: String
 ) : ViewModel() {
 
     private val _ui = MutableStateFlow(JuegoUiState())
     val ui: StateFlow<JuegoUiState> = _ui.asStateFlow()
 
     val historial: StateFlow<List<Partida>> =
-        repo.observarHistorial(limit = 50)
+        repo.observarHistorial(usuarioId = usuarioId, limit = 50)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init {
         viewModelScope.launch {
-            repo.observarMonedero().collect { m ->
-                _ui.value = _ui.value.copy(monedas = m.monedas)
+            repo.observarMonedero(usuarioId).collect { m ->
+                _ui.value = _ui.value.copy(monedas = m.saldo)
             }
         }
     }
@@ -41,8 +43,9 @@ class ControladorJuego(
         viewModelScope.launch {
             try {
                 _ui.value = _ui.value.copy(cargando = true, error = null)
-                val p = repo.lanzarDado()
-                val msg = if (p.gano) "¡Ganaste (+${p.deltaMonedas})!" else "Perdiste (${p.deltaMonedas})"
+                val p = repo.lanzarDado(usuarioId)
+                val gano = p.resultado == Resultado.GANADO
+                val msg = if (gano) "¡Ganaste (+${p.deltaMonedas})!" else "Perdiste (${p.deltaMonedas})"
                 _ui.value = _ui.value.copy(ultimoResultado = msg, cargando = false)
             } catch (t: Throwable) {
                 _ui.value = _ui.value.copy(cargando = false, error = t.message ?: "Error")
