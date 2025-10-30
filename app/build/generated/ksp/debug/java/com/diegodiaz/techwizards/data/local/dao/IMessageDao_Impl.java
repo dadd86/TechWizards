@@ -102,6 +102,24 @@ public final class IMessageDao_Impl implements IMessageDao {
   }
 
   @Override
+  public Completable insert(final MessageEntity entity) {
+    return Completable.fromCallable(new Callable<Void>() {
+      @Override
+      @Nullable
+      public Void call() throws Exception {
+        __db.beginTransaction();
+        try {
+          __insertionAdapterOfMessageEntity.insert(entity);
+          __db.setTransactionSuccessful();
+          return null;
+        } finally {
+          __db.endTransaction();
+        }
+      }
+    });
+  }
+
+  @Override
   public Completable deleteByMatch(final long matchId) {
     return Completable.fromCallable(new Callable<Void>() {
       @Override
@@ -226,6 +244,52 @@ public final class IMessageDao_Impl implements IMessageDao {
     _statement.bindLong(_argIndex, matchId);
     _argIndex = 2;
     _statement.bindLong(_argIndex, userId);
+    return RxRoom.createFlowable(__db, false, new String[] {"message"}, new Callable<List<MessageEntity>>() {
+      @Override
+      @NonNull
+      public List<MessageEntity> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfMatchId = CursorUtil.getColumnIndexOrThrow(_cursor, "matchId");
+          final int _cursorIndexOfRemitenteId = CursorUtil.getColumnIndexOrThrow(_cursor, "remitenteId");
+          final int _cursorIndexOfContenido = CursorUtil.getColumnIndexOrThrow(_cursor, "contenido");
+          final int _cursorIndexOfTimestamp = CursorUtil.getColumnIndexOrThrow(_cursor, "timestamp");
+          final List<MessageEntity> _result = new ArrayList<MessageEntity>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final MessageEntity _item;
+            final String _tmpId;
+            _tmpId = _cursor.getString(_cursorIndexOfId);
+            final String _tmpMatchId;
+            _tmpMatchId = _cursor.getString(_cursorIndexOfMatchId);
+            final String _tmpRemitenteId;
+            _tmpRemitenteId = _cursor.getString(_cursorIndexOfRemitenteId);
+            final String _tmpContenido;
+            _tmpContenido = _cursor.getString(_cursorIndexOfContenido);
+            final long _tmpTimestamp;
+            _tmpTimestamp = _cursor.getLong(_cursorIndexOfTimestamp);
+            _item = new MessageEntity(_tmpId,_tmpMatchId,_tmpRemitenteId,_tmpContenido,_tmpTimestamp);
+            _result.add(_item);
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+        }
+      }
+
+      @Override
+      protected void finalize() {
+        _statement.release();
+      }
+    });
+  }
+
+  @Override
+  public Flowable<List<MessageEntity>> getMensajes(final String lobbyId) {
+    final String _sql = "SELECT * FROM message WHERE matchId = ? ORDER BY timestamp ASC";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    _statement.bindString(_argIndex, lobbyId);
     return RxRoom.createFlowable(__db, false, new String[] {"message"}, new Callable<List<MessageEntity>>() {
       @Override
       @NonNull
