@@ -16,15 +16,15 @@ class MatchRepositoryRoom(
     private val monederoDao: IMonederoDao
 ) {
     // -------- Rx nativo --------
-    fun historialRx(usuarioId: String) =
+    fun historialRx(usuarioId: Long) =
         partidaDao.historial(usuarioId).map { list -> list.map { it.toDomain() } }
 
     fun registrarResultadoRx(partida: Partida, saldoNuevo: Int): Completable =
         partidaDao.insertar(partida.toEntity())
-            .andThen(monederoDao.actualizarSaldo(partida.usuarioId, saldoNuevo))
+            .andThen(monederoDao.actualizarSaldo(partida.usuarioNumero, saldoNuevo))
 
     // -------- Wrappers coroutines (opcional) --------
-    fun historial(usuarioId: String): Flow<List<Partida>> {
+    fun historial(usuarioId: Long): Flow<List<Partida>> {
         return historialRx(usuarioId).asFlow()
     }
 

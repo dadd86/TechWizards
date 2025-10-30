@@ -18,32 +18,22 @@ import kotlinx.coroutines.rx3.await
 class JuegoRepositoryRoom(
     private val usuarioDao: IUsuarioDao,
     private val monederoDao: IMonederoDao
-    // Si usas transacciones, inyecta tu TransactionRunner
 ) {
-    // -------- Rx nativo (Producto 1) --------
-    fun observeSaldoRx(usuarioId: String): Flowable<Monedero> =
-        monederoDao.observeSaldo(usuarioId).map { it.toDomain() }
+    fun observeSaldoRx(usuarioNumero: Long): Flowable<Monedero> =
+        monederoDao.observeSaldo(usuarioNumero).map { it.toDomain() }
 
-    fun cargarUsuarioRx(usuarioId: String): Maybe<Usuario> =
-        usuarioDao.getById(usuarioId).map { it.toDomain() }
+    fun cargarUsuarioRx(usuarioNumero: Long): Maybe<Usuario> =
+        usuarioDao.getByNumeroRx(usuarioNumero).map { it.toDomain() }
 
     fun inicializarMonedasRx(usuario: Usuario, monedasIniciales: Int): Completable =
         usuarioDao.upsert(usuario.toEntity())
             .andThen(
                 monederoDao.upsert(
                     MonederoEntity(
-                        id = "wallet_${usuario.id}",
-                        usuarioId = usuario.id,
+                        id = "wallet_${usuario.numero}",
+                        usuarioNumero = usuario.numero,
                         saldo = monedasIniciales
                     )
                 )
             )
-
-    // -------- Wrappers coroutines (opcional) --------
-    fun observarSaldo(usuarioId: String): Flow<Monedero> =
-        observeSaldoRx(usuarioId).asFlow<Monedero>()
-
-    suspend fun inicializarMonedas(usuario: Usuario, monedasIniciales: Int) {
-        inicializarMonedasRx(usuario, monedasIniciales).await()
-    }
 }

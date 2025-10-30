@@ -18,22 +18,49 @@ class ControladorSync : ViewModel() {
     private val _ui = MutableStateFlow(SyncUiState())
     val ui: StateFlow<SyncUiState> = _ui.asStateFlow()
 
-    fun enqueue(tipo: String, payload: String) {
+
+    fun enqueue(tipo: String, payload: String, op: String = "UPSERT", entityId: String? = null) {
+        val now = System.currentTimeMillis()
         val item = Outbox(
-            id = System.currentTimeMillis(),
-            tipo = tipo,
-            payload = payload
+            operationId = now.toString(),
+            entityType = tipo,
+            entityId = entityId ?: "local:$now",
+            op = op,
+            payloadJson = payload,
+            attempt = 0,
+            lastError = null,
+            createdAtMs = now,
+            updatedAtMs = now
         )
-        _ui.value = _ui.value.copy(outbox = _ui.value.outbox + item)
+        _ui.value = _ui.value.copy(
+            outbox = _ui.value.outbox + item,
+            ultimoResultado = "Encolada operación ${item.operationId}"
+        )
     }
 
     fun marcarEntregado(id: Long) {
-        _ui.value = _ui.value.copy(outbox = _ui.value.outbox.map { if (it.id == id) it.copy(entregado = true) else it })
+        val opId = id.toString()
+        val now = System.currentTimeMillis()
+        _ui.value = _ui.value.copy(
+            outbox = _ui.value.outbox.map { o ->
+                if (o.operationId == opId) o.copy(
+                    attempt = o.attempt + 1,
+                    lastError = null,
+                    updatedAtMs = now
+                ) else o
+            },
+            ultimoResultado = "Operación $opId marcada entregada"
+        )
     }
 
     fun limpiarEntregados() {
-        _ui.value = _ui.value.copy(outbox = _ui.value.outbox.filterNot { it.entregado })
+        _ui.value = _ui.value.copy(
+            outbox = _ui.value.outbox.filterNot { it.attempt > 0 && it.lastError == null },
+            ultimoResultado = "Outbox limpiado"
+        )
     }
 
-    fun limpiarError() { _ui.value = _ui.value.copy(error = null) }
+    fun limpiarError() {
+        _ui.value = _ui.value.copy(error = null)
+    }
 }

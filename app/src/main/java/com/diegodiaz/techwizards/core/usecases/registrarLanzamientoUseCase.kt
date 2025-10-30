@@ -24,7 +24,7 @@ class RegistrarLanzamientoUseCase(
     private val usuarioRepository: UsuarioRepository,
     private val matchRepository: MatchRepository,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-) /*{
+) {
     /**
      * Ejecuta el registro de evento y actualización de saldo.
      *
@@ -72,7 +72,7 @@ class RegistrarLanzamientoUseCase(
                 is Result.Ok -> {
                     DecentralizedLogger.i(
                         "RegistrarLanzamiento",
-                        "Saldo actualizado usuario=${redact(usuario.id)} saldo=$nuevoSaldo"
+                        "Saldo actualizado usuario=${redact(usuario.numero.toString())} saldo=$nuevoSaldo",
                     )
                 }
             }
@@ -81,14 +81,14 @@ class RegistrarLanzamientoUseCase(
                 is Result.Err -> {
                     DecentralizedLogger.w(
                         "RegistrarLanzamiento",
-                        "Último resultado NO actualizado usuario=${redact(usuario.id)}"
+                        "Último resultado no actualizado usuario=${redact(usuario.numero.toString())}",
                     )
                     return@withContext resultado
                 }
                 is Result.Ok -> {
                     DecentralizedLogger.i(
                         "RegistrarLanzamiento",
-                        "Último resultado actualizado usuario=${redact(usuario.id)} gano=$gano"
+                        "Último resultado actualizado usuario=${redact(usuario.numero.toString())} gano=$gano",
                     )
                 }
             }
@@ -96,7 +96,5 @@ class RegistrarLanzamientoUseCase(
         }
 }
 
-private fun redact(value: Any?): String {
-    val s = value?.toString() ?: return "***"
-    return if (s.length <= 4) "***" else s.take(2) + "***" + s.takeLast(2)
-}*/
+private fun redact(value: String): String =
+    if (value.length <= 4) "***" else value.take(2) + "***" + value.takeLast(2)

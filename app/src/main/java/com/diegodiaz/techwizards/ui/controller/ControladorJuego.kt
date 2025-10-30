@@ -32,7 +32,7 @@ class ControladorJuego(
     init {
         viewModelScope.launch {
             repo.observarSaldo(usuarioId).collect { m ->
-                _ui.update { it.copy(monedas = m.monedas) }
+                _ui.update { it.copy(monedas = m.saldo) }
             }
         }
     }

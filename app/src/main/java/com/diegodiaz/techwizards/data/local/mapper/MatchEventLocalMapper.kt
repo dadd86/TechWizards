@@ -3,22 +3,31 @@ package com.diegodiaz.techwizards.data.local.mapper
 import com.diegodiaz.techwizards.data.local.entity.MatchEventEntity
 import com.diegodiaz.techwizards.domain.model.MatchEvent
 
-fun MatchEventEntity.toDomain() = MatchEvent(
-    id = id,
-    matchId = matchId,
-    tipo = tipo,
-    timestamp = timestamp,
-    actorParticipantId = actorParticipantId,
-    payload = payload
-)
+/**
+ * Mapeo entre evento persistido y dominio.
+ *
+ * @security
+ * - Garantiza consistencia del payload al trasladarlo entre capas.
+ */
+fun MatchEventEntity.toDomain(): MatchEvent =
+    MatchEvent(
+        id = id,
+        matchId = matchId,
+        seq = seq,
+        type = type,
+        actorNumero = actorNumero,
+        payloadJson = payloadJson,
+        createdAtMs = createdAtMs,
+    )
 
-fun MatchEvent.toEntity() = MatchEventEntity(
-    id = id,
-    matchId = matchId,
-    tipo = tipo,
-    timestamp = timestamp,
-    actorParticipantId = actorParticipantId,
-    payload = payload
-)
-
+fun MatchEvent.toEntity(): MatchEventEntity =
+    MatchEventEntity(
+        id = id,
+        matchId = matchId,
+        seq = seq,
+        type = type,
+        actorNumero = actorNumero,
+        payloadJson = payloadJson,
+        createdAtMs = createdAtMs,
+    )
 

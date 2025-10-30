@@ -1,7 +1,6 @@
 package com.diegodiaz.techwizards.domain.repository
 
 import com.diegodiaz.techwizards.core.common.AgentError
-import com.diegodiaz.techwizards.domain.model.Usuario
 import com.diegodiaz.techwizards.domain.model.GameSettings
 import com.diegodiaz.techwizards.core.common.Result
 

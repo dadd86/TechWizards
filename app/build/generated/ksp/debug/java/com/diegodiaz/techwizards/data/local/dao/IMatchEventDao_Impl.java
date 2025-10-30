@@ -1,32 +1,31 @@
 package com.diegodiaz.techwizards.data.local.dao;
 
 import android.database.Cursor;
+import android.os.CancellationSignal;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.room.CoroutinesRoom;
 import androidx.room.EntityInsertionAdapter;
 import androidx.room.RoomDatabase;
 import androidx.room.RoomSQLiteQuery;
-import androidx.room.SharedSQLiteStatement;
-import androidx.room.rxjava3.RxRoom;
 import androidx.room.util.CursorUtil;
 import androidx.room.util.DBUtil;
 import androidx.sqlite.db.SupportSQLiteStatement;
 import com.diegodiaz.techwizards.data.local.entity.MatchEventEntity;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
 import java.lang.Class;
 import java.lang.Exception;
 import java.lang.Long;
+import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.lang.SuppressWarnings;
-import java.lang.Void;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import javax.annotation.processing.Generated;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 
 @Generated("androidx.room.RoomProcessor")
 @SuppressWarnings({"unchecked", "deprecation"})
@@ -35,171 +34,61 @@ public final class IMatchEventDao_Impl implements IMatchEventDao {
 
   private final EntityInsertionAdapter<MatchEventEntity> __insertionAdapterOfMatchEventEntity;
 
-  private final SharedSQLiteStatement __preparedStmtOfDeleteByMatch;
-
   public IMatchEventDao_Impl(@NonNull final RoomDatabase __db) {
     this.__db = __db;
     this.__insertionAdapterOfMatchEventEntity = new EntityInsertionAdapter<MatchEventEntity>(__db) {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `match_event` (`id`,`matchId`,`tipo`,`timestamp`,`actorParticipantId`,`payload`) VALUES (nullif(?, 0),?,?,?,?,?)";
+        return "INSERT OR ABORT INTO `MatchEvent` (`id`,`matchId`,`seq`,`type`,`actorNum`,`payloadJson`,`createdAtMs`) VALUES (?,?,?,?,?,?,?)";
       }
 
       @Override
       protected void bind(@NonNull final SupportSQLiteStatement statement,
           @NonNull final MatchEventEntity entity) {
-        statement.bindLong(1, entity.getId());
-        statement.bindLong(2, entity.getMatchId());
-        statement.bindString(3, entity.getTipo());
-        statement.bindLong(4, entity.getTimestamp());
-        if (entity.getActorParticipantId() == null) {
-          statement.bindNull(5);
-        } else {
-          statement.bindLong(5, entity.getActorParticipantId());
-        }
-        if (entity.getPayload() == null) {
+        statement.bindString(1, entity.getId());
+        statement.bindString(2, entity.getMatchId());
+        statement.bindLong(3, entity.getSeq());
+        statement.bindString(4, entity.getType());
+        statement.bindLong(5, entity.getActorNumero());
+        if (entity.getPayloadJson() == null) {
           statement.bindNull(6);
         } else {
-          statement.bindString(6, entity.getPayload());
+          statement.bindString(6, entity.getPayloadJson());
         }
+        statement.bindLong(7, entity.getCreatedAtMs());
       }
     };
-    this.__preparedStmtOfDeleteByMatch = new SharedSQLiteStatement(__db) {
+  }
+
+  @Override
+  public Object insertar(final MatchEventEntity evento,
+      final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
-      public String createQuery() {
-        final String _query = "DELETE FROM match_event WHERE matchId = ?";
-        return _query;
-      }
-    };
-  }
-
-  @Override
-  public Completable upsert(final MatchEventEntity event) {
-    return Completable.fromCallable(new Callable<Void>() {
-      @Override
-      @Nullable
-      public Void call() throws Exception {
+      public Unit call() throws Exception {
         __db.beginTransaction();
         try {
-          __insertionAdapterOfMatchEventEntity.insert(event);
+          __insertionAdapterOfMatchEventEntity.insert(evento);
           __db.setTransactionSuccessful();
-          return null;
+          return Unit.INSTANCE;
         } finally {
           __db.endTransaction();
         }
       }
-    });
+    }, $completion);
   }
 
   @Override
-  public Completable upsertAll(final List<MatchEventEntity> events) {
-    return Completable.fromCallable(new Callable<Void>() {
-      @Override
-      @Nullable
-      public Void call() throws Exception {
-        __db.beginTransaction();
-        try {
-          __insertionAdapterOfMatchEventEntity.insert(events);
-          __db.setTransactionSuccessful();
-          return null;
-        } finally {
-          __db.endTransaction();
-        }
-      }
-    });
-  }
-
-  @Override
-  public Completable deleteByMatch(final long matchId) {
-    return Completable.fromCallable(new Callable<Void>() {
-      @Override
-      @Nullable
-      public Void call() throws Exception {
-        final SupportSQLiteStatement _stmt = __preparedStmtOfDeleteByMatch.acquire();
-        int _argIndex = 1;
-        _stmt.bindLong(_argIndex, matchId);
-        try {
-          __db.beginTransaction();
-          try {
-            _stmt.executeUpdateDelete();
-            __db.setTransactionSuccessful();
-            return null;
-          } finally {
-            __db.endTransaction();
-          }
-        } finally {
-          __preparedStmtOfDeleteByMatch.release(_stmt);
-        }
-      }
-    });
-  }
-
-  @Override
-  public Maybe<MatchEventEntity> getById(final long id) {
-    final String _sql = "SELECT * FROM match_event WHERE id = ? LIMIT 1";
+  public Object listarPorMatch(final String matchId,
+      final Continuation<? super List<MatchEventEntity>> $completion) {
+    final String _sql = "SELECT * FROM MatchEvent WHERE matchId = ? ORDER BY seq ASC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
-    _statement.bindLong(_argIndex, id);
-    return Maybe.fromCallable(new Callable<MatchEventEntity>() {
-      @Override
-      @Nullable
-      public MatchEventEntity call() throws Exception {
-        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
-        try {
-          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
-          final int _cursorIndexOfMatchId = CursorUtil.getColumnIndexOrThrow(_cursor, "matchId");
-          final int _cursorIndexOfTipo = CursorUtil.getColumnIndexOrThrow(_cursor, "tipo");
-          final int _cursorIndexOfTimestamp = CursorUtil.getColumnIndexOrThrow(_cursor, "timestamp");
-          final int _cursorIndexOfActorParticipantId = CursorUtil.getColumnIndexOrThrow(_cursor, "actorParticipantId");
-          final int _cursorIndexOfPayload = CursorUtil.getColumnIndexOrThrow(_cursor, "payload");
-          final MatchEventEntity _result;
-          if (_cursor.moveToFirst()) {
-            final long _tmpId;
-            _tmpId = _cursor.getLong(_cursorIndexOfId);
-            final long _tmpMatchId;
-            _tmpMatchId = _cursor.getLong(_cursorIndexOfMatchId);
-            final String _tmpTipo;
-            _tmpTipo = _cursor.getString(_cursorIndexOfTipo);
-            final long _tmpTimestamp;
-            _tmpTimestamp = _cursor.getLong(_cursorIndexOfTimestamp);
-            final Long _tmpActorParticipantId;
-            if (_cursor.isNull(_cursorIndexOfActorParticipantId)) {
-              _tmpActorParticipantId = null;
-            } else {
-              _tmpActorParticipantId = _cursor.getLong(_cursorIndexOfActorParticipantId);
-            }
-            final String _tmpPayload;
-            if (_cursor.isNull(_cursorIndexOfPayload)) {
-              _tmpPayload = null;
-            } else {
-              _tmpPayload = _cursor.getString(_cursorIndexOfPayload);
-            }
-            _result = new MatchEventEntity(_tmpId,_tmpMatchId,_tmpTipo,_tmpTimestamp,_tmpActorParticipantId,_tmpPayload);
-          } else {
-            _result = null;
-          }
-          return _result;
-        } finally {
-          _cursor.close();
-        }
-      }
-
-      @Override
-      protected void finalize() {
-        _statement.release();
-      }
-    });
-  }
-
-  @Override
-  public Flowable<List<MatchEventEntity>> listByMatch(final long matchId) {
-    final String _sql = "SELECT * FROM match_event WHERE matchId = ? ORDER BY timestamp ASC";
-    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
-    int _argIndex = 1;
-    _statement.bindLong(_argIndex, matchId);
-    return RxRoom.createFlowable(__db, false, new String[] {"match_event"}, new Callable<List<MatchEventEntity>>() {
+    _statement.bindString(_argIndex, matchId);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<List<MatchEventEntity>>() {
       @Override
       @NonNull
       public List<MatchEventEntity> call() throws Exception {
@@ -207,47 +96,77 @@ public final class IMatchEventDao_Impl implements IMatchEventDao {
         try {
           final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
           final int _cursorIndexOfMatchId = CursorUtil.getColumnIndexOrThrow(_cursor, "matchId");
-          final int _cursorIndexOfTipo = CursorUtil.getColumnIndexOrThrow(_cursor, "tipo");
-          final int _cursorIndexOfTimestamp = CursorUtil.getColumnIndexOrThrow(_cursor, "timestamp");
-          final int _cursorIndexOfActorParticipantId = CursorUtil.getColumnIndexOrThrow(_cursor, "actorParticipantId");
-          final int _cursorIndexOfPayload = CursorUtil.getColumnIndexOrThrow(_cursor, "payload");
+          final int _cursorIndexOfSeq = CursorUtil.getColumnIndexOrThrow(_cursor, "seq");
+          final int _cursorIndexOfType = CursorUtil.getColumnIndexOrThrow(_cursor, "type");
+          final int _cursorIndexOfActorNumero = CursorUtil.getColumnIndexOrThrow(_cursor, "actorNum");
+          final int _cursorIndexOfPayloadJson = CursorUtil.getColumnIndexOrThrow(_cursor, "payloadJson");
+          final int _cursorIndexOfCreatedAtMs = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAtMs");
           final List<MatchEventEntity> _result = new ArrayList<MatchEventEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final MatchEventEntity _item;
-            final long _tmpId;
-            _tmpId = _cursor.getLong(_cursorIndexOfId);
-            final long _tmpMatchId;
-            _tmpMatchId = _cursor.getLong(_cursorIndexOfMatchId);
-            final String _tmpTipo;
-            _tmpTipo = _cursor.getString(_cursorIndexOfTipo);
-            final long _tmpTimestamp;
-            _tmpTimestamp = _cursor.getLong(_cursorIndexOfTimestamp);
-            final Long _tmpActorParticipantId;
-            if (_cursor.isNull(_cursorIndexOfActorParticipantId)) {
-              _tmpActorParticipantId = null;
+            final String _tmpId;
+            _tmpId = _cursor.getString(_cursorIndexOfId);
+            final String _tmpMatchId;
+            _tmpMatchId = _cursor.getString(_cursorIndexOfMatchId);
+            final long _tmpSeq;
+            _tmpSeq = _cursor.getLong(_cursorIndexOfSeq);
+            final String _tmpType;
+            _tmpType = _cursor.getString(_cursorIndexOfType);
+            final long _tmpActorNumero;
+            _tmpActorNumero = _cursor.getLong(_cursorIndexOfActorNumero);
+            final String _tmpPayloadJson;
+            if (_cursor.isNull(_cursorIndexOfPayloadJson)) {
+              _tmpPayloadJson = null;
             } else {
-              _tmpActorParticipantId = _cursor.getLong(_cursorIndexOfActorParticipantId);
+              _tmpPayloadJson = _cursor.getString(_cursorIndexOfPayloadJson);
             }
-            final String _tmpPayload;
-            if (_cursor.isNull(_cursorIndexOfPayload)) {
-              _tmpPayload = null;
-            } else {
-              _tmpPayload = _cursor.getString(_cursorIndexOfPayload);
-            }
-            _item = new MatchEventEntity(_tmpId,_tmpMatchId,_tmpTipo,_tmpTimestamp,_tmpActorParticipantId,_tmpPayload);
+            final long _tmpCreatedAtMs;
+            _tmpCreatedAtMs = _cursor.getLong(_cursorIndexOfCreatedAtMs);
+            _item = new MatchEventEntity(_tmpId,_tmpMatchId,_tmpSeq,_tmpType,_tmpActorNumero,_tmpPayloadJson,_tmpCreatedAtMs);
             _result.add(_item);
           }
           return _result;
         } finally {
           _cursor.close();
+          _statement.release();
         }
       }
+    }, $completion);
+  }
 
+  @Override
+  public Object obtenerUltimaSecuencia(final String matchId,
+      final Continuation<? super Long> $completion) {
+    final String _sql = "SELECT MAX(seq) FROM MatchEvent WHERE matchId = ?";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    _statement.bindString(_argIndex, matchId);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<Long>() {
       @Override
-      protected void finalize() {
-        _statement.release();
+      @Nullable
+      public Long call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final Long _result;
+          if (_cursor.moveToFirst()) {
+            final Long _tmp;
+            if (_cursor.isNull(0)) {
+              _tmp = null;
+            } else {
+              _tmp = _cursor.getLong(0);
+            }
+            _result = _tmp;
+          } else {
+            _result = null;
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
       }
-    });
+    }, $completion);
   }
 
   @NonNull

@@ -1,6 +1,5 @@
 package com.diegodiaz.techwizards.ui.controller
 
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diegodiaz.techwizards.domain.model.Message
@@ -27,14 +26,21 @@ class ControladorChat : ViewModel() {
         val texto = _ui.value.textoActual.trim()
         if (texto.isBlank()) return
 
+        // Message exige senderNumero: Long → convertimos remitenteId a Long
+        val senderNumero = remitenteId.toLongOrNull()
+        if (senderNumero == null) {
+            _ui.value = _ui.value.copy(error = "remitenteId no es numérico (esperado Long).")
+            return
+        }
+
         viewModelScope.launch {
             val ahora = System.currentTimeMillis()
             val nuevo = Message(
                 id = ahora.toString(),
                 matchId = matchId,
-                remitenteId = remitenteId,
-                contenido = texto,
-                timestamp = ahora
+                senderNumero = senderNumero,
+                text = texto,
+                createdAtMs = ahora
             )
             _ui.value = _ui.value.copy(
                 mensajes = _ui.value.mensajes + nuevo,
@@ -43,5 +49,7 @@ class ControladorChat : ViewModel() {
         }
     }
 
-    fun limpiarError() { _ui.value = _ui.value.copy(error = null) }
+    fun limpiarError() {
+        _ui.value = _ui.value.copy(error = null)
+    }
 }

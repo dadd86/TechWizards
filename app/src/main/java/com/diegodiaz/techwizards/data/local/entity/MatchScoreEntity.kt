@@ -1,33 +1,42 @@
 package com.diegodiaz.techwizards.data.local.entity
 
+
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
-import androidx.room.Index
 import androidx.room.PrimaryKey
 
+/**
+ * Entidad Room para la tabla `MatchScore`.
+ *
+ * @security
+ * - Claves foráneas aseguran integridad con partidas y usuarios.
+ * - Solo almacena puntajes numéricos sin PII.
+ */
 @Entity(
-    tableName = "match_score",
+    tableName = "MatchScore",
+    primaryKeys = ["matchId", "usuarioNum"],
     foreignKeys = [
         ForeignKey(
             entity = MatchEntity::class,
             parentColumns = ["id"],
             childColumns = ["matchId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
-            entity = MatchParticipantEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["participantId"],
-            onDelete = ForeignKey.CASCADE
-        )
+            entity = UsuarioEntity::class,
+            parentColumns = ["numero"],
+            childColumns = ["usuarioNum"],
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
-    indices = [Index("matchId"), Index("participantId")]
 )
 data class MatchScoreEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long,
-    val matchId: Long,
-    val participantId: Long,
-    val puntos: Int
+    @ColumnInfo(name = "matchId")
+    val matchId: String,
+    @ColumnInfo(name = "usuarioNum")
+    val usuarioNumero: Long,
+    @ColumnInfo(name = "score")
+    val score: Int,
 )
-
 

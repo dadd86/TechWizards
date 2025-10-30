@@ -42,14 +42,14 @@ public final class IMonederoDao_Impl implements IMonederoDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `monedero` (`id`,`usuarioId`,`saldo`) VALUES (?,?,?)";
+        return "INSERT OR REPLACE INTO `Monedero` (`id`,`usuarioNumero`,`saldo`) VALUES (?,?,?)";
       }
 
       @Override
       protected void bind(@NonNull final SupportSQLiteStatement statement,
           @NonNull final MonederoEntity entity) {
         statement.bindString(1, entity.getId());
-        statement.bindString(2, entity.getUsuarioId());
+        statement.bindLong(2, entity.getUsuarioNumero());
         statement.bindLong(3, entity.getSaldo());
       }
     };
@@ -57,7 +57,7 @@ public final class IMonederoDao_Impl implements IMonederoDao {
       @Override
       @NonNull
       public String createQuery() {
-        final String _query = "UPDATE monedero SET saldo = ? WHERE usuarioId = ?";
+        final String _query = "UPDATE monedero SET saldo = ? WHERE usuarioNumero = ?";
         return _query;
       }
     };
@@ -90,7 +90,7 @@ public final class IMonederoDao_Impl implements IMonederoDao {
   }
 
   @Override
-  public Completable actualizarSaldo(final String usuarioId, final int nuevo) {
+  public Completable actualizarSaldo(final long usuarioNumero, final int nuevo) {
     return Completable.fromCallable(new Callable<Void>() {
       @Override
       @Nullable
@@ -99,7 +99,7 @@ public final class IMonederoDao_Impl implements IMonederoDao {
         int _argIndex = 1;
         _stmt.bindLong(_argIndex, nuevo);
         _argIndex = 2;
-        _stmt.bindString(_argIndex, usuarioId);
+        _stmt.bindLong(_argIndex, usuarioNumero);
         try {
           __db.beginTransaction();
           try {
@@ -134,29 +134,29 @@ public final class IMonederoDao_Impl implements IMonederoDao {
   }
 
   @Override
-  public Flowable<MonederoEntity> observeSaldo(final String usuarioId) {
-    final String _sql = "SELECT * FROM monedero WHERE usuarioId = ? LIMIT 1";
+  public Flowable<MonederoEntity> observeSaldo(final long usuarioNumero) {
+    final String _sql = "SELECT * FROM Monedero WHERE usuarioNumero = ? LIMIT 1";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
-    _statement.bindString(_argIndex, usuarioId);
-    return RxRoom.createFlowable(__db, false, new String[] {"monedero"}, new Callable<MonederoEntity>() {
+    _statement.bindLong(_argIndex, usuarioNumero);
+    return RxRoom.createFlowable(__db, false, new String[] {"Monedero"}, new Callable<MonederoEntity>() {
       @Override
       @NonNull
       public MonederoEntity call() throws Exception {
         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
         try {
           final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
-          final int _cursorIndexOfUsuarioId = CursorUtil.getColumnIndexOrThrow(_cursor, "usuarioId");
+          final int _cursorIndexOfUsuarioNumero = CursorUtil.getColumnIndexOrThrow(_cursor, "usuarioNumero");
           final int _cursorIndexOfSaldo = CursorUtil.getColumnIndexOrThrow(_cursor, "saldo");
           final MonederoEntity _result;
           if (_cursor.moveToFirst()) {
             final String _tmpId;
             _tmpId = _cursor.getString(_cursorIndexOfId);
-            final String _tmpUsuarioId;
-            _tmpUsuarioId = _cursor.getString(_cursorIndexOfUsuarioId);
+            final long _tmpUsuarioNumero;
+            _tmpUsuarioNumero = _cursor.getLong(_cursorIndexOfUsuarioNumero);
             final int _tmpSaldo;
             _tmpSaldo = _cursor.getInt(_cursorIndexOfSaldo);
-            _result = new MonederoEntity(_tmpId,_tmpUsuarioId,_tmpSaldo);
+            _result = new MonederoEntity(_tmpId,_tmpUsuarioNumero,_tmpSaldo);
           } else {
             _result = null;
           }

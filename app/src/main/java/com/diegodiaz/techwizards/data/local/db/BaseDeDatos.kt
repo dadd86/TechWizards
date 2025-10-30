@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 // DAOs
@@ -37,6 +38,8 @@ import com.diegodiaz.techwizards.data.local.entity.MatchParticipantEntity
 import com.diegodiaz.techwizards.data.local.entity.OutboxEntity
 
 
+import com.diegodiaz.techwizards.data.local.EnumConverters
+
 /**
  * Configuración principal de la base de datos Room.
  *
@@ -68,8 +71,10 @@ import com.diegodiaz.techwizards.data.local.entity.OutboxEntity
         OutboxEntity::class,
         IdMapEntity::class,
         TombstoneEntity::class
-    ]
+    ],
+    //exportSchema = true
 )
+@TypeConverters(EnumConverters::class)
 abstract class BaseDeDatos : RoomDatabase() {
 
     //  DAOs básicos
