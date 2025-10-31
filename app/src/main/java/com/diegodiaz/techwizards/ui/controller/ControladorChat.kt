@@ -23,16 +23,16 @@ class ControladorChat : ViewModel() {
         _ui.value = _ui.value.copy(textoActual = texto)
     }
 
-    fun enviar(autorId: Long = 0L, lobbyId: Long? = null, matchId: Long? = null) {
-        val texto = _ui.value.textoActual.trim()
-        if (texto.isBlank()) return
+    fun enviar(senderNumero: Long = 0L, matchId: String = "" ) {
+        val text = _ui.value.textoActual.trim()
+        if (text.isBlank()) return
         viewModelScope.launch {
             val nuevo = Message(
-                id = System.currentTimeMillis(),
-                authorId = autorId,
-                lobbyId = lobbyId,
+                id = System.currentTimeMillis().toString(),
                 matchId = matchId,
-                texto = texto
+                senderNumero = senderNumero,
+                text = text,
+                createdAtMs = System.currentTimeMillis()
             )
             _ui.value = _ui.value.copy(
                 mensajes = _ui.value.mensajes + nuevo,
@@ -40,6 +40,5 @@ class ControladorChat : ViewModel() {
             )
         }
     }
-
     fun limpiarError() { _ui.value = _ui.value.copy(error = null) }
 }

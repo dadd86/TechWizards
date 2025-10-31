@@ -2,6 +2,7 @@ package com.diegodiaz.techwizards.domain.repository
 
 import com.diegodiaz.techwizards.domain.model.Monedero
 import com.diegodiaz.techwizards.domain.model.Usuario
+import com.diegodiaz.techwizards.domain.model.Partida
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
 import kotlinx.coroutines.flow.Flow
@@ -25,4 +26,8 @@ interface JuegoRepository {
     // 🔹 Coroutines — versión suspendida
     fun observarSaldo(usuarioId: String): Flow<Monedero>
     suspend fun inicializarMonedas(usuario: Usuario, monedasIniciales: Int)
+
+    fun observarHistorial(usuarioId: String, limit: Int = 50): Flow<List<Partida>> //devuelve el historial de partidas
+    fun observarMonedero(usuarioId: String): Flow<Monedero> //observa el monedero del usuario en tiempo real
+    suspend fun lanzarDado(usuarioId: String): Partida //simular el lanzamiento de dado, modificar el saldo y guardar resultado
 }

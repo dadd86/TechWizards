@@ -1,4 +1,4 @@
-package com.diegodiaz.techwizards.ui.view
+/*package com.diegodiaz.techwizards.ui.view
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -70,3 +70,4 @@ data class PartidaFake(
     val monedas: Int,
     val fecha: Date
 )
+*/
