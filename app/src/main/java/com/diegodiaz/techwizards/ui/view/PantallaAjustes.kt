@@ -1,4 +1,4 @@
-/*package com.diegodiaz.techwizards.ui.view
+package com.diegodiaz.techwizards.ui.view
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -7,23 +7,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-/**
- * PantallaAjustes.kt
- *
- * Pantalla sencilla para activar o desactivar sonido y vibración.
- * Por ahora solo guarda los valores en memoria (no persiste aún).
- */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaAjustes(onBack: () -> Unit) {
+fun PantallaAjustes(
+    isDarkTheme: Boolean,
+    onToggleTheme: (Boolean) -> Unit,
+    onVolverAlMenu: () -> Unit
+) {
     var sonidoActivo by remember { mutableStateOf(true) }
     var vibracionActiva by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = { Text("⚙️ Ajustes") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Text("⬅️") }
+                    IconButton(onClick = onVolverAlMenu) {
+                        Text("⬅️")
+                    }
                 }
             )
         }
@@ -39,6 +40,19 @@ fun PantallaAjustes(onBack: () -> Unit) {
             Text("Preferencias del jugador", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(30.dp))
 
+            // Tema oscuro
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Tema oscuro")
+                Switch(checked = isDarkTheme, onCheckedChange = onToggleTheme)
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Sonido
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -50,6 +64,7 @@ fun PantallaAjustes(onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Vibración
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -60,10 +75,12 @@ fun PantallaAjustes(onBack: () -> Unit) {
             }
 
             Spacer(modifier = Modifier.height(40.dp))
-            Button(onClick = onBack, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            Button(
+                onClick = onVolverAlMenu,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
                 Text("Guardar y volver")
             }
         }
     }
 }
-*/

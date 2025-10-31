@@ -7,28 +7,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-/**
- * PantallaBienvenida.kt
- *
- * Pantalla que aparece al iniciar la app.
- * Muestra un mensaje y un botón para pasar al menú principal.
- */
 @Composable
-fun PantallaBienvenida(onNavigateToMenu: () -> Unit) {
-    // Centra todo el contenido en pantalla.
+fun PantallaBienvenida(
+    isDarkTheme: Boolean,
+    onJugar: () -> Unit
+) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "🎲 ¡Bienvenido a Tech Wizards!",
                 style = MaterialTheme.typography.headlineMedium
             )
             Spacer(modifier = Modifier.height(20.dp))
-            Button(onClick = onNavigateToMenu) {
+            Button(onClick = onJugar) {
                 Text("Comenzar")
             }
         }

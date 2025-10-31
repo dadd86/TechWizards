@@ -6,49 +6,64 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlin.random.Random
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.diegodiaz.techwizards.ui.viewmodel.JuegoViewModel
+import com.diegodiaz.techwizards.domain.model.Resultado
 
-/**
- * PantallaJugar.kt
- *
- * Aquí está la lógica básica del juego de azar.
- * Simula un lanzamiento de dado y actualiza las monedas según el resultado.
- */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaJugar(onBack: () -> Unit) {
-    // Guarda el resultado del dado
-    var resultado by remember { mutableStateOf(0) }
+fun PantallaJugar(
+    isDarkTheme: Boolean,
+    onVolverAlMenu: () -> Unit
+) {
+    val viewModel: JuegoViewModel = viewModel()
+    val monedas by viewModel.monedas.collectAsState()
+    val ultimoResultado by viewModel.ultimoResultado.collectAsState()
 
-    // Monedas del jugador (por ahora simuladas)
-    var monedas by remember { mutableStateOf(100) }
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("🎲 Jugar") },
+                navigationIcon = {
+                    IconButton(onClick = onVolverAlMenu) {
+                        Text("⬅️")
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(32.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Mostrar monedas actuales
+            Text(
+                text = "Monedas: $monedas",
+                style = MaterialTheme.typography.titleLarge
+            )
 
-    // Lógica del juego: tirar el dado y actualizar monedas
-    fun lanzarDado() {
-        val dado = Random.nextInt(1, 7) // número entre 1 y 6
-        resultado = dado
-        monedas += if (dado >= 4) 10 else -5
-    }
+            Spacer(modifier = Modifier.height(24.dp))
 
-    // Interfaz visual
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("🎲 Lanza el dado y prueba suerte", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(30.dp))
+            // Botón principal para lanzar el dado
+            Button(onClick = { viewModel.lanzarDado() }) {
+                Text("🎲 Lanzar dado")
+            }
 
-        Text("Resultado: $resultado", style = MaterialTheme.typography.bodyLarge)
-        Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Monedas: $monedas", style = MaterialTheme.typography.bodyLarge)
-        Spacer(modifier = Modifier.height(30.dp))
-
-        Button(onClick = { lanzarDado() }) { Text("🎯 Lanzar dado") }
-
-        Spacer(modifier = Modifier.height(40.dp))
-        Button(onClick = onBack) { Text("Volver al menú") }
+            // Mostrar el último resultado
+            Text(
+                text = when (ultimoResultado) {
+                    null -> "Aún no has jugado"
+                    Resultado.VICTORIA -> "¡Ganaste! 🎉"
+                    Resultado.DERROTA -> "Perdiste 😢"
+                },
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
     }
 }

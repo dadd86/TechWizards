@@ -68,6 +68,9 @@ dependencies {
     // Navegación Compose
     implementation(libs.navigation.compose)
 
+    // ✅ ViewModel para Compose (necesario para usar viewModel())
+    implementation(libs.lifecycle.viewmodel.compose)
+
     // Lifecycle / Coroutines
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.coroutines.android)
@@ -83,7 +86,7 @@ dependencies {
     implementation(libs.security.crypto)
     implementation(libs.serialization.json)
 
-    // Tus dependencias previas (si las necesitas)
+    // Core + Material
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -94,10 +97,8 @@ dependencies {
     implementation(libs.rxandroid)
     implementation(libs.coroutines.rx3)
 
-    // Test
+    // Tests
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
-
-

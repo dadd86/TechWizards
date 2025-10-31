@@ -1,4 +1,4 @@
-/*package com.diegodiaz.techwizards.ui.view
+package com.diegodiaz.techwizards.ui.view
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,14 +10,12 @@ import androidx.compose.ui.unit.dp
 import java.text.SimpleDateFormat
 import java.util.*
 
-/**
- * PantallaHistorial.kt
- *
- * Muestra partidas anteriores (por ahora, simuladas).
- */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaHistorial(onBack: () -> Unit) {
-
+fun PantallaHistorial(
+    isDarkTheme: Boolean,
+    onVolverAlMenu: () -> Unit
+) {
     val partidasEjemplo = listOf(
         PartidaFake("Partida 1", true, 10, Date()),
         PartidaFake("Partida 2", false, -5, Date()),
@@ -26,10 +24,12 @@ fun PantallaHistorial(onBack: () -> Unit) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = { Text("📜 Historial de Partidas") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Text("⬅️") }
+                    IconButton(onClick = onVolverAlMenu) {
+                        Text("⬅️")
+                    }
                 }
             )
         }
@@ -47,7 +47,10 @@ fun PantallaHistorial(onBack: () -> Unit) {
                         .padding(vertical = 8.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(partida.nombre, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            partida.nombre,
+                            style = MaterialTheme.typography.titleMedium
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text("Resultado: ${if (partida.ganada) "Ganada" else "Perdida"}")
                         Text("Monedas: ${partida.monedas}")
@@ -70,4 +73,3 @@ data class PartidaFake(
     val monedas: Int,
     val fecha: Date
 )
-*/

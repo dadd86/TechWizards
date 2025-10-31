@@ -2,7 +2,6 @@ package com.diegodiaz.techwizards.ui.controller
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.diegodiaz.techwizards.data.local.entity.Resultado
 import com.diegodiaz.techwizards.domain.model.Partida
 import com.diegodiaz.techwizards.domain.repository.JuegoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,6 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.diegodiaz.techwizards.domain.model.Resultado
+
 
 data class JuegoUiState(
     val monedas: Int = 0,
@@ -44,7 +45,7 @@ class ControladorJuego(
             try {
                 _ui.value = _ui.value.copy(cargando = true, error = null)
                 val p = repo.lanzarDado(usuarioId)
-                val gano = p.resultado == Resultado.GANADO
+                val gano = p.resultado == Resultado.VICTORIA
                 val msg = if (gano) "¡Ganaste (+${p.deltaMonedas})!" else "Perdiste (${p.deltaMonedas})"
                 _ui.value = _ui.value.copy(ultimoResultado = msg, cargando = false)
             } catch (t: Throwable) {

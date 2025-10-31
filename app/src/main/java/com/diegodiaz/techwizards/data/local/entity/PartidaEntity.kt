@@ -1,19 +1,23 @@
 package com.diegodiaz.techwizards.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import androidx.room.ColumnInfo
+import com.diegodiaz.techwizards.domain.model.Resultado
 
-
+/**
+ * Representa una partida registrada en la base de datos local.
+ * Cada partida pertenece a un usuario y almacena su resultado y las monedas ganadas/perdidas.
+ */
 @Entity(
     tableName = "Partida",
     foreignKeys = [
         ForeignKey(
             entity = UsuarioEntity::class,
-            parentColumns = ["numero"],        // ✅ ahora apunta correctamente al PK de Usuario
-            childColumns = ["usuarioNumero"],  // ✅ nombre alineado
+            parentColumns = ["numero"],
+            childColumns = ["usuarioNumero"],
             onUpdate = ForeignKey.CASCADE,
             onDelete = ForeignKey.CASCADE
         )
@@ -29,16 +33,14 @@ data class PartidaEntity(
     val id: Long = 0L,
 
     @ColumnInfo(name = "usuarioNumero")
-    val usuarioNumero: Long,                  // ✅ tipo compatible con UsuarioEntity.numero
+    val usuarioNumero: Long,
 
     @ColumnInfo(name = "fecha")
-    val fecha: Long,                          // epoch millis
+    val fecha: Long, // epoch millis
 
     @ColumnInfo(name = "resultado")
-    val resultado: Resultado,                 // enum tipado
+    val resultado: Resultado, // Usa el enum del dominio (VICTORIA / DERROTA)
 
     @ColumnInfo(name = "cambioMonedas")
     val cambioMonedas: Int
 )
-
-enum class Resultado { GANADO, PERDIDO }

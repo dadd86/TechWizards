@@ -13,7 +13,7 @@ import androidx.room.util.DBUtil;
 import androidx.sqlite.db.SupportSQLiteStatement;
 import com.diegodiaz.techwizards.data.local.EnumConverters;
 import com.diegodiaz.techwizards.data.local.entity.PartidaEntity;
-import com.diegodiaz.techwizards.data.local.entity.Resultado;
+import com.diegodiaz.techwizards.domain.model.Resultado;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import java.lang.Class;
@@ -150,7 +150,7 @@ public final class IPartidaDao_Impl implements IPartidaDao {
             }
             final Resultado _tmp_1 = __enumConverters.toResultado(_tmp);
             if (_tmp_1 == null) {
-              throw new IllegalStateException("Expected NON-NULL 'com.diegodiaz.techwizards.data.local.entity.Resultado', but it was NULL.");
+              throw new IllegalStateException("Expected NON-NULL 'com.diegodiaz.techwizards.domain.model.Resultado', but it was NULL.");
             } else {
               _tmpResultado = _tmp_1;
             }

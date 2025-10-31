@@ -5,20 +5,18 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.diegodiaz.techwizards.ui.view.*
-
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.diegodiaz.techwizards.ui.viewmodel.JuegoViewModel
 
 /**
  * NavGraph.kt
  *
- * Aquí definimos todas las pantallas y cómo se conectan entre sí.
- * Básicamente es el “mapa” de la navegación dentro del juego.
+ * Define todas las pantallas y cómo se conectan entre sí.
+ * Es el “mapa” de navegación dentro del juego.
  */
 @Composable
 fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
 
-    // NavHost define el gráfico de navegación.
-    // startDestination = pantalla inicial que se abre al ejecutar la app.
     NavHost(
         navController = navController,
         startDestination = "bienvenida",
@@ -38,9 +36,13 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
             )
         }
 
-        // Pantalla para jugar
+        // 🟩 Pantalla para jugar (ya conectada al ViewModel)
         composable("jugar") {
-            PantallaJugar(onBack = { navController.popBackStack() })
+            val viewModel: JuegoViewModel = viewModel()
+            PantallaJugar(
+                onBack = { navController.popBackStack() },
+                viewModel = viewModel
+            )
         }
 
         // Pantalla del historial de partidas
@@ -55,12 +57,15 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
     }
 }
 
+// ⚠️ Corrige las firmas de las siguientes funciones
+// (tienen que recibir un lambda que no devuelva nada, no un Boolean)
+
 @Composable
-fun PantallaAjustes(onBack: () -> Boolean) {
+fun PantallaAjustes(onBack: () -> Unit) {
     TODO("Not yet implemented")
 }
 
 @Composable
-fun PantallaHistorial(onBack: () -> Boolean) {
+fun PantallaHistorial(onBack: () -> Unit) {
     TODO("Not yet implemented")
 }

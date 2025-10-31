@@ -7,17 +7,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-/**
- * PantallaMenu.kt
- *
- * Menú principal de la aplicación.
- * Desde aquí el jugador puede elegir si quiere jugar, ver historial o cambiar ajustes.
- */
 @Composable
 fun PantallaMenu(
-    onNavigateToJugar: () -> Unit,
-    onNavigateToHistorial: () -> Unit,
-    onNavigateToAjustes: () -> Unit
+    isDarkTheme: Boolean,
+    onJugar: () -> Unit,
+    onHistorial: () -> Unit,
+    onAjustes: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -29,12 +24,12 @@ fun PantallaMenu(
         Text("Menú Principal", style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(40.dp))
 
-        Button(onClick = onNavigateToJugar) { Text("🎯 Jugar") }
+        Button(onClick = onJugar) { Text("🎯 Jugar") }
         Spacer(modifier = Modifier.height(20.dp))
 
-        Button(onClick = onNavigateToHistorial) { Text("📜 Historial") }
+        Button(onClick = onHistorial) { Text("📜 Historial") }
         Spacer(modifier = Modifier.height(20.dp))
 
-        Button(onClick = onNavigateToAjustes) { Text("⚙️ Ajustes") }
+        Button(onClick = onAjustes) { Text("⚙️ Ajustes") }
     }
 }
