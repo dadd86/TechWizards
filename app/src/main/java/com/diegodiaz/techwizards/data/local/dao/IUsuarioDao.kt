@@ -17,9 +17,15 @@ interface IUsuarioDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun upsert(usuario: UsuarioEntity): io.reactivex.rxjava3.core.Completable
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertSuspend(usuario: UsuarioEntity)
+
 
     @Query("SELECT * FROM Usuario WHERE numero = :numero LIMIT 1")
     fun getByNumeroRx(numero: Long): Maybe<UsuarioEntity>
+
+    @Query("SELECT * FROM Usuario WHERE numero = :numero LIMIT 1")
+    suspend fun getByNumero(numero: Long): UsuarioEntity?
 
     @Query("UPDATE Usuario SET monedas = :nuevoSaldo WHERE numero = :numero")
     suspend fun actualizarSaldo(numero: Long, nuevoSaldo: Int): Int

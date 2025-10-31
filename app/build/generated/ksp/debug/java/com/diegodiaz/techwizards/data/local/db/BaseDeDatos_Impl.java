@@ -94,6 +94,8 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
         db.execSQL("CREATE TABLE IF NOT EXISTS `Lobby` (`nombre` TEXT NOT NULL, `id` TEXT NOT NULL, `codigo` TEXT, `modo` TEXT NOT NULL, `estado` TEXT NOT NULL, `creadorNum` INTEGER NOT NULL, `createdAtMs` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`creadorNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE )");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_Lobby_estado` ON `Lobby` (`estado`)");
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_Lobby_codigo` ON `Lobby` (`codigo`)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Lobby_creadorNum` ON `Lobby` (`creadorNum`)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Lobby_estado_createdAtMs` ON `Lobby` (`estado`, `createdAtMs`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `Match` (`id` TEXT NOT NULL, `lobbyId` TEXT, `modo` TEXT NOT NULL, `estado` TEXT NOT NULL, `createdByNum` INTEGER NOT NULL, `createdAtMs` INTEGER NOT NULL, `startedAtMs` INTEGER, `finishedAtMs` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`lobbyId`) REFERENCES `Lobby`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`createdByNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE )");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_Match_estado_createdAtMs` ON `Match` (`estado`, `createdAtMs`)");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_Match_lobbyId` ON `Match` (`lobbyId`)");
@@ -111,7 +113,7 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_IdMap_remoteCollection_remoteId` ON `IdMap` (`remoteCollection`, `remoteId`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `Tombstone` (`tableName` TEXT NOT NULL, `entityId` TEXT NOT NULL, `deletedAtMs` INTEGER NOT NULL, PRIMARY KEY(`tableName`, `entityId`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8e6bebc00cbb0d30e5e0c5574845c066')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fbabe35cde15682d82f76bf0836d6e16')");
       }
 
       @Override
@@ -246,9 +248,11 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
         _columnsLobby.put("createdAtMs", new TableInfo.Column("createdAtMs", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysLobby = new HashSet<TableInfo.ForeignKey>(1);
         _foreignKeysLobby.add(new TableInfo.ForeignKey("Usuario", "CASCADE", "NO ACTION", Arrays.asList("creadorNum"), Arrays.asList("numero")));
-        final HashSet<TableInfo.Index> _indicesLobby = new HashSet<TableInfo.Index>(2);
+        final HashSet<TableInfo.Index> _indicesLobby = new HashSet<TableInfo.Index>(4);
         _indicesLobby.add(new TableInfo.Index("index_Lobby_estado", false, Arrays.asList("estado"), Arrays.asList("ASC")));
         _indicesLobby.add(new TableInfo.Index("index_Lobby_codigo", true, Arrays.asList("codigo"), Arrays.asList("ASC")));
+        _indicesLobby.add(new TableInfo.Index("index_Lobby_creadorNum", false, Arrays.asList("creadorNum"), Arrays.asList("ASC")));
+        _indicesLobby.add(new TableInfo.Index("index_Lobby_estado_createdAtMs", false, Arrays.asList("estado", "createdAtMs"), Arrays.asList("ASC", "ASC")));
         final TableInfo _infoLobby = new TableInfo("Lobby", _columnsLobby, _foreignKeysLobby, _indicesLobby);
         final TableInfo _existingLobby = TableInfo.read(db, "Lobby");
         if (!_infoLobby.equals(_existingLobby)) {
@@ -402,7 +406,7 @@ public final class BaseDeDatos_Impl extends BaseDeDatos {
         }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "8e6bebc00cbb0d30e5e0c5574845c066", "e47b8851e2135aa95ae898f7b62af4b2");
+    }, "fbabe35cde15682d82f76bf0836d6e16", "9a99c2cb6ffeb4a74e5c3b35ffb778a7");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;

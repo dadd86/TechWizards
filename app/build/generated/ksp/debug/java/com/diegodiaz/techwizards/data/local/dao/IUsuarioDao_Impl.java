@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import javax.annotation.processing.Generated;
+import kotlin.Unit;
 import kotlin.coroutines.Continuation;
 
 @Generated("androidx.room.RoomProcessor")
@@ -109,6 +110,25 @@ public final class IUsuarioDao_Impl implements IUsuarioDao {
         }
       }
     });
+  }
+
+  @Override
+  public Object upsertSuspend(final UsuarioEntity usuario,
+      final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        __db.beginTransaction();
+        try {
+          __insertionAdapterOfUsuarioEntity.insert(usuario);
+          __db.setTransactionSuccessful();
+          return Unit.INSTANCE;
+        } finally {
+          __db.endTransaction();
+        }
+      }
+    }, $completion);
   }
 
   @Override
@@ -288,6 +308,59 @@ public final class IUsuarioDao_Impl implements IUsuarioDao {
         _statement.release();
       }
     });
+  }
+
+  @Override
+  public Object getByNumero(final long numero,
+      final Continuation<? super UsuarioEntity> $completion) {
+    final String _sql = "SELECT * FROM Usuario WHERE numero = ? LIMIT 1";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    _statement.bindLong(_argIndex, numero);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<UsuarioEntity>() {
+      @Override
+      @Nullable
+      public UsuarioEntity call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfNumero = CursorUtil.getColumnIndexOrThrow(_cursor, "numero");
+          final int _cursorIndexOfAlias = CursorUtil.getColumnIndexOrThrow(_cursor, "usuario");
+          final int _cursorIndexOfFechaAltaMs = CursorUtil.getColumnIndexOrThrow(_cursor, "fechaAlta");
+          final int _cursorIndexOfMonedas = CursorUtil.getColumnIndexOrThrow(_cursor, "monedas");
+          final int _cursorIndexOfGanoUltimaPartida = CursorUtil.getColumnIndexOrThrow(_cursor, "gano");
+          final int _cursorIndexOfFirebaseUid = CursorUtil.getColumnIndexOrThrow(_cursor, "firebaseUid");
+          final UsuarioEntity _result;
+          if (_cursor.moveToFirst()) {
+            final long _tmpNumero;
+            _tmpNumero = _cursor.getLong(_cursorIndexOfNumero);
+            final String _tmpAlias;
+            _tmpAlias = _cursor.getString(_cursorIndexOfAlias);
+            final long _tmpFechaAltaMs;
+            _tmpFechaAltaMs = _cursor.getLong(_cursorIndexOfFechaAltaMs);
+            final int _tmpMonedas;
+            _tmpMonedas = _cursor.getInt(_cursorIndexOfMonedas);
+            final boolean _tmpGanoUltimaPartida;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfGanoUltimaPartida);
+            _tmpGanoUltimaPartida = _tmp != 0;
+            final String _tmpFirebaseUid;
+            if (_cursor.isNull(_cursorIndexOfFirebaseUid)) {
+              _tmpFirebaseUid = null;
+            } else {
+              _tmpFirebaseUid = _cursor.getString(_cursorIndexOfFirebaseUid);
+            }
+            _result = new UsuarioEntity(_tmpNumero,_tmpAlias,_tmpFechaAltaMs,_tmpMonedas,_tmpGanoUltimaPartida,_tmpFirebaseUid);
+          } else {
+            _result = null;
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
   }
 
   @NonNull

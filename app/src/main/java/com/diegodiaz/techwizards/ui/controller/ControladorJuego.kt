@@ -52,4 +52,7 @@ class ControladorJuego(
             }
         }
     }
+    companion object {
+        const val DEFAULT_USUARIO_ID: String = "1"
+    }
 }

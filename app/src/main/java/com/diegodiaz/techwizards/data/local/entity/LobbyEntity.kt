@@ -11,12 +11,14 @@ import androidx.room.ColumnInfo
     indices = [
         Index(value = ["estado"]),
         Index(value = ["codigo"], unique = true),
+        Index(value = ["creadorNum"]),                  // ✅ índice que faltaba
+        Index(value = ["estado", "createdAtMs"])        // (opcional) útil para listados por estado/fecha
     ],
     foreignKeys = [
         ForeignKey(
             entity = UsuarioEntity::class,
-            parentColumns = ["numero"],     // PK de UsuarioEntity
-            childColumns = ["creadorNum"],  // nombre de columna real
+            parentColumns = ["numero"],                 // PK de UsuarioEntity
+            childColumns = ["creadorNum"],              // nombre de columna real
             onDelete = ForeignKey.CASCADE
         ),
     ],
@@ -24,16 +26,23 @@ import androidx.room.ColumnInfo
 data class LobbyEntity(
     @ColumnInfo(name = "nombre")
     val nombre: String,
-    @PrimaryKey @ColumnInfo(name = "id")
+
+    @PrimaryKey
+    @ColumnInfo(name = "id")
     val id: String,
+
     @ColumnInfo(name = "codigo")
-    val codigo: String?,          // null-safe
+    val codigo: String?,
+
     @ColumnInfo(name = "modo")
     val modo: String,
+
     @ColumnInfo(name = "estado")
-    val estado: String,           // persistimos String; el enum se usa en dominio
+    val estado: String,
+
     @ColumnInfo(name = "creadorNum")
     val creadorNumero: Long,
+
     @ColumnInfo(name = "createdAtMs")
     val createdAtMs: Long,
 )

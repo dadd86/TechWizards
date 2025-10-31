@@ -3,6 +3,7 @@ package com.diegodiaz.techwizards.data.local.dao;
 import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.room.CoroutinesRoom;
 import androidx.room.EntityInsertionAdapter;
 import androidx.room.RoomDatabase;
 import androidx.room.RoomSQLiteQuery;
@@ -19,6 +20,8 @@ import io.reactivex.rxjava3.core.Flowable;
 import java.lang.Class;
 import java.lang.Exception;
 import java.lang.IllegalStateException;
+import java.lang.Long;
+import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.lang.SuppressWarnings;
@@ -28,6 +31,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import javax.annotation.processing.Generated;
+import kotlin.coroutines.Continuation;
+import kotlinx.coroutines.flow.Flow;
 
 @Generated("androidx.room.RoomProcessor")
 @SuppressWarnings({"unchecked", "deprecation"})
@@ -93,6 +98,25 @@ public final class IPartidaDao_Impl implements IPartidaDao {
   }
 
   @Override
+  public Object insertarSuspend(final PartidaEntity entity,
+      final Continuation<? super Long> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Long>() {
+      @Override
+      @NonNull
+      public Long call() throws Exception {
+        __db.beginTransaction();
+        try {
+          final Long _result = __insertionAdapterOfPartidaEntity.insertAndReturnId(entity);
+          __db.setTransactionSuccessful();
+          return _result;
+        } finally {
+          __db.endTransaction();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
   public Completable borrarTodo() {
     return Completable.fromCallable(new Callable<Void>() {
       @Override
@@ -122,6 +146,65 @@ public final class IPartidaDao_Impl implements IPartidaDao {
     int _argIndex = 1;
     _statement.bindLong(_argIndex, usuarioNumero);
     return RxRoom.createFlowable(__db, false, new String[] {"Partida"}, new Callable<List<PartidaEntity>>() {
+      @Override
+      @NonNull
+      public List<PartidaEntity> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfUsuarioNumero = CursorUtil.getColumnIndexOrThrow(_cursor, "usuarioNumero");
+          final int _cursorIndexOfFecha = CursorUtil.getColumnIndexOrThrow(_cursor, "fecha");
+          final int _cursorIndexOfResultado = CursorUtil.getColumnIndexOrThrow(_cursor, "resultado");
+          final int _cursorIndexOfCambioMonedas = CursorUtil.getColumnIndexOrThrow(_cursor, "cambioMonedas");
+          final List<PartidaEntity> _result = new ArrayList<PartidaEntity>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final PartidaEntity _item;
+            final long _tmpId;
+            _tmpId = _cursor.getLong(_cursorIndexOfId);
+            final long _tmpUsuarioNumero;
+            _tmpUsuarioNumero = _cursor.getLong(_cursorIndexOfUsuarioNumero);
+            final long _tmpFecha;
+            _tmpFecha = _cursor.getLong(_cursorIndexOfFecha);
+            final Resultado _tmpResultado;
+            final String _tmp;
+            if (_cursor.isNull(_cursorIndexOfResultado)) {
+              _tmp = null;
+            } else {
+              _tmp = _cursor.getString(_cursorIndexOfResultado);
+            }
+            final Resultado _tmp_1 = __enumConverters.toResultado(_tmp);
+            if (_tmp_1 == null) {
+              throw new IllegalStateException("Expected NON-NULL 'com.diegodiaz.techwizards.data.local.entity.Resultado', but it was NULL.");
+            } else {
+              _tmpResultado = _tmp_1;
+            }
+            final int _tmpCambioMonedas;
+            _tmpCambioMonedas = _cursor.getInt(_cursorIndexOfCambioMonedas);
+            _item = new PartidaEntity(_tmpId,_tmpUsuarioNumero,_tmpFecha,_tmpResultado,_tmpCambioMonedas);
+            _result.add(_item);
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+        }
+      }
+
+      @Override
+      protected void finalize() {
+        _statement.release();
+      }
+    });
+  }
+
+  @Override
+  public Flow<List<PartidaEntity>> historialFlow(final long usuarioNumero, final int limite) {
+    final String _sql = "SELECT * FROM Partida WHERE usuarioNumero = ? ORDER BY fecha DESC LIMIT ?";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
+    int _argIndex = 1;
+    _statement.bindLong(_argIndex, usuarioNumero);
+    _argIndex = 2;
+    _statement.bindLong(_argIndex, limite);
+    return CoroutinesRoom.createFlow(__db, false, new String[] {"Partida"}, new Callable<List<PartidaEntity>>() {
       @Override
       @NonNull
       public List<PartidaEntity> call() throws Exception {

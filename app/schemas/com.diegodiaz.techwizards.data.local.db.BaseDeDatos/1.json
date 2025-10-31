@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "8e6bebc00cbb0d30e5e0c5574845c066",
+    "identityHash": "fbabe35cde15682d82f76bf0836d6e16",
     "entities": [
       {
         "tableName": "Usuario",
@@ -283,6 +283,25 @@
             ],
             "orders": [],
             "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_Lobby_codigo` ON `${TABLE_NAME}` (`codigo`)"
+          },
+          {
+            "name": "index_Lobby_creadorNum",
+            "unique": false,
+            "columnNames": [
+              "creadorNum"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Lobby_creadorNum` ON `${TABLE_NAME}` (`creadorNum`)"
+          },
+          {
+            "name": "index_Lobby_estado_createdAtMs",
+            "unique": false,
+            "columnNames": [
+              "estado",
+              "createdAtMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Lobby_estado_createdAtMs` ON `${TABLE_NAME}` (`estado`, `createdAtMs`)"
           }
         ],
         "foreignKeys": [
@@ -891,7 +910,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8e6bebc00cbb0d30e5e0c5574845c066')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fbabe35cde15682d82f76bf0836d6e16')"
     ]
   }
 }
