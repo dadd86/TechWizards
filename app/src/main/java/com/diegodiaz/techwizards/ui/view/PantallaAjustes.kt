@@ -1,69 +1,48 @@
-/*package com.diegodiaz.techwizards.ui.view
+// ui/view/PantallaAjustes.kt
+package com.diegodiaz.techwizards.ui.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-/**
- * PantallaAjustes.kt
- *
- * Pantalla sencilla para activar o desactivar sonido y vibración.
- * Por ahora solo guarda los valores en memoria (no persiste aún).
- */
 @Composable
-fun PantallaAjustes(onBack: () -> Unit) {
-    var sonidoActivo by remember { mutableStateOf(true) }
-    var vibracionActiva by remember { mutableStateOf(false) }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("⚙️ Ajustes") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) { Text("⬅️") }
-                }
-            )
-        }
-    ) { innerPadding ->
+fun PantallaAjustes(
+    isDarkTheme: Boolean,
+    onToggleTheme: (Boolean) -> Unit,
+    onVolverAlMenu: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(if (!isDarkTheme) Color(0xFFB5E2F8) else MaterialTheme.colorScheme.background)
+    ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(32.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.Start
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .align(Alignment.TopCenter),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Text("Preferencias del jugador", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(30.dp))
-
+            Text("Ajustes", style = MaterialTheme.typography.titleLarge)
             Row(
-                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Sonido activado")
-                Switch(checked = sonidoActivo, onCheckedChange = { sonidoActivo = it })
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Vibración activada")
-                Switch(checked = vibracionActiva, onCheckedChange = { vibracionActiva = it })
-            }
-
-            Spacer(modifier = Modifier.height(40.dp))
-            Button(onClick = onBack, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                Text("Guardar y volver")
+                Text("Tema oscuro")
+                Switch(checked = isDarkTheme, onCheckedChange = onToggleTheme)
             }
         }
+        Button(
+            onClick = onVolverAlMenu,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(0.6f)
+                .padding(bottom = 28.dp)
+        ) { Text("Volver al menú") }
     }
 }
-*/

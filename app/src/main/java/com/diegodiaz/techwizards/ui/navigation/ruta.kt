@@ -1,11 +1,10 @@
+// ui/navigation/Rutas.kt
 package com.diegodiaz.techwizards.ui.navigation
 
-/**
- * Define rutas navegables de la app.
- */
-sealed class ruta(val path: String) {
-    data object Bienvenida : ruta("bienvenida")
-    data object Menu : ruta("menu")
-    data object Jugar : ruta("jugar")
-    data object Historial : ruta("historial")
+sealed class Ruta(val path: String) {
+    data object Bienvenida : Ruta("bienvenida")
+    data object Menu       : Ruta("menu")
+    data object Jugar      : Ruta("jugar")
+    data object Historial  : Ruta("historial")
+    data object Ajustes    : Ruta("ajustes")
 }

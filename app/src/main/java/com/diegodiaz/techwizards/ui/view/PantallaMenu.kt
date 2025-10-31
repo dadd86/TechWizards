@@ -1,40 +1,80 @@
+// ui/view/PantallaMenu.kt
 package com.diegodiaz.techwizards.ui.view
 
+import android.app.Activity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
-/**
- * PantallaMenu.kt
- *
- * Menú principal de la aplicación.
- * Desde aquí el jugador puede elegir si quiere jugar, ver historial o cambiar ajustes.
- */
 @Composable
 fun PantallaMenu(
-    onNavigateToJugar: () -> Unit,
-    onNavigateToHistorial: () -> Unit,
-    onNavigateToAjustes: () -> Unit
+    isDarkTheme: Boolean,
+    onJugar: () -> Unit,
+    onHistorial: () -> Unit,
+    onAjustes: () -> Unit
 ) {
-    Column(
+    var showDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(if (!isDarkTheme) Color(0xFFF7F7F7) else MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
     ) {
-        Text("Menú Principal", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(40.dp))
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Menú principal",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(Modifier.height(16.dp))
+            MenuBoton("Jugar", onClick = onJugar)
+            MenuBoton("Historial", onClick = onHistorial)
+            MenuBoton("Ajustes", onClick = onAjustes)
+            MenuBoton("Salir", onClick = { showDialog = true })
 
-        Button(onClick = onNavigateToJugar) { Text("🎯 Jugar") }
-        Spacer(modifier = Modifier.height(20.dp))
+            if (showDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDialog = false },
+                    title = { Text("Confirmar salida") },
+                    text = { Text("¿Deseas salir de la aplicación?") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showDialog = false
+                            (context as? Activity)?.finish()
+                        }) { Text("Confirmar") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDialog = false }) { Text("Cancelar") }
+                    }
+                )
+            }
+        }
+    }
+}
 
-        Button(onClick = onNavigateToHistorial) { Text("📜 Historial") }
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Button(onClick = onNavigateToAjustes) { Text("⚙️ Ajustes") }
+@Composable
+private fun MenuBoton(texto: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF3F3F3)),
+        modifier = Modifier
+            .fillMaxWidth(0.7f)
+            .height(48.dp)
+    ) {
+        Text(texto, fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 20.sp)
     }
 }
