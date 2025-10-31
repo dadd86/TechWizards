@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:2:1-29:12
-INJECTED from C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:2:1-29:12
-INJECTED from C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:2:1-29:12
-INJECTED from C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:2:1-29:12
+ADDED from C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:2:1-30:12
+INJECTED from C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:2:1-30:12
+INJECTED from C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:2:1-30:12
+INJECTED from C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:2:1-30:12
 MERGED from [com.google.android.material:material:1.13.0] C:\Users\diaz_\.gradle\caches\8.13\transforms\27364ba5db819fb09a507c4e3810e98e\transformed\material-1.13.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.appcompat:appcompat-resources:1.7.1] C:\Users\diaz_\.gradle\caches\8.13\transforms\ab70547f328958bfc971042aa07b854d\transformed\appcompat-resources-1.7.1\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.0] C:\Users\diaz_\.gradle\caches\8.13\transforms\cb080536adac76e5115aba9b6fbfc0ab\transformed\constraintlayout-2.1.0\AndroidManifest.xml:2:1-11:12
@@ -101,8 +101,8 @@ MERGED from [io.reactivex.rxjava3:rxandroid:3.0.2] C:\Users\diaz_\.gradle\caches
 	xmlns:android
 		ADDED from C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:2:11-69
 application
-ADDED from C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:5:5-26:19
-INJECTED from C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:5:5-26:19
+ADDED from C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:5:5-27:19
+INJECTED from C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:5:5-27:19
 MERGED from [com.google.android.material:material:1.13.0] C:\Users\diaz_\.gradle\caches\8.13\transforms\27364ba5db819fb09a507c4e3810e98e\transformed\material-1.13.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.13.0] C:\Users\diaz_\.gradle\caches\8.13\transforms\27364ba5db819fb09a507c4e3810e98e\transformed\material-1.13.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.0] C:\Users\diaz_\.gradle\caches\8.13\transforms\cb080536adac76e5115aba9b6fbfc0ab\transformed\constraintlayout-2.1.0\AndroidManifest.xml:9:5-20

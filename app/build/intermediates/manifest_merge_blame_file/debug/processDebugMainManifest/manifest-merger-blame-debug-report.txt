@@ -33,7 +33,7 @@
 20-->[androidx.core:core:1.17.0] C:\Users\diaz_\.gradle\caches\8.13\transforms\c015bfea3b67b691db346f91c3dba892\transformed\core-1.17.0\AndroidManifest.xml:26:22-94
 21
 22    <application
-22-->C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:5:5-26:19
+22-->C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:5:5-27:19
 23        android:name="com.diegodiaz.techwizards.app.App"
 23-->C:\Users\diaz_\AndroidStudioProjects\TechWizards\app\src\main\AndroidManifest.xml:6:9-32
 24        android:allowBackup="true"

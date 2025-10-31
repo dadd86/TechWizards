@@ -1,66 +1,50 @@
+// ui/view/NavGraph.kt
 package com.diegodiaz.techwizards.ui.view
 
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.diegodiaz.techwizards.ui.view.*
+import com.diegodiaz.techwizards.ui.navigation.Ruta
 
-
-/**
- * NavGraph.kt
- *
- * Aquí definimos todas las pantallas y cómo se conectan entre sí.
- * Básicamente es el “mapa” de la navegación dentro del juego.
- */
 @Composable
-fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
-
-    // NavHost define el gráfico de navegación.
-    // startDestination = pantalla inicial que se abre al ejecutar la app.
-    NavHost(
-        navController = navController,
-        startDestination = "bienvenida",
-        modifier = modifier
-    ) {
-        // Pantalla inicial (bienvenida)
+fun NavGraph(
+    navController: NavHostController,
+    isDarkTheme: Boolean,
+    onToggleTheme: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    NavHost(navController, startDestination = "bienvenida", modifier) {
         composable("bienvenida") {
-            PantallaBienvenida(onNavigateToMenu = { navController.navigate("menu") })
-        }
-
-        // Menú principal
-        composable("menu") {
-            PantallaMenu(
-                onNavigateToJugar = { navController.navigate("jugar") },
-                onNavigateToHistorial = { navController.navigate("historial") },
-                onNavigateToAjustes = { navController.navigate("ajustes") }
+            PantallaBienvenida(
+                isDarkTheme = isDarkTheme,
+                onJugar = { navController.navigate("menu") }
             )
         }
-
-        // Pantalla para jugar
+        composable("menu") {
+            PantallaMenu(
+                isDarkTheme = isDarkTheme,
+                onJugar = { navController.navigate("jugar") },
+                onHistorial = { navController.navigate("historial") },
+                onAjustes = { navController.navigate("ajustes") }
+            )
+        }
         composable("jugar") {
             PantallaJugar(onBack = { navController.popBackStack() })
         }
-
-        // Pantalla del historial de partidas
         composable("historial") {
-            PantallaHistorial(onBack = { navController.popBackStack() })
+            PantallaHistorial(
+                isDarkTheme = isDarkTheme,
+                onVolverAlMenu = { navController.navigate("menu") }
+            )
         }
-
-        // Pantalla de ajustes
         composable("ajustes") {
-            PantallaAjustes(onBack = { navController.popBackStack() })
+            PantallaAjustes(
+                isDarkTheme = isDarkTheme,
+                onToggleTheme = onToggleTheme,
+                onVolverAlMenu = { navController.navigate("menu") }
+            )
         }
     }
-}
-
-@Composable
-fun PantallaAjustes(onBack: () -> Boolean) {
-    TODO("Not yet implemented")
-}
-
-@Composable
-fun PantallaHistorial(onBack: () -> Boolean) {
-    TODO("Not yet implemented")
 }

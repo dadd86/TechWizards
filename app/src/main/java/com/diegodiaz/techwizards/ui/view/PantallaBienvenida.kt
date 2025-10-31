@@ -18,6 +18,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diegodiaz.techwizards.R
+import androidx.compose.foundation.layout.Arrangement
+
 
 @Composable
 fun PantallaBienvenida(
