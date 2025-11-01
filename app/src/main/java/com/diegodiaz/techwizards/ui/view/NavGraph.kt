@@ -3,6 +3,7 @@ package com.diegodiaz.techwizards.ui.view
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -80,9 +81,12 @@ fun NavGraph(
             )
         }
         composable("historial") {
+            val viewModel: ControladorPartida = viewModel(factory = ControladorPartidaFactory(repo, usuarioId))
+            val historial by viewModel.historial.collectAsState()
             PantallaHistorial(
                 isDarkTheme = isDarkTheme,
-                onVolverAlMenu = { navController.navigate("menu") }
+                historial = historial,
+                onVolverAlMenu = {  navController.navigate("menu") }
             )
         }
         composable("ajustes") {

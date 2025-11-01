@@ -54,11 +54,8 @@ class ControladorPartida (
     fun lanzar() {
         viewModelScope.launch {
             try {
-                // Solo actualiza "cargando", el resto lo hace el repo + flow
                 val partida = repo.lanzarDado(usuarioId)
-                // Nada más: el saldo y último resultado se actualizarán por Flow automáticamente
             } catch (t: Throwable) {
-                // Si quieres puedes mostrar un error
             }
         }
     }

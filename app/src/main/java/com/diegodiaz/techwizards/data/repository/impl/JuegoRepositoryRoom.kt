@@ -65,9 +65,7 @@ class JuegoRepositoryRoom(
 
         val dado = (1..6).random()
         val gano = dado == 6
-        val cambioMonedas = if (gano) 10 else -10
-        saldo += cambioMonedas
-
+        val cambioMonedas = if (gano) 30 else -10
         // Limita el saldo a mínimo 0
         saldo = maxOf(saldo + cambioMonedas, 0)
 

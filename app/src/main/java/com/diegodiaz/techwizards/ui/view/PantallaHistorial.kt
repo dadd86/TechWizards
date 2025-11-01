@@ -13,10 +13,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.diegodiaz.techwizards.data.local.entity.Resultado
+import com.diegodiaz.techwizards.domain.model.Partida
 
 @Composable
 fun PantallaHistorial(
     isDarkTheme: Boolean,
+    historial: List<Partida>,
     onVolverAlMenu: () -> Unit
 ) {
     Box(
@@ -47,10 +50,13 @@ fun PantallaHistorial(
                     verticalArrangement = Arrangement.spacedBy(18.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    HistorialItem("02/10/2025", "Ganó", "+50") //CAMBIAR!!! SON VARIABLES
-                    HistorialItem("02/10/2025", "Perdió", "-30")
-                    HistorialItem("02/10/2025", "Ganó", "+50")
-                    HistorialItem("02/10/2025", "Perdió", "-30")
+                    historial.forEach { partida ->
+                        HistorialItem(
+                            fecha = partida.fecha.formateaComoFecha(),
+                            resultado = if (partida.resultado == Resultado.GANADO) "Ganó" else "Perdió",
+                            monedas = if (partida.deltaMonedas > 0) "+${partida.deltaMonedas}" else partida.deltaMonedas.toString()
+                        )
+                    }
                 }
             }
         }
@@ -71,6 +77,12 @@ fun PantallaHistorial(
             )
         }
     }
+}
+
+fun Long.formateaComoFecha(): String {
+    val date = java.util.Date(this)
+    val format = java.text.SimpleDateFormat("dd/MM/yyyy")
+    return format.format(date)
 }
 
 @Composable
