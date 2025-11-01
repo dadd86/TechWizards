@@ -1,6 +1,7 @@
 package com.diegodiaz.techwizards.core
 
 import android.content.Context
+import com.diegodiaz.techwizards.data.local.dao.IPartidaDao
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
 import com.diegodiaz.techwizards.data.repository.impl.JuegoRepositoryRoom
 import com.diegodiaz.techwizards.data.repository.impl.MatchRepositoryRoom
@@ -20,7 +21,8 @@ object ServiceLocator {
     val juegoRepository by lazy {
         JuegoRepositoryRoom(
             usuarioDao = usuarioDao,
-            monederoDao = monederoDao
+            monederoDao = monederoDao,
+            partidaDao = partidaDao
         )
     }
 

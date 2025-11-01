@@ -17,6 +17,12 @@ interface IPartidaDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertar(entity: PartidaEntity): Completable
 
+    @Insert
+    suspend fun insert(partida: PartidaEntity): Long
+
     @Query("DELETE FROM Partida")
     fun borrarTodo(): Completable
+
+    @Query("SELECT * FROM Partida WHERE usuarioNumero = :usuarioNumero ORDER BY fecha DESC LIMIT :limit")
+    fun observarHistorial(usuarioNumero: Long, limit: Int = 50): kotlinx.coroutines.flow.Flow<List<PartidaEntity>>
 }

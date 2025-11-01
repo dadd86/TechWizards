@@ -32,10 +32,10 @@ data class PartidaEntity(
     val usuarioNumero: Long,                  // ✅ tipo compatible con UsuarioEntity.numero
 
     @ColumnInfo(name = "fecha")
-    val fecha: Long,                          // epoch millis
+    val fecha: Long,
 
     @ColumnInfo(name = "resultado")
-    val resultado: Resultado,                 // enum tipado
+    val resultado: Resultado,
 
     @ColumnInfo(name = "cambioMonedas")
     val cambioMonedas: Int

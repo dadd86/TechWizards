@@ -19,9 +19,6 @@ class MatchRepositoryRoom(
     fun historialRx(usuarioId: Long) =
         partidaDao.historial(usuarioId).map { list -> list.map { it.toDomain() } }
 
-    fun registrarResultadoRx(partida: Partida, saldoNuevo: Int): Completable =
-        partidaDao.insertar(partida.toEntity())
-            .andThen(monederoDao.actualizarSaldo(partida.usuarioNumero, saldoNuevo))
 
     // -------- Wrappers coroutines (opcional) --------
     fun historial(usuarioId: Long): Flow<List<Partida>> {
@@ -29,6 +26,8 @@ class MatchRepositoryRoom(
     }
 
     suspend fun registrarResultado(partida: Partida, saldoNuevo: Int) {
-        registrarResultadoRx(partida, saldoNuevo).await()
+        partidaDao.insert(partida.toEntity())
+        monederoDao.actualizarSaldo(partida.usuarioNumero, saldoNuevo)
     }
+
 }

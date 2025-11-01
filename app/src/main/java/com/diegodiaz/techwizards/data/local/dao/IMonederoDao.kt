@@ -13,11 +13,18 @@ interface IMonederoDao {
     @Query("SELECT * FROM Monedero WHERE usuarioNumero = :usuarioNumero LIMIT 1")
     fun observeSaldo(usuarioNumero: Long): Flowable<MonederoEntity>
 
+    @Query("SELECT * FROM Monedero WHERE usuarioNumero = :usuarioNumero LIMIT 1")
+    suspend fun getMonederoSimple(usuarioNumero: Long): MonederoEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun upsert(entity: MonederoEntity): Completable
 
-    @Query("UPDATE monedero SET saldo = :nuevo WHERE usuarioNumero = :usuarioNumero")
-    fun actualizarSaldo(usuarioNumero: Long, nuevo: Int): Completable
+    @Query("UPDATE Monedero SET saldo = :nuevo WHERE usuarioNumero = :usuarioNumero")
+    suspend fun actualizarSaldo(usuarioNumero: Long, nuevo: Int)
+
+    // RxJava
+    @Query("UPDATE Monedero SET saldo = :nuevo WHERE usuarioNumero = :usuarioNumero")
+    fun actualizarSaldoRx(usuarioNumero: Long, nuevo: Int): Completable
 
     @Query("DELETE FROM usuario")
     fun borrarTodo()

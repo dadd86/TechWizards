@@ -1,66 +1,96 @@
 package com.diegodiaz.techwizards.ui.view
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.diegodiaz.techwizards.ui.view.*
+
+import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
+import com.diegodiaz.techwizards.data.repository.impl.JuegoRepositoryRoom
+import com.diegodiaz.techwizards.domain.model.Usuario
+import com.diegodiaz.techwizards.ui.controller.ControladorPartida
+import com.diegodiaz.techwizards.ui.controller.ControladorPartidaFactory
+import io.reactivex.rxjava3.schedulers.Schedulers
 
 
-/**
- * NavGraph.kt
- *
- * Aquí definimos todas las pantallas y cómo se conectan entre sí.
- * Básicamente es el “mapa” de la navegación dentro del juego.
- */
 @Composable
-fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
+fun NavGraph(
+    navController: NavHostController,
+    isDarkTheme: Boolean,
+    onToggleTheme: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val db = remember { BaseDeDatos.get(context) }
+    val usuarioDao = db.usuarioDao()
+    val monederoDao = db.monederoDao()
+    val partidaDao = db.partidaDao()
+    val repo = remember { JuegoRepositoryRoom(usuarioDao, monederoDao, partidaDao) }
+    val usuarioNumero = 1L
+    val usuarioId = usuarioNumero.toString()
+    LaunchedEffect(Unit) {
+        val usuario = Usuario(
+            numero = usuarioNumero,
+            alias = "Tester",
+            fechaAltaMs = System.currentTimeMillis(),
+            monedas = 100,
+            ganoUltimaPartida = false,
+            firebaseUid = null
+        )
+        // Esto crea  un usuario de prueba
+        repo.inicializarMonedasRx(usuario, 100)
+            .subscribeOn(Schedulers.io())
+            .subscribe({}, { throwable -> throwable.printStackTrace() })
+    }
 
-    // NavHost define el gráfico de navegación.
-    // startDestination = pantalla inicial que se abre al ejecutar la app.
     NavHost(
         navController = navController,
         startDestination = "bienvenida",
         modifier = modifier
     ) {
-        // Pantalla inicial (bienvenida)
         composable("bienvenida") {
-            PantallaBienvenida(onNavigateToMenu = { navController.navigate("menu") })
-        }
-
-        // Menú principal
-        composable("menu") {
-            PantallaMenu(
-                onNavigateToJugar = { navController.navigate("jugar") },
-                onNavigateToHistorial = { navController.navigate("historial") },
-                onNavigateToAjustes = { navController.navigate("ajustes") }
+            PantallaBienvenida(
+                isDarkTheme = isDarkTheme,
+                onJugar = { navController.navigate("menu") }
             )
         }
-
-        // Pantalla para jugar
-        composable("jugar") {
-            PantallaJugar(onBack = { navController.popBackStack() })
+        composable("menu") {
+            PantallaMenu(
+                isDarkTheme = isDarkTheme,
+                onJugar = { navController.navigate("partida") },
+                onHistorial = { navController.navigate("historial") },
+                onAjustes = { navController.navigate("ajustes") }
+            )
         }
-
-        // Pantalla del historial de partidas
+        composable("partida") {
+            val factory = ControladorPartidaFactory(repo, usuarioId)
+            val controladorPartida: ControladorPartida = viewModel(factory = factory)
+            val uiState = controladorPartida.ui.collectAsState().value
+            PantallaPartida(
+                isDarkTheme = isDarkTheme,
+                uiState = uiState,
+                onVolverAlMenu = { navController.navigate("menu") },
+                onElegirNumero = { num -> controladorPartida.elegirNumero(num) }
+            )
+        }
         composable("historial") {
-            PantallaHistorial(onBack = { navController.popBackStack() })
+            PantallaHistorial(
+                isDarkTheme = isDarkTheme,
+                onVolverAlMenu = { navController.navigate("menu") }
+            )
         }
-
-        // Pantalla de ajustes
         composable("ajustes") {
-            PantallaAjustes(onBack = { navController.popBackStack() })
+            PantallaAjustes(
+                isDarkTheme = isDarkTheme,
+                onToggleTheme = onToggleTheme,
+                onVolverAlMenu = { navController.navigate("menu") }
+            )
         }
     }
-}
-
-@Composable
-fun PantallaAjustes(onBack: () -> Boolean) {
-    TODO("Not yet implemented")
-}
-
-@Composable
-fun PantallaHistorial(onBack: () -> Boolean) {
-    TODO("Not yet implemented")
 }
