@@ -1,8 +1,7 @@
-// ui/view/PantallaBienvenida.kt
 package com.diegodiaz.techwizards.ui.view
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,14 +11,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.layout.ContentScale
 import com.diegodiaz.techwizards.R
-import androidx.compose.foundation.layout.Arrangement
-
 
 @Composable
 fun PantallaBienvenida(
@@ -40,7 +37,10 @@ fun PantallaBienvenida(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(120.dp)
-                    .background(color = Color(0xFF5597CF), shape = CircleShape)
+                    .background(
+                        color = Color(0xFF5597CF),
+                        shape = CircleShape
+                    )
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.dado),
@@ -59,7 +59,9 @@ fun PantallaBienvenida(
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = onJugar,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White
+                ),
                 modifier = Modifier
                     .fillMaxWidth(0.7f)
                     .height(56.dp)

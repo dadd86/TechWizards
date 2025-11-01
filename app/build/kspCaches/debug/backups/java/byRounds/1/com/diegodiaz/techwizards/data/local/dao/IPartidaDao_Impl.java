@@ -43,6 +43,8 @@ public final class IPartidaDao_Impl implements IPartidaDao {
 
   private final EnumConverters __enumConverters = new EnumConverters();
 
+  private final EntityInsertionAdapter<PartidaEntity> __insertionAdapterOfPartidaEntity_1;
+
   private final SharedSQLiteStatement __preparedStmtOfBorrarTodo;
 
   public IPartidaDao_Impl(@NonNull final RoomDatabase __db) {
@@ -52,6 +54,28 @@ public final class IPartidaDao_Impl implements IPartidaDao {
       @NonNull
       protected String createQuery() {
         return "INSERT OR REPLACE INTO `Partida` (`id`,`usuarioNumero`,`fecha`,`resultado`,`cambioMonedas`) VALUES (nullif(?, 0),?,?,?,?)";
+      }
+
+      @Override
+      protected void bind(@NonNull final SupportSQLiteStatement statement,
+          @NonNull final PartidaEntity entity) {
+        statement.bindLong(1, entity.getId());
+        statement.bindLong(2, entity.getUsuarioNumero());
+        statement.bindLong(3, entity.getFecha());
+        final String _tmp = __enumConverters.fromResultado(entity.getResultado());
+        if (_tmp == null) {
+          statement.bindNull(4);
+        } else {
+          statement.bindString(4, _tmp);
+        }
+        statement.bindLong(5, entity.getCambioMonedas());
+      }
+    };
+    this.__insertionAdapterOfPartidaEntity_1 = new EntityInsertionAdapter<PartidaEntity>(__db) {
+      @Override
+      @NonNull
+      protected String createQuery() {
+        return "INSERT OR ABORT INTO `Partida` (`id`,`usuarioNumero`,`fecha`,`resultado`,`cambioMonedas`) VALUES (nullif(?, 0),?,?,?,?)";
       }
 
       @Override
@@ -98,15 +122,14 @@ public final class IPartidaDao_Impl implements IPartidaDao {
   }
 
   @Override
-  public Object insertarSuspend(final PartidaEntity entity,
-      final Continuation<? super Long> $completion) {
+  public Object insert(final PartidaEntity partida, final Continuation<? super Long> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Long>() {
       @Override
       @NonNull
       public Long call() throws Exception {
         __db.beginTransaction();
         try {
-          final Long _result = __insertionAdapterOfPartidaEntity.insertAndReturnId(entity);
+          final Long _result = __insertionAdapterOfPartidaEntity_1.insertAndReturnId(partida);
           __db.setTransactionSuccessful();
           return _result;
         } finally {
@@ -197,13 +220,13 @@ public final class IPartidaDao_Impl implements IPartidaDao {
   }
 
   @Override
-  public Flow<List<PartidaEntity>> historialFlow(final long usuarioNumero, final int limite) {
+  public Flow<List<PartidaEntity>> observarHistorial(final long usuarioNumero, final int limit) {
     final String _sql = "SELECT * FROM Partida WHERE usuarioNumero = ? ORDER BY fecha DESC LIMIT ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
     int _argIndex = 1;
     _statement.bindLong(_argIndex, usuarioNumero);
     _argIndex = 2;
-    _statement.bindLong(_argIndex, limite);
+    _statement.bindLong(_argIndex, limit);
     return CoroutinesRoom.createFlow(__db, false, new String[] {"Partida"}, new Callable<List<PartidaEntity>>() {
       @Override
       @NonNull

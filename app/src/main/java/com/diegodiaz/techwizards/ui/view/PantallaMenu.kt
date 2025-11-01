@@ -1,20 +1,19 @@
-// ui/view/PantallaMenu.kt
 package com.diegodiaz.techwizards.ui.view
 
 import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.Arrangement
-
+import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 fun PantallaMenu(
@@ -57,10 +56,14 @@ fun PantallaMenu(
                         TextButton(onClick = {
                             showDialog = false
                             (context as? Activity)?.finish()
-                        }) { Text("Confirmar") }
+                        }) {
+                            Text("Confirmar")
+                        }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showDialog = false }) { Text("Cancelar") }
+                        TextButton(onClick = { showDialog = false }) {
+                            Text("Cancelar")
+                        }
                     }
                 )
             }
@@ -69,14 +72,21 @@ fun PantallaMenu(
 }
 
 @Composable
-private fun MenuBoton(texto: String, onClick: () -> Unit) {
+fun MenuBoton(texto: String, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF3F3F3)),
+        elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 0.dp),
         modifier = Modifier
             .fillMaxWidth(0.7f)
             .height(48.dp)
+            .clip(RoundedCornerShape(16.dp))
     ) {
-        Text(texto, fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 20.sp)
+        Text(
+            text = texto,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black,
+            fontSize = 20.sp
+        )
     }
 }

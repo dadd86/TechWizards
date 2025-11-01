@@ -18,7 +18,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import java.lang.Class;
 import java.lang.Exception;
-import java.lang.Integer;
 import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
@@ -30,7 +29,6 @@ import java.util.concurrent.Callable;
 import javax.annotation.processing.Generated;
 import kotlin.Unit;
 import kotlin.coroutines.Continuation;
-import kotlinx.coroutines.flow.Flow;
 
 @Generated("androidx.room.RoomProcessor")
 @SuppressWarnings({"unchecked", "deprecation"})
@@ -64,7 +62,7 @@ public final class IMonederoDao_Impl implements IMonederoDao {
       @Override
       @NonNull
       public String createQuery() {
-        final String _query = "UPDATE monedero SET saldo = ? WHERE usuarioNumero = ?";
+        final String _query = "UPDATE Monedero SET saldo = ? WHERE usuarioNumero = ?";
         return _query;
       }
     };
@@ -97,26 +95,35 @@ public final class IMonederoDao_Impl implements IMonederoDao {
   }
 
   @Override
-  public Object upsertSuspend(final MonederoEntity entity,
+  public Object actualizarSaldo(final long usuarioNumero, final int nuevo,
       final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
       public Unit call() throws Exception {
-        __db.beginTransaction();
+        final SupportSQLiteStatement _stmt = __preparedStmtOfActualizarSaldo.acquire();
+        int _argIndex = 1;
+        _stmt.bindLong(_argIndex, nuevo);
+        _argIndex = 2;
+        _stmt.bindLong(_argIndex, usuarioNumero);
         try {
-          __insertionAdapterOfMonederoEntity.insert(entity);
-          __db.setTransactionSuccessful();
-          return Unit.INSTANCE;
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
         } finally {
-          __db.endTransaction();
+          __preparedStmtOfActualizarSaldo.release(_stmt);
         }
       }
     }, $completion);
   }
 
   @Override
-  public Completable actualizarSaldo(final long usuarioNumero, final int nuevo) {
+  public Completable actualizarSaldoRx(final long usuarioNumero, final int nuevo) {
     return Completable.fromCallable(new Callable<Void>() {
       @Override
       @Nullable
@@ -140,34 +147,6 @@ public final class IMonederoDao_Impl implements IMonederoDao {
         }
       }
     });
-  }
-
-  @Override
-  public Object actualizarSaldoSuspend(final long usuarioNumero, final int nuevo,
-      final Continuation<? super Integer> $completion) {
-    return CoroutinesRoom.execute(__db, true, new Callable<Integer>() {
-      @Override
-      @NonNull
-      public Integer call() throws Exception {
-        final SupportSQLiteStatement _stmt = __preparedStmtOfActualizarSaldo.acquire();
-        int _argIndex = 1;
-        _stmt.bindLong(_argIndex, nuevo);
-        _argIndex = 2;
-        _stmt.bindLong(_argIndex, usuarioNumero);
-        try {
-          __db.beginTransaction();
-          try {
-            final Integer _result = _stmt.executeUpdateDelete();
-            __db.setTransactionSuccessful();
-            return _result;
-          } finally {
-            __db.endTransaction();
-          }
-        } finally {
-          __preparedStmtOfActualizarSaldo.release(_stmt);
-        }
-      }
-    }, $completion);
   }
 
   @Override
@@ -228,47 +207,7 @@ public final class IMonederoDao_Impl implements IMonederoDao {
   }
 
   @Override
-  public Flow<MonederoEntity> observeSaldoFlow(final long usuarioNumero) {
-    final String _sql = "SELECT * FROM Monedero WHERE usuarioNumero = ? LIMIT 1";
-    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
-    int _argIndex = 1;
-    _statement.bindLong(_argIndex, usuarioNumero);
-    return CoroutinesRoom.createFlow(__db, false, new String[] {"Monedero"}, new Callable<MonederoEntity>() {
-      @Override
-      @Nullable
-      public MonederoEntity call() throws Exception {
-        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
-        try {
-          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
-          final int _cursorIndexOfUsuarioNumero = CursorUtil.getColumnIndexOrThrow(_cursor, "usuarioNumero");
-          final int _cursorIndexOfSaldo = CursorUtil.getColumnIndexOrThrow(_cursor, "saldo");
-          final MonederoEntity _result;
-          if (_cursor.moveToFirst()) {
-            final String _tmpId;
-            _tmpId = _cursor.getString(_cursorIndexOfId);
-            final long _tmpUsuarioNumero;
-            _tmpUsuarioNumero = _cursor.getLong(_cursorIndexOfUsuarioNumero);
-            final int _tmpSaldo;
-            _tmpSaldo = _cursor.getInt(_cursorIndexOfSaldo);
-            _result = new MonederoEntity(_tmpId,_tmpUsuarioNumero,_tmpSaldo);
-          } else {
-            _result = null;
-          }
-          return _result;
-        } finally {
-          _cursor.close();
-        }
-      }
-
-      @Override
-      protected void finalize() {
-        _statement.release();
-      }
-    });
-  }
-
-  @Override
-  public Object obtenerSaldo(final long usuarioNumero,
+  public Object getMonederoSimple(final long usuarioNumero,
       final Continuation<? super MonederoEntity> $completion) {
     final String _sql = "SELECT * FROM Monedero WHERE usuarioNumero = ? LIMIT 1";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
