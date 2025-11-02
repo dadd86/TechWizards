@@ -15,14 +15,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import com.diegodiaz.techwizards.ui.responsive.Responsive
+import com.diegodiaz.techwizards.ui.responsive.UiDims
 
+// ui/view/PantallaMenu.kt
 @Composable
 fun PantallaMenu(
     isDarkTheme: Boolean,
     onJugar: () -> Unit,
     onHistorial: () -> Unit,
     onAjustes: () -> Unit
-)= Responsive { dims ->
+) = Responsive { dims ->
     var showDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -34,37 +36,28 @@ fun PantallaMenu(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(dims.spaceSm)
         ) {
-            Text(
-                text = "Menú principal",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(Modifier.height(16.dp))
-            MenuBoton("Jugar", onClick = onJugar)
-            MenuBoton("Historial", onClick = onHistorial)
-            MenuBoton("Ajustes", onClick = onAjustes)
-            MenuBoton("Salir", onClick = { showDialog = true })
+            Text("Menú principal", fontSize = dims.titleSp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(dims.spaceSm))
+            MenuBoton("Jugar", dims, onJugar)
+            MenuBoton("Historial", dims, onHistorial)
+            MenuBoton("Ajustes", dims, onAjustes)
+            MenuBoton("Salir", dims) { showDialog = true }
 
             if (showDialog) {
                 AlertDialog(
                     onDismissRequest = { showDialog = false },
-                    title = { Text("Confirmar salida") },
-                    text = { Text("¿Deseas salir de la aplicación?") },
+                    title = { Text("Confirmar salida", fontSize = dims.bodySp) },
+                    text  = { Text("¿Deseas salir de la aplicación?", fontSize = dims.bodySp) },
                     confirmButton = {
                         TextButton(onClick = {
                             showDialog = false
                             (context as? Activity)?.finish()
-                        }) {
-                            Text("Confirmar")
-                        }
+                        }) { Text("Confirmar", fontSize = dims.bodySp) }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showDialog = false }) {
-                            Text("Cancelar")
-                        }
+                        TextButton(onClick = { showDialog = false }) { Text("Cancelar", fontSize = dims.bodySp) }
                     }
                 )
             }
@@ -73,21 +66,13 @@ fun PantallaMenu(
 }
 
 @Composable
-fun MenuBoton(texto: String, onClick: () -> Unit) {
+private fun MenuBoton(texto: String, dims: UiDims, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF3F3F3)),
-        elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 0.dp),
         modifier = Modifier
             .fillMaxWidth(0.7f)
-            .height(48.dp)
+            .height(dims.buttonHeightSm)
             .clip(RoundedCornerShape(16.dp))
-    ) {
-        Text(
-            text = texto,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black,
-            fontSize = 20.sp
-        )
-    }
+    ) { Text(texto, fontSize = dims.bodySp, fontWeight = FontWeight.Bold, color = Color.Black) }
 }

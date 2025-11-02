@@ -3,13 +3,13 @@ package com.diegodiaz.techwizards.ui.responsive
 
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.min
 import androidx.compose.ui.unit.sp
 
 /**
@@ -25,7 +25,8 @@ fun Responsive(
         modifier = modifier
             .windowInsetsPadding(WindowInsets.systemBars) // evita solaparse con notch/barras
     ) {
-        val minSide = listOf(maxWidth, maxHeight).minBy { it.value }
+        // ✅ Evitar kotlin.math.min con Dp (no existe). Compara directamente Dp.
+        val minSide: Dp = if (maxWidth < maxHeight) maxWidth else maxHeight
 
         val dims = remember(minSide) { UiDims.from(minSide) }
         content(dims)
@@ -33,8 +34,8 @@ fun Responsive(
 }
 
 /**
- * Dimensiones derivadas del lado corto (minSide). Ajusta factores si quieres
- * que todo “crezca” o “encoga” más.
+ * Dimensiones derivadas del lado corto (minSide).
+ * Ajusta factores si quieres que todo “crezca” o “encoga” más.
  */
 data class UiDims(
     val minSide: Dp,
@@ -56,7 +57,6 @@ data class UiDims(
 ) {
     companion object {
         fun from(minSide: Dp): UiDims {
-            // factores “razonables”
             val f = minSide.value
             return UiDims(
                 minSide = minSide,

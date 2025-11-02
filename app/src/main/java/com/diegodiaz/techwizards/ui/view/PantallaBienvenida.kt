@@ -19,61 +19,50 @@ import androidx.compose.ui.layout.ContentScale
 import com.diegodiaz.techwizards.R
 import com.diegodiaz.techwizards.ui.responsive.Responsive
 
+// ui/view/PantallaBienvenida.kt
 @Composable
 fun PantallaBienvenida(
     isDarkTheme: Boolean,
     onJugar: () -> Unit
-)  = Responsive { dims ->
+) = Responsive { dims ->
     Box(
-        contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxSize()
-            .background(if (!isDarkTheme) Color(0xFF7EC8E3) else MaterialTheme.colorScheme.background)
+            .background(if (!isDarkTheme) Color(0xFF7EC8E3) else MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(dims.spaceLg)
         ) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .size(120.dp)
-                    .background(
-                        color = Color(0xFF5597CF),
-                        shape = CircleShape
-                    )
+                    .size(dims.imageLg * 1.25f)
+                    .background(Color(0xFF5597CF), shape = CircleShape)
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.dado),
                     contentDescription = "Dado",
-                    modifier = Modifier.size(90.dp),
-                    contentScale = ContentScale.Fit
+                    modifier = Modifier.size(dims.imageLg)
                 )
             }
             Text(
                 text = "¡Bienvenido a\nJuegosAzar!",
-                fontSize = 28.sp,
+                fontSize = dims.titleSp,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                lineHeight = 34.sp
+                lineHeight = (dims.titleSp * 1.2f)
             )
-            Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = onJugar,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White
-                ),
                 modifier = Modifier
                     .fillMaxWidth(0.7f)
-                    .height(56.dp)
-                    .clip(RoundedCornerShape(28.dp))
+                    .height(dims.buttonHeight)
+                    .clip(RoundedCornerShape(dims.cardCorner)),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
             ) {
-                Text(
-                    text = "JUGAR",
-                    fontSize = 22.sp,
-                    color = Color(0xFF3B71B8),
-                    fontWeight = FontWeight.Bold
-                )
+                Text("JUGAR", fontSize = dims.bodySp, color = Color(0xFF3B71B8), fontWeight = FontWeight.Bold)
             }
         }
     }

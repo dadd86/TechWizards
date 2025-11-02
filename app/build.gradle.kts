@@ -37,6 +37,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.7.3"
     }
     kotlinOptions { jvmTarget = "17" }
 
@@ -61,6 +65,7 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
+    implementation(libs.compose.foundation)
     implementation(libs.compose.ui.tooling.preview)
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.compose.ui.tooling)

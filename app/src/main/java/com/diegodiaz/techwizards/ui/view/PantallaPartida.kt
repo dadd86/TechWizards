@@ -19,6 +19,14 @@ import androidx.compose.ui.draw.clip
 import com.diegodiaz.techwizards.R
 import com.diegodiaz.techwizards.ui.controller.JuegoUiState
 import com.diegodiaz.techwizards.ui.responsive.Responsive
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun PantallaPartida(
@@ -26,82 +34,108 @@ fun PantallaPartida(
     uiState: JuegoUiState,
     onVolverAlMenu: () -> Unit,
     onElegirNumero: (Int) -> Unit
-)= Responsive { dims ->
+) = Responsive { dims ->
     var showDialog by remember { mutableStateOf(false) }
+
+    // Tamaños relativos a la pantalla
+    val boxSize = (dims.minSide * 0.8f).coerceAtMost(360.dp)     // contenedor del dado
+    val diceSize = boxSize * 0.7f                                // imagen del dado
+    val coinSize = (dims.minSide * 0.10f).coerceIn(24.dp, 48.dp) // icono moneda
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(if (!isDarkTheme) Color(0xFFD6E8CD) else MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
+            .background(if (!isDarkTheme) Color(0xFFD6E8CD) else MaterialTheme.colorScheme.background)
+            .padding(horizontal = dims.spaceSm) // margen lateral proporcional
     ) {
+        // Scroll de emergencia (pantallas muy chicas/teclado abierto)
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(dims.spaceMd))
+
+            // Barra de monedas
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier
-                    .fillMaxWidth(0.93f)
-                    .padding(start = 8.dp, bottom = 12.dp)
+                    .fillMaxWidth()
+                    .padding(bottom = dims.spaceSm)
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.moneda),
                     contentDescription = "Moneda",
-                    modifier = Modifier.size(38.dp)
+                    modifier = Modifier.size(coinSize)
                 )
+                Spacer(Modifier.width(dims.spaceXs))
                 Text(
                     text = " ${uiState.monedas}",
-                    fontSize = 22.sp,
+                    fontSize = dims.titleSp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
             }
-            Spacer(Modifier.height(18.dp))
-            Box(
-                modifier = Modifier
-                    .size(260.dp)
-                    .background(Color(0xFFF9F9EB), shape = RoundedCornerShape(36.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.dado_negro),
-                    contentDescription = "Dado_negro",
-                    modifier = Modifier.size(180.dp),
-                    contentScale = ContentScale.Fit
-                )
-            }
-            Spacer(Modifier.height(32.dp))
-            Button(
-                onClick = { showDialog = true },
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(72.dp)
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(Color(0xFF96C78F)),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF96C78F))
-            ) {
-                Text(
-                    text = "Lanzar",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 32.sp
-                )
-            }
-            Spacer(Modifier.height(24.dp))
-            Text(
-                text = uiState.ultimoResultado.ifEmpty { "Último lanzamiento: ..." },
-                fontWeight = FontWeight.Medium,
-                fontSize = 22.sp,
-                color = MaterialTheme.colorScheme.onBackground
-            )
 
-            Spacer(Modifier.height(12.dp))
+            // Centro flexible: dado + botón lanzar
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f), // reparte el espacio y evita “empujar” el botón fuera
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Dado
+                Box(
+                    modifier = Modifier
+                        .size(boxSize)
+                        .background(Color(0xFFF9F9EB), shape = RoundedCornerShape(dims.cardCorner)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.dado_negro),
+                        contentDescription = "Dado",
+                        modifier = Modifier.size(diceSize),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+
+                Spacer(Modifier.height(dims.spaceMd))
+
+                // Botón Lanza
+                Button(
+                    onClick = { showDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .height(dims.buttonHeight)
+                        .clip(RoundedCornerShape(dims.cardCorner)),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF96C78F))
+                ) {
+                    Text(
+                        text = "Lanzar",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = dims.titleSp
+                    )
+                }
+
+                Spacer(Modifier.height(dims.spaceSm))
+
+                Text(
+                    text = uiState.ultimoResultado.ifEmpty { "Último lanzamiento: ..." },
+                    fontWeight = FontWeight.Medium,
+                    fontSize = dims.bodySp,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+
+            // Botón Volver al menú
+            Spacer(Modifier.height(dims.spaceSm))
             Button(
                 onClick = onVolverAlMenu,
                 modifier = Modifier
                     .fillMaxWidth(0.6f)
+                    .height(dims.buttonHeightSm)
                     .clip(RoundedCornerShape(20.dp)),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White)
             ) {
@@ -109,58 +143,67 @@ fun PantallaPartida(
                     text = "Volver al menú",
                     color = Color(0xFF96C78F),
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 20.sp
+                    fontSize = dims.bodySp
                 )
             }
-        }
-    }
 
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text("Elige un número del 1 al 6") },
-            text = {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
-                ) {
-                    (1..6).forEach { number ->
-                        Button(
-                            onClick = {
-                                onElegirNumero(number)
-                                showDialog = false
-                            },
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF5C6BC0),
-                                contentColor = Color.White
-                            ),
-                            contentPadding = PaddingValues(0.dp),
-                            modifier = Modifier
-                                .size(40.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier.size(44.dp),
-                                contentAlignment = Alignment.Center
+            Spacer(Modifier.height(dims.spaceMd))
+        }
+
+        @OptIn(ExperimentalLayoutApi::class)
+        if (showDialog) {
+            val chipSize = (dims.minSide * 0.20f).coerceIn(40.dp, 64.dp)
+            val spacing  = dims.spaceSm
+
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                properties = DialogProperties(
+                    usePlatformDefaultWidth = false // permite ocupar más ancho en pantallas pequeñas
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dims.spaceMd), // margen lateral del diálogo
+                title = {
+                    Text(
+                        "Elige un número del 1 al 6",
+                        fontSize = dims.bodySp
+                    )
+                },
+                text = {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(spacing),
+                        verticalArrangement   = Arrangement.spacedBy(spacing)
+                    ) {
+                        (1..6).forEach { number ->
+                            Button(
+                                onClick = {
+                                    onElegirNumero(number)
+                                    showDialog = false
+                                },
+                                shape = CircleShape,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF5C6BC0),
+                                    contentColor = Color.White
+                                ),
+                                contentPadding = PaddingValues(0.dp),
+                                modifier = Modifier.size(chipSize)
                             ) {
                                 Text(
                                     text = number.toString(),
-                                    fontSize = 18.sp,
-                                    color = Color.White
+                                    fontSize = (dims.bodySp.value * 0.9f).sp
                                 )
                             }
                         }
                     }
+                },
+                confirmButton = {}, // sin botón de confirmar; seleccionas directo
+                dismissButton = {
+                    TextButton(onClick = { showDialog = false }) {
+                        Text("Cancelar", fontSize = dims.bodySp)
+                    }
                 }
-            },
-            confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = {
-                    showDialog = false
-                }) {
-                    Text("Cancelar")
-                }
-            }
-        )
+            )
+        }
     }
 }
