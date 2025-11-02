@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
+import com.diegodiaz.techwizards.ui.responsive.Responsive
 
 @Composable
 fun PantallaMenu(
@@ -21,7 +22,7 @@ fun PantallaMenu(
     onJugar: () -> Unit,
     onHistorial: () -> Unit,
     onAjustes: () -> Unit
-) {
+)= Responsive { dims ->
     var showDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 

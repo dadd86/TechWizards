@@ -6,6 +6,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlin.random.Random
+import com.diegodiaz.techwizards.ui.responsive.Responsive
 
 @Composable fun PantallaMatch() {}
 

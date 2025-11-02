@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.draw.clip
 import com.diegodiaz.techwizards.R
 import com.diegodiaz.techwizards.ui.controller.JuegoUiState
+import com.diegodiaz.techwizards.ui.responsive.Responsive
 
 @Composable
 fun PantallaPartida(
@@ -25,7 +26,7 @@ fun PantallaPartida(
     uiState: JuegoUiState,
     onVolverAlMenu: () -> Unit,
     onElegirNumero: (Int) -> Unit
-) {
+)= Responsive { dims ->
     var showDialog by remember { mutableStateOf(false) }
 
     Box(

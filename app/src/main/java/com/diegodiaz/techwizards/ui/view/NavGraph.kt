@@ -18,6 +18,7 @@ import com.diegodiaz.techwizards.domain.model.Usuario
 import com.diegodiaz.techwizards.ui.controller.ControladorPartida
 import com.diegodiaz.techwizards.ui.controller.ControladorPartidaFactory
 import io.reactivex.rxjava3.schedulers.Schedulers
+import com.diegodiaz.techwizards.ui.responsive.Responsive
 
 
 @Composable
@@ -26,7 +27,7 @@ fun NavGraph(
     isDarkTheme: Boolean,
     onToggleTheme: (Boolean) -> Unit,
     modifier: Modifier = Modifier
-) {
+)= Responsive { dims ->
     val context = LocalContext.current
     val db = remember { BaseDeDatos.get(context) }
     val usuarioDao = db.usuarioDao()

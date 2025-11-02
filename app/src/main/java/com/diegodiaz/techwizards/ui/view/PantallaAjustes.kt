@@ -14,13 +14,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import com.diegodiaz.techwizards.R
+import com.diegodiaz.techwizards.ui.responsive.Responsive
 
 @Composable
 fun PantallaAjustes(
     isDarkTheme: Boolean,
     onToggleTheme: (Boolean) -> Unit,
     onVolverAlMenu: () -> Unit
-) {
+)= Responsive { dims ->
     Box(
         modifier = Modifier
             .fillMaxSize()

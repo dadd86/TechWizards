@@ -17,12 +17,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.layout.ContentScale
 import com.diegodiaz.techwizards.R
+import com.diegodiaz.techwizards.ui.responsive.Responsive
 
 @Composable
 fun PantallaBienvenida(
     isDarkTheme: Boolean,
     onJugar: () -> Unit
-) {
+)  = Responsive { dims ->
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier

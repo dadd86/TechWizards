@@ -15,13 +15,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.diegodiaz.techwizards.data.local.entity.Resultado
 import com.diegodiaz.techwizards.domain.model.Partida
+import com.diegodiaz.techwizards.ui.responsive.Responsive
 
 @Composable
 fun PantallaHistorial(
     isDarkTheme: Boolean,
     historial: List<Partida>,
     onVolverAlMenu: () -> Unit
-) {
+) = Responsive { dims ->
     Box(
         modifier = Modifier
             .fillMaxSize()
