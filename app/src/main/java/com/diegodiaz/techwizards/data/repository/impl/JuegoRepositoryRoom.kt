@@ -46,7 +46,29 @@ class JuegoRepositoryRoom(
         monederoDao.observeSaldo(usuarioId.toLong()).asFlow().map { it.toDomain() }
 
     override suspend fun inicializarMonedas(usuario: Usuario, monedasIniciales: Int) {
-        throw NotImplementedError("Implementar inicializarMonedas")
+        val numero = usuario.numero
+        val existente = usuarioDao.getByNumero(numero)
+        val monederoActual = monederoDao.getMonederoSimple(numero)
+        val saldoPersistido = monederoActual?.saldo ?: monedasIniciales
+
+        val entidad = usuario.toEntity().copy(
+            fechaAltaMs = existente?.fechaAltaMs ?: usuario.fechaAltaMs,
+            monedas = saldoPersistido,
+            ganoUltimaPartida = existente?.ganoUltimaPartida ?: usuario.ganoUltimaPartida,
+            firebaseUid = existente?.firebaseUid ?: usuario.firebaseUid
+        )
+
+        usuarioDao.upsertSuspend(entidad)
+
+        if (monederoActual == null) {
+            monederoDao.upsertSuspend(
+                MonederoEntity(
+                    id = "wallet_$numero",
+                    usuarioNumero = numero,
+                    saldo = saldoPersistido
+                )
+            )
+        }
     }
 
     override fun observarHistorial(usuarioId: String, limit: Int): Flow<List<Partida>> {
@@ -58,10 +80,16 @@ class JuegoRepositoryRoom(
         return monederoDao.observeSaldo(usuarioId.toLong()).asFlow().map { it.toDomain() }
     }
 
+    override fun observarUsuario(usuarioId: String): Flow<Usuario?> {
+        return usuarioDao.observeUsuario(usuarioId.toLong()).map { it?.toDomain() }
+    }
+
+
     override suspend fun lanzarDado(usuarioId: String): Partida {
         val usuarioNumero = usuarioId.toLong()
         val monedero = monederoDao.getMonederoSimple(usuarioNumero)
         var saldo = monedero?.saldo ?: 0
+        val alias = usuarioDao.getByNumero(usuarioNumero)?.alias ?: "Jugador"
 
         val dado = (1..6).random()
         val gano = dado == 6
@@ -73,11 +101,14 @@ class JuegoRepositoryRoom(
             usuarioNumero = usuarioNumero,
             fecha = System.currentTimeMillis(),
             resultado = if (gano) Resultado.GANADO else Resultado.PERDIDO,
-            cambioMonedas = cambioMonedas
+            cambioMonedas = cambioMonedas,
+            nombreJugador = alias
         )
         val partidaId = partidaDao.insert(partidaEntity)
 
         monederoDao.actualizarSaldo(usuarioNumero, saldo)
+        usuarioDao.actualizarSaldo(usuarioNumero, saldo)
+        usuarioDao.actualizarUltimoResultado(usuarioNumero, gano)
 
         return partidaEntity.copy(id = partidaId).toDomain()
     }

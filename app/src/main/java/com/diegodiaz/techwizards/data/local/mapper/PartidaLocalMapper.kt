@@ -9,7 +9,8 @@ fun PartidaEntity.toDomain() = Partida(
     usuarioNumero = usuarioNumero,
     fecha = fecha,
     resultado = resultado,
-    deltaMonedas = cambioMonedas
+    deltaMonedas = cambioMonedas,
+    nombreJugador = nombreJugador
 )
 
 fun Partida.toEntity() = PartidaEntity(
@@ -17,5 +18,6 @@ fun Partida.toEntity() = PartidaEntity(
     usuarioNumero = usuarioNumero,
     fecha = fecha,
     resultado = resultado,
-    cambioMonedas = deltaMonedas
+    cambioMonedas = deltaMonedas,
+    nombreJugador = nombreJugador
 )

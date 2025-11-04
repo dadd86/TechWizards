@@ -1,44 +1,31 @@
 -- ================================================================
 -- 📦 BASE DE DATOS: TechWizards (Juego de Azar con Dado)
--- 🧠 OBJETIVO: Persistencia de datos (Room + RxJava3)
--- 📄 AUTOR: Diego Armando Diaz Devia
--- 🗓️ FECHA DE ACTUALIZACIÓN: 2025-10-29 (V2)
+-- 🧠 OBJETIVO: Persistencia segura (Room + RxJava3 + JSON + FKs)
+-- 🔒 VERSIÓN: V3 (Hardening)
 -- ================================================================
 
--- =========================================================
--- 🔧 PRAGMAS (durabilidad y concurrencia en SQLite)
--- =========================================================
-PRAGMA foreign_keys = ON;    -- Enforce FKs (Room también lo activa; lo dejamos explícito)
-PRAGMA journal_mode = WAL;   -- Mejor concurrencia y recuperación
-PRAGMA synchronous = FULL;   -- Máxima durabilidad (cámbialo a NORMAL si priorizas rendimiento)
+PRAGMA foreign_keys = ON;
+PRAGMA journal_mode = WAL;
+PRAGMA synchronous = FULL;
+PRAGMA secure_delete = ON;
+PRAGMA temp_store = MEMORY;
+PRAGMA mmap_size = 134217728;
 
 BEGIN TRANSACTION;
 
--- =========================================================
--- 👤 USUARIO
--- Tabla identidad local del jugador.
--- Columnas (coinciden con tu UsuarioEntity):
---   numero (PK autoincr), usuario (alias), fechaAlta, monedas, gano, firebaseUid
--- =========================================================
+-- ======================= 👤 USUARIO ===============================
 CREATE TABLE IF NOT EXISTS Usuario (
-    numero      INTEGER PRIMARY KEY AUTOINCREMENT,   -- PK (Room: @PrimaryKey(autoGenerate=true))
-    usuario     TEXT    NOT NULL,                    -- alias visible
-    fechaAlta   INTEGER NOT NULL,                    -- epoch millis (en entity lo nombras fechaAltaMs → columna "fechaAlta")
-    monedas     INTEGER NOT NULL DEFAULT 0,
-    gano        INTEGER NOT NULL DEFAULT 0,          -- Boolean en Room (0/1)
-    firebaseUid TEXT UNIQUE                          -- vínculo opcional con Firebase Auth
+    numero       INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario      TEXT    NOT NULL CHECK (length(trim(usuario)) BETWEEN 3 AND 50),
+    fechaAlta    INTEGER NOT NULL CHECK (fechaAlta > 0),
+    monedas      INTEGER NOT NULL DEFAULT 0 CHECK (monedas >= 0),
+    gano         INTEGER NOT NULL DEFAULT 0 CHECK (gano IN (0,1)),
+    firebaseUid  TEXT UNIQUE
 );
 
--- 🔁 MIGRACIÓN LEGADA (si ya existía Usuario sin firebaseUid):
--- ⚠️ SQLite no soporta IF NOT EXISTS en ADD COLUMN; agrégalo en una Migration de Room:
--- ALTER TABLE Usuario ADD COLUMN firebaseUid TEXT UNIQUE;
-
--- =========================================================
--- 🏷️ IDMAP (correspondencia ID local ↔ remoto)
--- Entity: IdMapEntity (PK compuesta localTable+localId; unique en remoteCollection+remoteId)
--- =========================================================
+-- ======================= 🏷️ IDMAP ================================
 CREATE TABLE IF NOT EXISTS IdMap (
-    localTable        TEXT NOT NULL,
+    localTable        TEXT NOT NULL CHECK (length(localTable) > 0),
     localId           TEXT NOT NULL,
     remoteCollection  TEXT NOT NULL,
     remoteId          TEXT NOT NULL,
@@ -46,162 +33,152 @@ CREATE TABLE IF NOT EXISTS IdMap (
     UNIQUE (remoteCollection, remoteId)
 );
 
--- =========================================================
--- 🏠 LOBBY (sala previa a la partida)
--- Entity: LobbyEntity
--- Campos clave: estado en {'PENDING','FULL','CLOSED'}, FK creadorNum -> Usuario.numero
--- =========================================================
+-- ======================= 🏠 LOBBY ================================
 CREATE TABLE IF NOT EXISTS Lobby (
-    id           TEXT PRIMARY KEY,                                         -- UUID/ULID
-    nombre       TEXT NOT NULL,                                            -- visible
-    codigo       TEXT UNIQUE,                                              -- código invitación
-    modo         TEXT NOT NULL,                                            -- "1v1","duos",...
+    id           TEXT PRIMARY KEY,
+    nombre       TEXT NOT NULL CHECK (length(trim(nombre)) > 0),
+    codigo       TEXT UNIQUE,
+    modo         TEXT NOT NULL CHECK (modo IN ('1v1','duos','solo')),
     estado       TEXT NOT NULL CHECK (estado IN ('PENDING','FULL','CLOSED')),
-    creadorNum   INTEGER NOT NULL,                                         -- FK -> Usuario.numero
+    creadorNum   INTEGER NOT NULL,
     createdAtMs  INTEGER NOT NULL,
-    FOREIGN KEY (creadorNum) REFERENCES Usuario(numero) ON DELETE CASCADE
+    FOREIGN KEY (creadorNum) REFERENCES Usuario(numero)
+        ON DELETE CASCADE ON UPDATE CASCADE
 );
-CREATE INDEX IF NOT EXISTS idx_lobby__estado      ON Lobby(estado);
-CREATE INDEX IF NOT EXISTS idx_lobby__created_at  ON Lobby(createdAtMs);
+CREATE INDEX IF NOT EXISTS idx_lobby_estado_createdAt ON Lobby(estado, createdAtMs DESC);
 
--- =========================================================
--- 🎮 MATCH (instancia de partida multijugador)
--- Entity: MatchEntity (alineado con tu dominio)
--- estado ∈ {'PENDING','ACTIVE','FINISHED','CANCELLED'}
--- lobbyId es FK opcional (si proviene de un lobby)
--- =========================================================
+-- ======================= 🎮 MATCH ================================
 CREATE TABLE IF NOT EXISTS Match (
-    id           TEXT PRIMARY KEY,                                         -- UUID/ULID
-    lobbyId      TEXT,                                                     -- FK opcional -> Lobby.id
+    id           TEXT PRIMARY KEY,
+    lobbyId      TEXT,
     modo         TEXT NOT NULL,
     estado       TEXT NOT NULL CHECK (estado IN ('PENDING','ACTIVE','FINISHED','CANCELLED')),
-    createdByNum INTEGER NOT NULL,                                         -- FK -> Usuario.numero (host)
+    createdByNum INTEGER NOT NULL,
     createdAtMs  INTEGER NOT NULL,
     startedAtMs  INTEGER,
     finishedAtMs INTEGER,
-    FOREIGN KEY (createdByNum) REFERENCES Usuario(numero) ON DELETE CASCADE,
-    FOREIGN KEY (lobbyId)     REFERENCES Lobby(id)        ON DELETE SET NULL
+    FOREIGN KEY (createdByNum) REFERENCES Usuario(numero)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (lobbyId) REFERENCES Lobby(id)
+        ON DELETE SET NULL ON UPDATE CASCADE
 );
-CREATE INDEX IF NOT EXISTS idx_match__estado_createdAt ON Match(estado, createdAtMs DESC);
+CREATE INDEX IF NOT EXISTS idx_match_estado_createdAt ON Match(estado, createdAtMs DESC);
 
--- =========================================================
--- 👥 MATCH PARTICIPANT (jugadores dentro de un match)
--- Entity: MatchParticipantEntity (PK compuesta matchId+usuarioNum)
--- =========================================================
+-- ======================= 👥 PARTICIPANTE ==========================
 CREATE TABLE IF NOT EXISTS MatchParticipant (
-    matchId     TEXT    NOT NULL,                                         -- FK -> Match.id
-    usuarioNum  INTEGER NOT NULL,                                         -- FK -> Usuario.numero
-    rol         TEXT,                                                     -- "host","player", etc.
-    teamId      TEXT,                                                     -- etiqueta opcional
+    matchId     TEXT NOT NULL,
+    usuarioNum  INTEGER NOT NULL,
+    rol         TEXT CHECK (rol IN ('host','player','guest')),
+    teamId      TEXT,
     joinedAtMs  INTEGER NOT NULL,
     leftAtMs    INTEGER,
     score       INTEGER NOT NULL DEFAULT 0 CHECK (score >= 0),
     PRIMARY KEY (matchId, usuarioNum),
-    FOREIGN KEY (matchId)    REFERENCES Match(id)    ON DELETE CASCADE,
+    FOREIGN KEY (matchId) REFERENCES Match(id) ON DELETE CASCADE,
     FOREIGN KEY (usuarioNum) REFERENCES Usuario(numero) ON DELETE CASCADE
 );
-CREATE INDEX IF NOT EXISTS idx_participant__match ON MatchParticipant(matchId);
+CREATE INDEX IF NOT EXISTS idx_participant_match ON MatchParticipant(matchId);
 
--- =========================================================
--- 📜 MATCH EVENT (bitácora inmutable de eventos por match)
--- Entity: MatchEventEntity
--- UNIQUE (matchId, seq) asegura orden total por partida
--- =========================================================
+-- ======================= 📜 EVENTOS ==============================
 CREATE TABLE IF NOT EXISTS MatchEvent (
-    id           TEXT PRIMARY KEY,                                         -- UUID/ULID
-    matchId      TEXT    NOT NULL,                                         -- FK -> Match.id
-    seq          INTEGER NOT NULL,                                         -- secuencia por match
-    type         TEXT    NOT NULL,                                         -- "MOVE","BET","ROLL",...
-    actorNum     INTEGER NOT NULL,                                         -- FK -> Usuario.numero
-    payloadJson  TEXT,                                                     -- JSON (sanitizado)
+    id           TEXT PRIMARY KEY,
+    matchId      TEXT NOT NULL,
+    seq          INTEGER NOT NULL,
+    type         TEXT NOT NULL,
+    actorNum     INTEGER NOT NULL,
+    payloadJson  TEXT CHECK (json_valid(payloadJson)),
     createdAtMs  INTEGER NOT NULL,
-    FOREIGN KEY (matchId) REFERENCES Match(id)         ON DELETE CASCADE,
-    FOREIGN KEY (actorNum) REFERENCES Usuario(numero)  ON DELETE CASCADE,
+    FOREIGN KEY (matchId) REFERENCES Match(id) ON DELETE CASCADE,
+    FOREIGN KEY (actorNum) REFERENCES Usuario(numero) ON DELETE CASCADE,
     UNIQUE (matchId, seq)
 );
-CREATE INDEX IF NOT EXISTS idx_event__match_seq ON MatchEvent(matchId, seq);
+CREATE INDEX IF NOT EXISTS idx_event_match_seq ON MatchEvent(matchId, seq);
 
--- =========================================================
--- 💬 MESSAGE (chat de match)
--- Entity: MessageEntity (coincide con tus DAOs; columnas exactas)
--- =========================================================
+-- ======================= 💬 MENSAJES =============================
 CREATE TABLE IF NOT EXISTS Message (
-    id           TEXT PRIMARY KEY,                                         -- UUID/ULID
-    matchId      TEXT    NOT NULL,                                         -- FK -> Match.id
-    senderNum    INTEGER NOT NULL,                                         -- FK -> Usuario.numero
-    text         TEXT    NOT NULL CHECK (length(trim(text)) > 0),
+    id           TEXT PRIMARY KEY,
+    matchId      TEXT NOT NULL,
+    senderNum    INTEGER NOT NULL,
+    text         TEXT NOT NULL CHECK (length(trim(text)) BETWEEN 1 AND 500),
     createdAtMs  INTEGER NOT NULL,
-    FOREIGN KEY (matchId)   REFERENCES Match(id)          ON DELETE CASCADE,
-    FOREIGN KEY (senderNum) REFERENCES Usuario(numero)    ON DELETE CASCADE
+    FOREIGN KEY (matchId) REFERENCES Match(id) ON DELETE CASCADE,
+    FOREIGN KEY (senderNum) REFERENCES Usuario(numero) ON DELETE CASCADE
 );
-CREATE INDEX IF NOT EXISTS idx_message__match_time ON Message(matchId, createdAtMs);
+CREATE INDEX IF NOT EXISTS idx_message_match_time ON Message(matchId, createdAtMs);
 
--- =========================================================
--- 🧮 MATCH SCORE (marcador final por match/usuario)
--- Entity: MatchScoreEntity (PK compuesta matchId+usuarioNum)
--- =========================================================
-CREATE TABLE IF NOT EXISTS MatchScore (
-    matchId     TEXT    NOT NULL,                                         -- FK -> Match.id
-    usuarioNum  INTEGER NOT NULL,                                         -- FK -> Usuario.numero
-    score       INTEGER NOT NULL CHECK (score >= 0),
-    PRIMARY KEY (matchId, usuarioNum),
-    FOREIGN KEY (matchId)    REFERENCES Match(id)       ON DELETE CASCADE,
-    FOREIGN KEY (usuarioNum) REFERENCES Usuario(numero) ON DELETE CASCADE
-);
-
--- =========================================================
--- 💰 MONEDERO (saldo por usuario)
--- Entity: MonederoEntity (alineado a tu dominio: id, usuarioNumero, saldo)
--- =========================================================
+-- ======================= 💰 MONEDERO =============================
 CREATE TABLE IF NOT EXISTS Monedero (
-    id            TEXT PRIMARY KEY,                                       -- p.ej. "wallet_<usuarioNumero>"
-    usuarioNumero INTEGER NOT NULL,                                       -- FK -> Usuario.numero
+    id            TEXT PRIMARY KEY,
+    usuarioNumero INTEGER NOT NULL,
     saldo         INTEGER NOT NULL DEFAULT 0 CHECK (saldo >= 0),
     FOREIGN KEY (usuarioNumero) REFERENCES Usuario(numero) ON DELETE CASCADE
 );
-CREATE INDEX IF NOT EXISTS idx_monedero__usuario ON Monedero(usuarioNumero);
+CREATE INDEX IF NOT EXISTS idx_monedero_usuario ON Monedero(usuarioNumero);
 
--- =========================================================
--- 🗓️ EVENTO (misiones/retos/torneos)
--- Tabla en minúscula: "evento" (coincide con tu IEventoDao)
--- Entity: EventoEntity
--- =========================================================
-CREATE TABLE IF NOT EXISTS evento (
-    id           TEXT    PRIMARY KEY,
-    nombre       TEXT    NOT NULL,
-    descripcion  TEXT    NOT NULL,
-    fechaInicio  INTEGER NOT NULL,                                        -- epoch millis
-    fechaFin     INTEGER NOT NULL,                                        -- epoch millis
-    completado   INTEGER NOT NULL DEFAULT 0                               -- Boolean (0/1)
+-- ======================= 🧮 SCORE ================================
+CREATE TABLE IF NOT EXISTS MatchScore (
+    matchId     TEXT NOT NULL,
+    usuarioNum  INTEGER NOT NULL,
+    score       INTEGER NOT NULL CHECK (score >= 0),
+    PRIMARY KEY (matchId, usuarioNum),
+    FOREIGN KEY (matchId) REFERENCES Match(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuarioNum) REFERENCES Usuario(numero) ON DELETE CASCADE
 );
-CREATE INDEX IF NOT EXISTS idx_evento__inicio ON evento(fechaInicio);
 
--- =========================================================
--- 📤 OUTBOX (operaciones idempotentes pendientes de sincronizar)
--- Entity: OutboxEntity
--- =========================================================
+-- ======================= 🗓️ EVENTO ==============================
+CREATE TABLE IF NOT EXISTS evento (
+    id           TEXT PRIMARY KEY,
+    nombre       TEXT NOT NULL CHECK (length(trim(nombre)) > 0),
+    descripcion  TEXT NOT NULL CHECK (length(trim(descripcion)) > 0),
+    fechaInicio  INTEGER NOT NULL,
+    fechaFin     INTEGER NOT NULL,
+    completado   INTEGER NOT NULL DEFAULT 0 CHECK (completado IN (0,1))
+);
+CREATE INDEX IF NOT EXISTS idx_evento_inicio ON evento(fechaInicio);
+
+-- ======================= 📤 OUTBOX ===============================
 CREATE TABLE IF NOT EXISTS Outbox (
-    operationId  TEXT PRIMARY KEY,                                        -- UUID del intento
-    entityType   TEXT    NOT NULL,
-    entityId     TEXT    NOT NULL,
-    op           TEXT    NOT NULL CHECK (op IN ('CREATE','UPDATE','DELETE')),
-    payloadJson  TEXT    NOT NULL,
-    attempt      INTEGER NOT NULL DEFAULT 0,
+    operationId  TEXT PRIMARY KEY,
+    entityType   TEXT NOT NULL,
+    entityId     TEXT NOT NULL,
+    op           TEXT NOT NULL CHECK (op IN ('CREATE','UPDATE','DELETE')),
+    payloadJson  TEXT NOT NULL CHECK (json_valid(payloadJson)),
+    attempt      INTEGER NOT NULL DEFAULT 0 CHECK (attempt >= 0),
     lastError    TEXT,
     createdAtMs  INTEGER NOT NULL,
     updatedAtMs  INTEGER NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_outbox__entity ON Outbox(entityType, entityId);
+CREATE INDEX IF NOT EXISTS idx_outbox_entity ON Outbox(entityType, entityId);
 
--- =========================================================
--- 🪦 TOMBSTONE (borrados lógicos para replicación)
--- Entity: TombstoneEntity (PK compuesta tableName+entityId)
--- =========================================================
+-- ======================= 🪦 TOMBSTONE ============================
 CREATE TABLE IF NOT EXISTS Tombstone (
-    tableName    TEXT    NOT NULL,
-    entityId     TEXT    NOT NULL,
+    tableName    TEXT NOT NULL,
+    entityId     TEXT NOT NULL,
     deletedAtMs  INTEGER NOT NULL,
     PRIMARY KEY (tableName, entityId)
 );
+
+-- ======================= 🧩 PARTIDA ==============================
+CREATE TABLE IF NOT EXISTS Partida (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuarioNumero  INTEGER NOT NULL REFERENCES Usuario(numero)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    fecha          INTEGER NOT NULL,
+    resultado      TEXT    NOT NULL CHECK (resultado IN ('GANADO','PERDIDO')),
+    cambioMonedas  INTEGER NOT NULL,
+    nombreJugador  TEXT    NOT NULL DEFAULT '' CHECK (length(nombreJugador) <= 60)
+);
+CREATE INDEX IF NOT EXISTS idx_partida_usuario_fecha ON Partida(usuarioNumero, fecha DESC);
+
+-- FKs hijos (recomendado)
+CREATE INDEX IF NOT EXISTS idx_lobby_creadorNum            ON Lobby(creadorNum);
+CREATE INDEX IF NOT EXISTS idx_match_createdByNum          ON Match(createdByNum);
+CREATE INDEX IF NOT EXISTS idx_match_lobbyId               ON Match(lobbyId);
+-- MatchParticipant tiene PK (matchId, usuarioNum): ya indexa ambas.
+CREATE INDEX IF NOT EXISTS idx_message_senderNum           ON Message(senderNum);
+-- Message(matchId) ya indexado por (matchId, createdAtMs) -> OK
+CREATE INDEX IF NOT EXISTS idx_monedero_usuarioNumero      ON Monedero(usuarioNumero);
+-- MatchScore: PK (matchId, usuarioNum) -> ya indexa ambas
+-- Partida ya tiene (usuarioNumero, fecha DESC) -> OK
 
 COMMIT;

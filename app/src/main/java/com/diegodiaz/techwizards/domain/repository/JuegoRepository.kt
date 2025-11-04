@@ -29,5 +29,6 @@ interface JuegoRepository {
 
     fun observarHistorial(usuarioId: String, limit: Int = 50): Flow<List<Partida>> //devuelve el historial de partidas
     fun observarMonedero(usuarioId: String): Flow<Monedero> //observa el monedero del usuario en tiempo real
+    fun observarUsuario(usuarioId: String): Flow<Usuario?> //expone el alias persistido del jugador
     suspend fun lanzarDado(usuarioId: String): Partida //simular el lanzamiento de dado, modificar el saldo y guardar resultado
 }

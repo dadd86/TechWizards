@@ -38,7 +38,10 @@ data class PartidaEntity(
     val resultado: Resultado,
 
     @ColumnInfo(name = "cambioMonedas")
-    val cambioMonedas: Int
+    val cambioMonedas: Int,
+
+    @ColumnInfo(name = "nombreJugador")
+    val nombreJugador: String
 )
 
 enum class Resultado { GANADO, PERDIDO }

@@ -6,7 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.diegodiaz.techwizards.data.local.entity.UsuarioEntity
 import io.reactivex.rxjava3.core.Maybe
-
+import kotlinx.coroutines.flow.Flow
 @Dao
 interface IUsuarioDao {
 
@@ -35,5 +35,8 @@ interface IUsuarioDao {
 
     @Query("DELETE FROM usuario")
     fun borrarTodo()
+
+    @Query("SELECT * FROM Usuario WHERE numero = :numero LIMIT 1")
+    fun observeUsuario(numero: Long): Flow<UsuarioEntity?>
 
 }

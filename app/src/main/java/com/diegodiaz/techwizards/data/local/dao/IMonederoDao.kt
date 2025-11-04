@@ -28,4 +28,7 @@ interface IMonederoDao {
 
     @Query("DELETE FROM usuario")
     fun borrarTodo()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertSuspend(entity: MonederoEntity)
 }
