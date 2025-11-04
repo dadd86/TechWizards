@@ -33,7 +33,7 @@ fun PantallaHistorial(
     val listState = rememberLazyListState()
 
     // Pesos de columnas ajustados por el lado corto (para móviles muy estrechos)
-    val (wFecha, wRes, wDelta) = pesosPorAncho(dims.minSide)
+    val pesos = pesosPorAncho(dims.minSide)
 
     Scaffold(
         containerColor = fondo,
@@ -104,20 +104,26 @@ fun PantallaHistorial(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         HeaderCell(
+                            text = "Jugador",
+                            modifier = Modifier.weight(pesos.jugador, fill = true),
+                            size = if (dims.minSide < 360.dp) dims.bodySp * 0.9f else dims.bodySp,
+                            align = TextAlign.Start
+                        )
+                        HeaderCell(
                             text = "Fecha",
-                            modifier = Modifier.weight(wFecha, fill = true),
+                            modifier = Modifier.weight(pesos.fecha, fill = true),
                             size = if (dims.minSide < 360.dp) dims.bodySp * 0.9f else dims.bodySp,
                             align = TextAlign.Start
                         )
                         HeaderCell(
                             text = "Resultado",
-                            modifier = Modifier.weight(wRes, fill = true),
+                            modifier = Modifier.weight(pesos.resultado, fill = true),
                             size = if (dims.minSide < 360.dp) dims.bodySp * 0.9f else dims.bodySp,
                             align = TextAlign.Center
                         )
                         HeaderCell(
                             text = "Monedas",
-                            modifier = Modifier.weight(wDelta, fill = true),
+                            modifier = Modifier.weight(pesos.deltaMonedas, fill = true),
                             size = if (dims.minSide < 360.dp) dims.bodySp * 0.9f else dims.bodySp,
                             align = TextAlign.End
                         )
@@ -160,21 +166,27 @@ fun PantallaHistorial(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     BodyCell(
+                                        text = partida.aliasJugador,
+                                        modifier = Modifier.weight(pesos.jugador, fill = true),
+                                        dims = dims,
+                                        align = TextAlign.Start,
+                                        bold = true
+                                    )
+                                    BodyCell(
                                         text = partida.fecha.formateaComoFecha(),
-                                        modifier = Modifier.weight(wFecha, fill = true),
+                                        modifier = Modifier.weight(pesos.fecha, fill = true),
                                         dims = dims,
                                         align = TextAlign.Start
                                     )
                                     BodyCell(
                                         text = if (partida.resultado == Resultado.GANADO) "Ganó" else "Perdió",
-                                        modifier = Modifier.weight(wRes, fill = true),
+                                        modifier = Modifier.weight(pesos.resultado, fill = true),
                                         dims = dims,
-                                        align = TextAlign.Center,
-                                        bold = true
+                                        align = TextAlign.Center
                                     )
                                     BodyCell(
                                         text = if (partida.deltaMonedas >= 0) "+${partida.deltaMonedas}" else partida.deltaMonedas.toString(),
-                                        modifier = Modifier.weight(wDelta, fill = true),
+                                        modifier = Modifier.weight(pesos.deltaMonedas, fill = true),
                                         dims = dims,
                                         align = TextAlign.End
                                     )
@@ -233,16 +245,26 @@ private fun BodyCell(
 
 /* ---------------------------- Utilidades ---------------------------- */
 
-private fun pesosPorAncho(minSide: Dp): Triple<Float, Float, Float> =
+private data class PesosColumnas(
+    val jugador: Float,
+    val fecha: Float,
+    val resultado: Float,
+    val deltaMonedas: Float
+)
+
+/**
+ * Ajusta los pesos de las columnas según el ancho disponible.
+ */
+private fun pesosPorAncho(minSide: Dp): PesosColumnas =
     if (minSide < 360.dp) {
-        // pantallas muy estrechas: fecha y resultado más compactos
-        Triple(0.42f, 0.32f, 0.26f)   // Fecha, Resultado, Monedas
+        PesosColumnas(jugador = 0.28f, fecha = 0.30f, resultado = 0.22f, deltaMonedas = 0.20f)
     } else {
-        // pantallas normales: todavía más aire para Monedas
-        Triple(0.44f, 0.30f, 0.26f)
+        PesosColumnas(jugador = 0.26f, fecha = 0.30f, resultado = 0.24f, deltaMonedas = 0.20f)
     }
 
-
+/**
+ * Formatea una marca de tiempo en formato corto amigable.
+ */
 fun Long.formateaComoFecha(): String {
     val date = java.util.Date(this)
     val format = java.text.SimpleDateFormat("dd/MM/yyyy")

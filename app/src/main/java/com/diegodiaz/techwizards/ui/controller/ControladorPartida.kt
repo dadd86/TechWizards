@@ -8,27 +8,13 @@ import com.diegodiaz.techwizards.domain.model.Monedero
 import com.diegodiaz.techwizards.domain.model.Partida
 import com.diegodiaz.techwizards.domain.repository.JuegoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
-import com.diegodiaz.techwizards.domain.model.formatoResumen
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/**
- * Estado de la pantalla de partida.
- *
- * @property nombreJugador Alias vigente del jugador.
- * @property monedas Saldo mostrado en la UI.
- * @property numeroElegido Último número seleccionado para lanzar el dado.
- * @property ultimoResultado Resumen textual del último resultado registrado.
- * @property cargando Indicador de progreso para operaciones en curso.
- * @property error Mensaje de error a mostrar en pantalla.
- * @security
- * - No exponer identificadores sensibles en `error` sin redactarlos.
- */
 data class JuegoUiState(
-    val nombreJugador: String = "",
     val monedas: Int = 100,
     val numeroElegido: Int? = null,
     val ultimoResultado: String = "",
@@ -36,10 +22,14 @@ data class JuegoUiState(
     val error: String? = null
 )
 
-
 /**
- * ViewModel que orquesta la experiencia de juego del dado.
+ * Devuelve un texto descriptivo del resultado más reciente incorporando el alias del jugador.
  */
+fun Partida.formatoResumen(): String = when (resultado) {
+    Resultado.GANADO -> "${aliasJugador} ganó (+$deltaMonedas)"
+    Resultado.PERDIDO -> "${aliasJugador} perdió ($deltaMonedas)"
+}
+
 class ControladorPartida (
     private val repo: JuegoRepository,
     private val usuarioId: String
@@ -47,12 +37,9 @@ class ControladorPartida (
 
     val ui: StateFlow<JuegoUiState> = combine(
         repo.observarMonedero(usuarioId),
-        repo.observarHistorial(usuarioId),
-        repo.observarUsuario(usuarioId)
-        ) { monedero, historial, usuario ->
-        val alias = usuario?.alias ?: historial.firstOrNull()?.nombreJugador.orEmpty()
+        repo.observarHistorial(usuarioId)
+    ) { monedero: Monedero, historial: List<Partida> ->
         JuegoUiState(
-            nombreJugador = alias,
             monedas = monedero.saldo,
             ultimoResultado = historial.firstOrNull()?.formatoResumen() ?: "",
             cargando = false,

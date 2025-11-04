@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "fbabe35cde15682d82f76bf0836d6e16",
+    "identityHash": "5315e65a1d3c32222cd69709f025262d",
     "entities": [
       {
         "tableName": "Usuario",
@@ -88,7 +88,7 @@
       },
       {
         "tableName": "Partida",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `usuarioNumero` INTEGER NOT NULL, `fecha` INTEGER NOT NULL, `resultado` TEXT NOT NULL, `cambioMonedas` INTEGER NOT NULL, FOREIGN KEY(`usuarioNumero`) REFERENCES `Usuario`(`numero`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `usuarioNumero` INTEGER NOT NULL, `fecha` INTEGER NOT NULL, `resultado` TEXT NOT NULL, `cambioMonedas` INTEGER NOT NULL, `nombreJugador` TEXT NOT NULL, FOREIGN KEY(`usuarioNumero`) REFERENCES `Usuario`(`numero`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -118,6 +118,12 @@
             "fieldPath": "cambioMonedas",
             "columnName": "cambioMonedas",
             "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombreJugador",
+            "columnName": "nombreJugador",
+            "affinity": "TEXT",
             "notNull": true
           }
         ],
@@ -910,7 +916,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fbabe35cde15682d82f76bf0836d6e16')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5315e65a1d3c32222cd69709f025262d')"
     ]
   }
 }

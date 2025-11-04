@@ -44,37 +44,29 @@ class JuegoRepositoryRoom(
     // ------- Coroutines ---------
     override fun observarSaldo(usuarioId: String): Flow<Monedero> =
         monederoDao.observeSaldo(usuarioId.toLong()).asFlow().map { it.toDomain() }
-
+    /**
+     * Garantiza que exista el usuario y su monedero antes de iniciar la sesión de juego.
+     *
+     * @param usuario Perfil local del jugador.
+     * @param monedasIniciales Saldo inicial usado en caso de crear el monedero por primera vez.
+     */
     override suspend fun inicializarMonedas(usuario: Usuario, monedasIniciales: Int) {
-        val numero = usuario.numero
-        val existente = usuarioDao.getByNumero(numero)
-        val monederoActual = monederoDao.getMonederoSimple(numero)
-        val saldoPersistido = monederoActual?.saldo ?: monedasIniciales
-
-        val entidad = usuario.toEntity().copy(
-            fechaAltaMs = existente?.fechaAltaMs ?: usuario.fechaAltaMs,
-            monedas = saldoPersistido,
-            ganoUltimaPartida = existente?.ganoUltimaPartida ?: usuario.ganoUltimaPartida,
-            firebaseUid = existente?.firebaseUid ?: usuario.firebaseUid
-        )
-
-        usuarioDao.upsertSuspend(entidad)
-
-        if (monederoActual == null) {
-            monederoDao.upsertSuspend(
-                MonederoEntity(
-                    id = "wallet_$numero",
-                    usuarioNumero = numero,
-                    saldo = saldoPersistido
-                )
+        usuarioDao.upsertSuspend(usuario.toEntity())
+        val saldoActual = monederoDao.getMonederoSimple(usuario.numero)?.saldo ?: monedasIniciales
+        monederoDao.upsertSuspend(
+            MonederoEntity(
+                id = "wallet_${usuario.numero}",
+                usuarioNumero = usuario.numero,
+                saldo = saldoActual
             )
-        }
+        )
     }
 
     override fun observarHistorial(usuarioId: String, limit: Int): Flow<List<Partida>> {
         return partidaDao.observarHistorial(usuarioId.toLong(), limit)
-            .map { lista: List<PartidaEntity> -> lista.map { it.toDomain() } }
+            .map { lista -> lista.map { it.toDomain() } }
     }
+
 
     override fun observarMonedero(usuarioId: String): Flow<Monedero> {
         return monederoDao.observeSaldo(usuarioId.toLong()).asFlow().map { it.toDomain() }
@@ -107,10 +99,10 @@ class JuegoRepositoryRoom(
         val partidaId = partidaDao.insert(partidaEntity)
 
         monederoDao.actualizarSaldo(usuarioNumero, saldo)
-        usuarioDao.actualizarSaldo(usuarioNumero, saldo)
-        usuarioDao.actualizarUltimoResultado(usuarioNumero, gano)
+        val usuario = usuarioDao.getByNumero(usuarioNumero)
+            ?: error("Usuario inexistente para registrar partida")
 
-        return partidaEntity.copy(id = partidaId).toDomain()
+        return partidaEntity.copy(id = partidaId).toDomain(usuario.alias)
     }
 
 }

@@ -1,9 +1,28 @@
--- ================================================================
--- 📦 BASE DE DATOS: TechWizards (Juego de Azar con Dado)
--- 🧠 OBJETIVO: Persistencia segura (Room + RxJava3 + JSON + FKs)
--- 🔒 VERSIÓN: V3 (Hardening)
--- ================================================================
+/* =====================================================================
+   📦 TechWizards – Esquema SQLite (V3 Hardened)
+   Objetivo:
+     - Persistencia local segura para juego de azar con dado.
+     - Integración con Room + RxJava3 (y DataStore para settings).
+   Seguridad:
+     - FKs estrictas, CHECKs de dominio, json_valid() donde aplica.
+     - PRAGMAs para durabilidad/recuperación y borrado seguro.
+   Rendimiento:
+     - WAL + índices en todas las FKs hijas y consultas frecuentes.
+   Migraciones:
+     - Usa Room Migration para ALTER/RENAME si cambian nombres.
+   ===================================================================== */
 
+-- ===========================
+-- 🔧 PRAGMAS – Durabilidad & Seguridad
+-- ===========================
+/*
+  foreign_keys     : obliga integridad referencial a nivel SQLite (Room también).
+  journal_mode=WAL : concurrencia lecturas/escrituras y recuperación rápida.
+  synchronous=FULL : máxima durabilidad (puedes bajar a NORMAL si necesitas más rendimiento).
+  secure_delete    : sobre-escribe páginas borradas (reduce recuperación de datos borrados).
+  temp_store=MEMORY: objetos temporales en RAM (menos E/S).
+  mmap_size        : activa mapeo de memoria (optimiza lecturas grandes).
+*/
 PRAGMA foreign_keys = ON;
 PRAGMA journal_mode = WAL;
 PRAGMA synchronous = FULL;
@@ -13,7 +32,14 @@ PRAGMA mmap_size = 134217728;
 
 BEGIN TRANSACTION;
 
--- ======================= 👤 USUARIO ===============================
+-- =====================================================================
+-- 👤 USUARIO
+--   Modelo de identidad local del jugador.
+--   Room: mapea booleanos a INTEGER (0/1) vía TypeConverter.
+--   Notas:
+--     - 'usuario' es el "alias" visible (3..50).
+--     - 'fechaAlta' es epoch millis (>0).
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS Usuario (
     numero       INTEGER PRIMARY KEY AUTOINCREMENT,
     usuario      TEXT    NOT NULL CHECK (length(trim(usuario)) BETWEEN 3 AND 50),
@@ -22,8 +48,17 @@ CREATE TABLE IF NOT EXISTS Usuario (
     gano         INTEGER NOT NULL DEFAULT 0 CHECK (gano IN (0,1)),
     firebaseUid  TEXT UNIQUE
 );
+/* Room Sugerido:
+   @ColumnInfo(name="usuario") val alias: String
+   @ColumnInfo(name="fechaAlta") val fechaAltaMs: Long
+   @ColumnInfo(name="gano") val ganoUltimaPartida: Boolean
+*/
 
--- ======================= 🏷️ IDMAP ================================
+-- =====================================================================
+-- 🏷️ IDMAP – Correlación Local↔Remoto
+--   Uso: desambiguar ids de Firestore/REST frente a ids locales.
+--   Unicidad bidireccional: (localTable, localId) y (remoteCollection, remoteId)
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS IdMap (
     localTable        TEXT NOT NULL CHECK (length(localTable) > 0),
     localId           TEXT NOT NULL,
@@ -33,7 +68,12 @@ CREATE TABLE IF NOT EXISTS IdMap (
     UNIQUE (remoteCollection, remoteId)
 );
 
--- ======================= 🏠 LOBBY ================================
+-- =====================================================================
+-- 🏠 LOBBY – Sala previa a partida
+--   Dominio: estado ∈ {PENDING, FULL, CLOSED}
+--   FKs: creadorNum → Usuario.numero (CASCADE)
+--   Índices: (estado, createdAtMs DESC) + idx FK (abajo)
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS Lobby (
     id           TEXT PRIMARY KEY,
     nombre       TEXT NOT NULL CHECK (length(trim(nombre)) > 0),
@@ -46,8 +86,17 @@ CREATE TABLE IF NOT EXISTS Lobby (
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_lobby_estado_createdAt ON Lobby(estado, createdAtMs DESC);
+/* Room Sugerido:
+   @ColumnInfo(name="creadorNum") val creadorNumero: Long
+   TypeConverter<LobbyEstado↔String>
+*/
 
--- ======================= 🎮 MATCH ================================
+-- =====================================================================
+-- 🎮 MATCH – Instancia de partida
+--   Dominio: estado ∈ {PENDING, ACTIVE, FINISHED, CANCELLED}
+--   FKs: createdByNum → Usuario.numero (CASCADE)
+--        lobbyId → Lobby.id (SET NULL) – match puede no venir de lobby
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS Match (
     id           TEXT PRIMARY KEY,
     lobbyId      TEXT,
@@ -63,8 +112,16 @@ CREATE TABLE IF NOT EXISTS Match (
         ON DELETE SET NULL ON UPDATE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_match_estado_createdAt ON Match(estado, createdAtMs DESC);
+/* Room Sugerido:
+   @ColumnInfo(name="createdByNum") val createdByNumero: Long
+   TypeConverter<MatchEstado↔String>
+*/
 
--- ======================= 👥 PARTICIPANTE ==========================
+-- =====================================================================
+-- 👥 MATCH PARTICIPANT – Jugadores en un match
+--   PK compuesta: (matchId, usuarioNum) → ya indexa ambas FKs.
+--   'rol' con CHECK para evitar valores arbitrarios.
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS MatchParticipant (
     matchId     TEXT NOT NULL,
     usuarioNum  INTEGER NOT NULL,
@@ -78,8 +135,15 @@ CREATE TABLE IF NOT EXISTS MatchParticipant (
     FOREIGN KEY (usuarioNum) REFERENCES Usuario(numero) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_participant_match ON MatchParticipant(matchId);
+/* Room Sugerido:
+   @ColumnInfo(name="usuarioNum") val usuarioNumero: Long
+*/
 
--- ======================= 📜 EVENTOS ==============================
+-- =====================================================================
+-- 📜 MATCH EVENT – Bitácora inmutable
+--   Unicidad: (matchId, seq) asegura orden total.
+--   payloadJson validado con json_valid() para evitar basura.
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS MatchEvent (
     id           TEXT PRIMARY KEY,
     matchId      TEXT NOT NULL,
@@ -93,8 +157,15 @@ CREATE TABLE IF NOT EXISTS MatchEvent (
     UNIQUE (matchId, seq)
 );
 CREATE INDEX IF NOT EXISTS idx_event_match_seq ON MatchEvent(matchId, seq);
+/* Room Sugerido:
+   @ColumnInfo(name="actorNum") val actorNumero: Long
+*/
 
--- ======================= 💬 MENSAJES =============================
+-- =====================================================================
+-- 💬 MESSAGE – Chat del match
+--   CHECK de longitud (1..500) y trim().
+--   Índice (matchId, createdAtMs) para listados cronológicos.
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS Message (
     id           TEXT PRIMARY KEY,
     matchId      TEXT NOT NULL,
@@ -105,8 +176,14 @@ CREATE TABLE IF NOT EXISTS Message (
     FOREIGN KEY (senderNum) REFERENCES Usuario(numero) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_message_match_time ON Message(matchId, createdAtMs);
+/* Room Sugerido:
+   @ColumnInfo(name="senderNum") val senderNumero: Long
+*/
 
--- ======================= 💰 MONEDERO =============================
+-- =====================================================================
+-- 💰 MONEDERO – Saldo por usuario
+--   CHECK saldo ≥ 0 para evitar negativos accidentales.
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS Monedero (
     id            TEXT PRIMARY KEY,
     usuarioNumero INTEGER NOT NULL,
@@ -115,7 +192,10 @@ CREATE TABLE IF NOT EXISTS Monedero (
 );
 CREATE INDEX IF NOT EXISTS idx_monedero_usuario ON Monedero(usuarioNumero);
 
--- ======================= 🧮 SCORE ================================
+-- =====================================================================
+-- 🧮 MATCH SCORE – Puntaje final por jugador/match
+--   PK compuesta (matchId, usuarioNum) evita duplicados.
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS MatchScore (
     matchId     TEXT NOT NULL,
     usuarioNum  INTEGER NOT NULL,
@@ -124,8 +204,14 @@ CREATE TABLE IF NOT EXISTS MatchScore (
     FOREIGN KEY (matchId) REFERENCES Match(id) ON DELETE CASCADE,
     FOREIGN KEY (usuarioNum) REFERENCES Usuario(numero) ON DELETE CASCADE
 );
+/* Room Sugerido:
+   @ColumnInfo(name="usuarioNum") val usuarioNumero: Long
+*/
 
--- ======================= 🗓️ EVENTO ==============================
+-- =====================================================================
+-- 🗓️ EVENTO – Misiones/retos/torneos
+--   Booleans como INTEGER (0/1) – usa TypeConverter en Room.
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS evento (
     id           TEXT PRIMARY KEY,
     nombre       TEXT NOT NULL CHECK (length(trim(nombre)) > 0),
@@ -136,7 +222,11 @@ CREATE TABLE IF NOT EXISTS evento (
 );
 CREATE INDEX IF NOT EXISTS idx_evento_inicio ON evento(fechaInicio);
 
--- ======================= 📤 OUTBOX ===============================
+-- =====================================================================
+-- 📤 OUTBOX – Operaciones idempotentes para sync
+--   payloadJson validado; attempt ≥ 0; op restringido.
+--   Índice por (entityType, entityId) para búsquedas rápidas.
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS Outbox (
     operationId  TEXT PRIMARY KEY,
     entityType   TEXT NOT NULL,
@@ -150,7 +240,10 @@ CREATE TABLE IF NOT EXISTS Outbox (
 );
 CREATE INDEX IF NOT EXISTS idx_outbox_entity ON Outbox(entityType, entityId);
 
--- ======================= 🪦 TOMBSTONE ============================
+-- =====================================================================
+-- 🪦 TOMBSTONE – Borrado lógico para replicación
+--   PK compuesta: (tableName, entityId).
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS Tombstone (
     tableName    TEXT NOT NULL,
     entityId     TEXT NOT NULL,
@@ -158,7 +251,11 @@ CREATE TABLE IF NOT EXISTS Tombstone (
     PRIMARY KEY (tableName, entityId)
 );
 
--- ======================= 🧩 PARTIDA ==============================
+-- =====================================================================
+-- 🧩 PARTIDA – Historial de tiradas del dado (singleplayer)
+--   Dominio: resultado ∈ {'GANADO','PERDIDO'} (si agregas EMPATE, adapta CHECK)
+--   'nombreJugador' auxiliar para UI; ignorable en dominio.
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS Partida (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     usuarioNumero  INTEGER NOT NULL REFERENCES Usuario(numero)
@@ -169,16 +266,29 @@ CREATE TABLE IF NOT EXISTS Partida (
     nombreJugador  TEXT    NOT NULL DEFAULT '' CHECK (length(nombreJugador) <= 60)
 );
 CREATE INDEX IF NOT EXISTS idx_partida_usuario_fecha ON Partida(usuarioNumero, fecha DESC);
+/* Room Sugerido:
+   @ColumnInfo(name="cambioMonedas") val deltaMonedas: Int
+   TypeConverter<Resultado↔String> (‘GANADO’/‘PERDIDO’)
+*/
 
--- FKs hijos (recomendado)
+-- =====================================================================
+-- 📚 Índices extra para columnas FK (evitan table scans en updates)
+--   (algunas ya cubiertas por PK compuestas o índices previos)
+-- =====================================================================
 CREATE INDEX IF NOT EXISTS idx_lobby_creadorNum            ON Lobby(creadorNum);
 CREATE INDEX IF NOT EXISTS idx_match_createdByNum          ON Match(createdByNum);
 CREATE INDEX IF NOT EXISTS idx_match_lobbyId               ON Match(lobbyId);
--- MatchParticipant tiene PK (matchId, usuarioNum): ya indexa ambas.
 CREATE INDEX IF NOT EXISTS idx_message_senderNum           ON Message(senderNum);
--- Message(matchId) ya indexado por (matchId, createdAtMs) -> OK
 CREATE INDEX IF NOT EXISTS idx_monedero_usuarioNumero      ON Monedero(usuarioNumero);
--- MatchScore: PK (matchId, usuarioNum) -> ya indexa ambas
--- Partida ya tiene (usuarioNumero, fecha DESC) -> OK
+/* No se crean para MatchScore/Participant porque sus PK compuestas
+   ya indexan las columnas. */
 
 COMMIT;
+
+/* ========================== ✅ Notas finales ==========================
+- Booleans en Room: usa @TypeConverter(Int↔Boolean).
+- Enums (LobbyEstado, MatchEstado, Resultado): @TypeConverter(String↔Enum).
+- Logs: no registres payloadJson completo; redacta PII si existiera.
+- Backups: considera cifrado a nivel OS (EncryptedFile) o SQLCipher si es requisito.
+- DataStore: usa DataStore Preferences para GameSettings (no requiere tabla).
+====================================================================== */

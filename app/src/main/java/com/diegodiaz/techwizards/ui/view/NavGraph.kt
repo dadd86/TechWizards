@@ -11,14 +11,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-
+import androidx.compose.runtime.mutableStateOf
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
 import com.diegodiaz.techwizards.data.repository.impl.JuegoRepositoryRoom
+import com.diegodiaz.techwizards.data.local.mapper.toDomain
 import com.diegodiaz.techwizards.domain.model.Usuario
 import com.diegodiaz.techwizards.ui.controller.ControladorPartida
 import com.diegodiaz.techwizards.ui.controller.ControladorPartidaFactory
 import io.reactivex.rxjava3.schedulers.Schedulers
 import com.diegodiaz.techwizards.ui.responsive.Responsive
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 
 @Composable
@@ -34,22 +37,14 @@ fun NavGraph(
     val monederoDao = db.monederoDao()
     val partidaDao = db.partidaDao()
     val repo = remember { JuegoRepositoryRoom(usuarioDao, monederoDao, partidaDao) }
-    val usuarioNumero = 1L
-    val usuarioId = usuarioNumero.toString()
+    val scope = rememberCoroutineScope()
+    val usuarioActual = remember { mutableStateOf<Usuario?>(null) }
     LaunchedEffect(Unit) {
-        val usuario = Usuario(
-            numero = usuarioNumero,
-            alias = "Tester",
-            fechaAltaMs = System.currentTimeMillis(),
-            monedas = 100,
-            ganoUltimaPartida = false,
-            firebaseUid = null
-        )
-        // Esto crea  un usuario de prueba
-        repo.inicializarMonedasRx(usuario, 100)
-            .subscribeOn(Schedulers.io())
-            .subscribe({}, { throwable -> throwable.printStackTrace() })
+        val existente = usuarioDao.obtenerUsuarioPrincipal()
+        usuarioActual.value = existente?.toDomain()
     }
+
+    val usuarioId = (usuarioActual.value?.numero ?: 1L).toString()
 
     NavHost(
         navController = navController,
@@ -59,7 +54,26 @@ fun NavGraph(
         composable("bienvenida") {
             PantallaBienvenida(
                 isDarkTheme = isDarkTheme,
-                onJugar = { navController.navigate("menu") }
+                nombrePredeterminado = usuarioActual.value?.alias,
+                onJugar = { nombre ->
+                    scope.launch {
+                        val existente = usuarioActual.value
+                        val usuario = Usuario(
+                            numero = existente?.numero ?: 1L,
+                            alias = nombre,
+                            fechaAltaMs = existente?.fechaAltaMs ?: System.currentTimeMillis(),
+                            monedas = existente?.monedas ?: 100,
+                            ganoUltimaPartida = existente?.ganoUltimaPartida ?: false,
+                            firebaseUid = existente?.firebaseUid
+                        )
+                        repo.inicializarMonedas(usuario, usuario.monedas)
+                        val actualizado = usuarioDao.obtenerUsuarioPrincipal()?.toDomain() ?: usuario
+                        usuarioActual.value = actualizado
+                        navController.navigate("menu") {
+                            popUpTo("bienvenida") { inclusive = true }
+                        }
+                    }
+                }
             )
         }
         composable("menu") {

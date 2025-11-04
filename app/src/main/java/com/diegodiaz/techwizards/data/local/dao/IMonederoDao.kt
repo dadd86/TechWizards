@@ -29,6 +29,11 @@ interface IMonederoDao {
     @Query("DELETE FROM usuario")
     fun borrarTodo()
 
+    /**
+     * Inserta o actualiza el saldo del monedero usando corrutinas.
+     *
+     * @param entity Registro a persistir.
+     */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertSuspend(entity: MonederoEntity)
 }
