@@ -8,13 +8,13 @@ import io.reactivex.rxjava3.core.Flowable
 import kotlinx.coroutines.flow.Flow
 
 /**
- * JuegoRepository.kt
- *
- * Se encarga de gestionar los datos del jugador (usuario y monedas).
- * Aquí se definen las operaciones principales relacionadas con el monedero.
+ * Se encarga de gestionar los datos del jugador (usuario, monedero e historial).
  *
  * 🔹 Esta interfaz define QUÉ se puede hacer desde el dominio.
  * 🔹 La implementación (JuegoRepositoryRoom.kt) define CÓMO se hace con Room.
+ *
+ * @security
+ * - Todas las operaciones manipulan únicamente alias y saldos locales almacenados en Room.
  */
 interface JuegoRepository {
 
@@ -29,6 +29,5 @@ interface JuegoRepository {
 
     fun observarHistorial(usuarioId: String, limit: Int = 50): Flow<List<Partida>> //devuelve el historial de partidas
     fun observarMonedero(usuarioId: String): Flow<Monedero> //observa el monedero del usuario en tiempo real
-    fun observarUsuario(usuarioId: String): Flow<Usuario?> //expone el alias persistido del jugador
     suspend fun lanzarDado(usuarioId: String): Partida //simular el lanzamiento de dado, modificar el saldo y guardar resultado
 }

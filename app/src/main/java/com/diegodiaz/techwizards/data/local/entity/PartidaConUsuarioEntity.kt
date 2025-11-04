@@ -8,14 +8,10 @@ import androidx.room.Embedded
  *
  * @property partida Datos persistidos en la tabla `Partida`.
  * @property alias Alias visible del jugador almacenado en `Usuario.usuario`.
+ * @security
+ * - Solo expone alias y resultados; no incluye identificadores remotos.
  */
 data class PartidaConUsuarioEntity(
-    val id: Long,
-    val usuarioNumero: Long,
-    val fecha: Long,
-    val resultado: Resultado,             // ← requiere TypeConverter String↔Resultado
-    @ColumnInfo(name = "cambioMonedas")
-    val cambioMonedas: Int,
-    @ColumnInfo(name = "alias")
-    val alias: String
+    @Embedded val partida: PartidaEntity,
+    @ColumnInfo(name = "alias") val alias: String
 )

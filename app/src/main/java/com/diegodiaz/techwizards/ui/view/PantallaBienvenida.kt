@@ -1,12 +1,11 @@
 package com.diegodiaz.techwizards.ui.view
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -18,7 +17,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.layout.ContentScale
 import com.diegodiaz.techwizards.R
 import com.diegodiaz.techwizards.ui.responsive.Responsive
 
@@ -28,6 +26,10 @@ import com.diegodiaz.techwizards.ui.responsive.Responsive
  * @param isDarkTheme Indica si el tema actual es oscuro.
  * @param nombrePredeterminado Alias previamente registrado para prellenar el diálogo.
  * @param onJugar Acción a ejecutar cuando el usuario confirma su alias.
+ * @return Unit ya que únicamente emite efectos de UI.
+ * @throws IllegalArgumentException No lanza excepciones; se valida el nombre en memoria.
+ * @security
+ * - El alias se mantiene en memoria hasta confirmarse y luego se envía al ViewModel para persistirlo.
  */
 @Composable
 fun PantallaBienvenida(

@@ -18,12 +18,26 @@ import com.diegodiaz.techwizards.data.local.mapper.toDomain
 import com.diegodiaz.techwizards.domain.model.Usuario
 import com.diegodiaz.techwizards.ui.controller.ControladorPartida
 import com.diegodiaz.techwizards.ui.controller.ControladorPartidaFactory
-import io.reactivex.rxjava3.schedulers.Schedulers
 import com.diegodiaz.techwizards.ui.responsive.Responsive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.rx3.await
 import androidx.compose.runtime.rememberCoroutineScope
 
-
+/**
+ * Define la jerarquía de navegación y orquesta la inicialización del jugador en Room.
+ *
+ * Usa el repositorio respaldado por Room para garantizar que la escritura del alias se realice
+ * mediante las APIs reactivas de RxJava antes de navegar hacia el menú principal.
+ *
+ * @param navController Controlador de navegación de Compose.
+ * @param isDarkTheme Indica si el tema actual es oscuro.
+ * @param onToggleTheme Acción para alternar el tema desde ajustes.
+ * @param modifier Modificador opcional de la raíz del NavHost.
+ * @return Unit porque solo construye composición de navegación.
+ * @throws IllegalStateException Solo propaga errores inesperados de Room o repositorio.
+ * @security
+ * - Obtiene y persiste únicamente el alias del jugador y su saldo local.
+ */
 @Composable
 fun NavGraph(
     navController: NavHostController,

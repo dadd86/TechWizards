@@ -21,7 +21,17 @@ import com.diegodiaz.techwizards.data.local.entity.Resultado
 import com.diegodiaz.techwizards.domain.model.Partida
 import com.diegodiaz.techwizards.ui.responsive.Responsive
 import com.diegodiaz.techwizards.ui.responsive.UiDims
-
+/**
+ * Renderiza el historial de partidas mostrando alias, resultado y variación de monedas.
+ *
+ * @param isDarkTheme Indica si se usa tema oscuro.
+ * @param historial Listado de partidas en orden descendente.
+ * @param onVolverAlMenu Acción al pulsar el botón de regreso.
+ * @return Unit al tratarse de una función composable.
+ * @throws IllegalStateException No lanza excepciones; se limita a componer UI.
+ * @security
+ * - Solo muestra alias locales y resultados almacenados en Room.
+ */
 @Composable
 fun PantallaHistorial(
     isDarkTheme: Boolean,
@@ -201,7 +211,18 @@ fun PantallaHistorial(
 }
 
 /* ----------------------------- Celdas ----------------------------- */
-
+/**
+ * Crea una celda de encabezado reutilizable para el historial.
+ *
+ * @param text Texto del encabezado.
+ * @param modifier Modificador aplicado al contenedor.
+ * @param size Tamaño de fuente calculado.
+ * @param align Alineación del texto.
+ * @return Unit ya que únicamente emite UI.
+ * @throws IllegalArgumentException No lanza excepciones; parámetros se validan previamente.
+ * @security
+ * - No manipula datos sensibles.
+ */
 @Composable
 private fun HeaderCell(
     text: String,
@@ -221,7 +242,19 @@ private fun HeaderCell(
         overflow = TextOverflow.Ellipsis
     )
 }
-
+/**
+ * Crea una celda de contenido para cada fila del historial.
+ *
+ * @param text Texto a mostrar.
+ * @param modifier Modificador aplicado al texto.
+ * @param dims Dimensiones responsivas calculadas.
+ * @param align Alineación del texto.
+ * @param bold Indica si el texto se muestra en negrita.
+ * @return Unit porque solo compone UI.
+ * @throws IllegalArgumentException No lanza excepciones; entradas inválidas se muestran tal cual.
+ * @security
+ * - Presenta únicamente información local de partidas.
+ */
 @Composable
 private fun BodyCell(
     text: String,
@@ -254,6 +287,12 @@ private data class PesosColumnas(
 
 /**
  * Ajusta los pesos de las columnas según el ancho disponible.
+ *
+ * @param minSide Lado mínimo detectado por la capa responsiva.
+ * @return Pesos adecuados para cada columna.
+ * @throws IllegalArgumentException No lanza excepciones; se usan valores constantes.
+ * @security
+ * - Función puramente de layout, no procesa datos sensibles.
  */
 private fun pesosPorAncho(minSide: Dp): PesosColumnas =
     if (minSide < 360.dp) {
@@ -264,6 +303,11 @@ private fun pesosPorAncho(minSide: Dp): PesosColumnas =
 
 /**
  * Formatea una marca de tiempo en formato corto amigable.
+ *
+ * @return Cadena formateada en `dd/MM/yyyy`.
+ * @throws IllegalArgumentException Podría lanzar si la configuración regional no es válida (controlado por JVM).
+ * @security
+ * - No expone información adicional; solo transforma fechas.
  */
 fun Long.formateaComoFecha(): String {
     val date = java.util.Date(this)

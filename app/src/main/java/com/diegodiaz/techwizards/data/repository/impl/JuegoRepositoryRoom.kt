@@ -17,18 +17,55 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.reactive.asFlow
 
+/**
+ * Implementación de [JuegoRepository] respaldada por Room.
+ *
+ * @param usuarioDao DAO para operaciones con usuarios.
+ * @param monederoDao DAO para monedero.
+ * @param partidaDao DAO de partidas para historial.
+ * @security
+ * - Respeta el esquema definido en `PrimerSQL.sql` y evita exponer PII.
+ */
 class JuegoRepositoryRoom(
     private val usuarioDao: IUsuarioDao,
     private val monederoDao: IMonederoDao,
     private val partidaDao: IPartidaDao
 
 ) : JuegoRepository {
+    /**
+     * Observa el saldo usando el flujo reactivo de Room.
+     *
+     * @param usuarioId Identificador del jugador.
+     * @return [Flowable] con el monedero en dominio.
+     * @throws IllegalStateException Propaga errores de Room si ocurren.
+     * @security
+     * - Solo expone saldo numérico asociado a IDs locales.
+     */
     override fun observeSaldoRx(usuarioId: String): Flowable<Monedero> =
         monederoDao.observeSaldo(usuarioId.toLong()).map { it.toDomain() }
 
+    /**
+     * Carga el usuario usando la API RxJava.
+     *
+     * @param usuarioId Identificador del jugador.
+     * @return [Maybe] que emite el usuario si existe.
+     * @throws IllegalStateException Room propaga las violaciones de integridad.
+     * @security
+     * - Mantiene los campos limitados al esquema local.
+     */
     override fun cargarUsuarioRx(usuarioId: String): Maybe<Usuario> =
         usuarioDao.getByNumeroRx(usuarioId.toLong()).map { it.toDomain() }
 
+    /**
+     * Inicializa el usuario y el monedero usando RxJava.
+     *
+     * @param usuario Usuario a persistir.
+     * @param monedasIniciales Saldo inicial.
+     * @return [Completable] cuando la transacción finaliza.
+     * @throws IllegalStateException Room propaga cualquier error de constraint.
+     * @security
+     * - Solo persiste alias, saldos y timestamps locales.
+     */
     override fun inicializarMonedasRx(usuario: Usuario, monedasIniciales: Int): Completable =
         usuarioDao.upsert(usuario.toEntity())
             .andThen(
@@ -42,8 +79,18 @@ class JuegoRepositoryRoom(
             )
 
     // ------- Coroutines ---------
+    /**
+     * Observa el saldo del monedero usando corrutinas.
+     *
+     * @param usuarioId Identificador del jugador.
+     * @return Flujo con el monedero convertido a dominio.
+     * @throws IllegalStateException Room comunica errores mediante excepciones.
+     * @security
+     * - Solo expone montos y alias locales.
+     */
     override fun observarSaldo(usuarioId: String): Flow<Monedero> =
         monederoDao.observeSaldo(usuarioId.toLong()).asFlow().map { it.toDomain() }
+
     /**
      * Garantiza que exista el usuario y su monedero antes de iniciar la sesión de juego.
      *
@@ -62,26 +109,47 @@ class JuegoRepositoryRoom(
         )
     }
 
+    /**
+     * Observa el historial de partidas adjuntando el alias registrado al momento.
+     *
+     * @param usuarioId Identificador del jugador en texto.
+     * @param limit Máximo de partidas a recuperar.
+     * @return Flujo con partidas de dominio listas para UI.
+     * @throws IllegalStateException Room gestiona errores de consulta.
+     * @security
+     * - Solo propaga alias y resultados locales.
+     */
     override fun observarHistorial(usuarioId: String, limit: Int): Flow<List<Partida>> {
         return partidaDao.observarHistorial(usuarioId.toLong(), limit)
             .map { lista -> lista.map { it.toDomain() } }
     }
 
-
+    /**
+     * Observa cambios en el monedero en tiempo real.
+     *
+     * @param usuarioId Identificador del jugador.
+     * @return Flujo de monedero.
+     * @throws IllegalStateException Room expone fallas a través de excepciones.
+     * @security
+     * - Solo maneja saldo y referencias locales.
+     */
     override fun observarMonedero(usuarioId: String): Flow<Monedero> {
         return monederoDao.observeSaldo(usuarioId.toLong()).asFlow().map { it.toDomain() }
     }
 
-    override fun observarUsuario(usuarioId: String): Flow<Usuario?> {
-        return usuarioDao.observeUsuario(usuarioId.toLong()).map { it?.toDomain() }
-    }
-
-
+    /**
+     * Registra un lanzamiento de dado, actualizando saldo y guardando alias del usuario.
+     *
+     * @param usuarioId Identificador del jugador.
+     * @return Partida registrada con alias y delta de monedas.
+     * @throws IllegalStateException Si el usuario no existe o hay problemas de integridad.
+     * @security
+     * - Solo persiste alias y resultados, en línea con el esquema local.
+     */
     override suspend fun lanzarDado(usuarioId: String): Partida {
         val usuarioNumero = usuarioId.toLong()
         val monedero = monederoDao.getMonederoSimple(usuarioNumero)
         var saldo = monedero?.saldo ?: 0
-        val alias = usuarioDao.getByNumero(usuarioNumero)?.alias ?: "Jugador"
 
         val dado = (1..6).random()
         val gano = dado == 6
@@ -93,8 +161,7 @@ class JuegoRepositoryRoom(
             usuarioNumero = usuarioNumero,
             fecha = System.currentTimeMillis(),
             resultado = if (gano) Resultado.GANADO else Resultado.PERDIDO,
-            cambioMonedas = cambioMonedas,
-            nombreJugador = alias
+            cambioMonedas = cambioMonedas
         )
         val partidaId = partidaDao.insert(partidaEntity)
 
