@@ -7,28 +7,30 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Entidad Room para la tabla `MatchEvent`.
+ * Entidad Room para la tabla `Match`.
  *
  * @security
- * - Relaciona eventos con Match y Usuario asegurando consistencia.
- * - Índice único mantiene orden total de eventos.
+ * - Claves foráneas mantienen consistencia con Lobby y Usuario.
+ * - Índices facilitan auditorías rápidas por estado.
  */
 @Entity(
-    tableName = "MatchEvent",
+    tableName = "Match",
     indices = [
-        Index(value = ["matchId", "seq"], unique = true),
+        Index(value = ["estado", "createdAtMs"]),
+        Index(value = ["lobbyId"]),
+        Index(value = ["createdByNum"]),
     ],
     foreignKeys = [
         ForeignKey(
-            entity = MatchEntity::class,
+            entity = LobbyEntity::class,
             parentColumns = ["id"],
-            childColumns = ["matchId"],
-            onDelete = ForeignKey.CASCADE,
+            childColumns = ["lobbyId"],
+            onDelete = ForeignKey.SET_NULL,
         ),
         ForeignKey(
             entity = UsuarioEntity::class,
             parentColumns = ["numero"],
-            childColumns = ["actorNum"],
+            childColumns = ["createdByNum"],
             onDelete = ForeignKey.CASCADE,
         ),
     ],

@@ -28,6 +28,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.unit.dp
 
+/**
+ * Pantalla principal del juego donde el usuario elige un número y lanza el dado.
+ *
+ * @param isDarkTheme Indica si debe usarse la paleta oscura.
+ * @param uiState Estado observable con saldo, resultado y errores.
+ * @param onVolverAlMenu Acción para regresar al menú principal.
+ * @param onElegirNumero Callback cuando el jugador selecciona un número del 1 al 6.
+ * @return Unit al tratarse de una función composable sin valor de retorno.
+ * @throws IllegalStateException No lanza excepciones; delega validaciones al ViewModel.
+ * @security
+ * - Solo muestra alias y saldos provenientes del estado de UI, sin PII adicional.
+ */
 @Composable
 fun PantallaPartida(
     isDarkTheme: Boolean,
