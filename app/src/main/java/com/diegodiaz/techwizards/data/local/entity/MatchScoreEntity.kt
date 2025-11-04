@@ -4,7 +4,7 @@ package com.diegodiaz.techwizards.data.local.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
-import androidx.room.PrimaryKey
+import androidx.room.Index
 
 /**
  * Entidad Room para la tabla `MatchScore`.
@@ -16,6 +16,9 @@ import androidx.room.PrimaryKey
 @Entity(
     tableName = "MatchScore",
     primaryKeys = ["matchId", "usuarioNum"],
+    indices = [
+        Index(value = ["usuarioNum"]),
+    ],
     foreignKeys = [
         ForeignKey(
             entity = MatchEntity::class,

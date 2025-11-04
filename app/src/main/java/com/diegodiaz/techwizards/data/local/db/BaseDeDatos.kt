@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.room.migration.Migration
 
 // DAOs
 import com.diegodiaz.techwizards.data.local.dao.IUsuarioDao
@@ -48,7 +49,7 @@ import com.diegodiaz.techwizards.data.local.EnumConverters
  * - Ejecuta migraciones incrementales para evitar pérdidas de datos.
  */
 @Database(
-    version = 1, // Primera ejecución: si cambias el esquema más adelante, sube versión y añade Migration.
+    version = 2, // Incrementa al añadir `nombreJugador` y aplica migración 1→2.
     exportSchema = true,
     entities = [
         // Básicas P1
@@ -100,6 +101,26 @@ abstract class BaseDeDatos : RoomDatabase() {
         @Volatile
         private var inst: BaseDeDatos? = null
 
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """
+                    ALTER TABLE Partida
+                    ADD COLUMN nombreJugador TEXT NOT NULL DEFAULT ''
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    UPDATE Partida
+                    SET nombreJugador = COALESCE(
+                        (SELECT usuario FROM Usuario WHERE Usuario.numero = Partida.usuarioNumero),
+                        ''
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun get(ctx: Context): BaseDeDatos =
             inst ?: synchronized(this) {
                 inst ?: Room.databaseBuilder(
@@ -108,7 +129,7 @@ abstract class BaseDeDatos : RoomDatabase() {
                     "techwizards.db"
                 )
                     .addCallback(RoomCallbackPragmas())
-                    // .fallbackToDestructiveMigration() //Solo usar en desarrollo sino perderemos datos
+                    .addMigrations(MIGRATION_1_2)
                     .build()
                     .also { inst = it }
             }

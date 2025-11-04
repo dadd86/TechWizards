@@ -7,12 +7,13 @@ import com.diegodiaz.techwizards.domain.model.Partida
 /**
  * Convierte la proyección de Room en un modelo de dominio listo para UI.
  *
- * @return Modelo de dominio [Partida] enriquecido con el alias actual.
+ * @return Modelo de dominio [Partida] enriquecido con el alias persistido al jugar.
  * @throws IllegalStateException No lanza excepciones; la proyección garantiza datos completos.
  * @security
  * - Propaga únicamente alias y resultados de partidas.
  */
-fun PartidaConUsuarioEntity.toDomain(): Partida = partida.toDomain(alias)
+fun PartidaConUsuarioEntity.toDomain(): Partida =
+    partida.toDomain(partida.nombreJugador.ifBlank { alias })
 
 /**
  * Convierte la entidad simple en dominio adjuntando el alias proporcionado.
@@ -45,5 +46,6 @@ fun Partida.toEntity() = PartidaEntity(
     usuarioNumero = usuarioNumero,
     fecha = fecha,
     resultado = resultado,
-    cambioMonedas = deltaMonedas
+    cambioMonedas = deltaMonedas,
+    nombreJugador = aliasJugador
 )

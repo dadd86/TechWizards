@@ -7,30 +7,30 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Entidad Room para la tabla `Match`.
+
+ * Entidad Room para la bitácora inmutable de eventos de un match.
  *
  * @security
- * - Claves foráneas mantienen consistencia con Lobby y Usuario.
- * - Índices facilitan auditorías rápidas por estado.
+ * - Mantiene integridad con la partida y el actor que originó el evento.
+ * - Índices evitan *scans* al ordenar o depurar por jugador.
  */
 @Entity(
-    tableName = "Match",
+    tableName = "MatchEvent",
     indices = [
-        Index(value = ["estado", "createdAtMs"]),
-        Index(value = ["lobbyId"]),
-        Index(value = ["createdByNum"]),
+        Index(value = ["matchId", "seq"], unique = true),
+        Index(value = ["actorNum"]),
     ],
     foreignKeys = [
         ForeignKey(
-            entity = LobbyEntity::class,
+            entity = MatchEntity::class,
             parentColumns = ["id"],
-            childColumns = ["lobbyId"],
-            onDelete = ForeignKey.SET_NULL,
+            childColumns = ["matchId"],
+            onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = UsuarioEntity::class,
             parentColumns = ["numero"],
-            childColumns = ["createdByNum"],
+            childColumns = ["actorNum"],
             onDelete = ForeignKey.CASCADE,
         ),
     ],

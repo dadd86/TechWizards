@@ -151,6 +151,9 @@ class JuegoRepositoryRoom(
         val monedero = monederoDao.getMonederoSimple(usuarioNumero)
         var saldo = monedero?.saldo ?: 0
 
+        val usuario = usuarioDao.getByNumero(usuarioNumero)
+            ?: error("Usuario inexistente para registrar partida")
+
         val dado = (1..6).random()
         val gano = dado == 6
         val cambioMonedas = if (gano) 30 else -10
@@ -161,13 +164,12 @@ class JuegoRepositoryRoom(
             usuarioNumero = usuarioNumero,
             fecha = System.currentTimeMillis(),
             resultado = if (gano) Resultado.GANADO else Resultado.PERDIDO,
-            cambioMonedas = cambioMonedas
+            cambioMonedas = cambioMonedas,
+            nombreJugador = usuario.alias
         )
         val partidaId = partidaDao.insert(partidaEntity)
 
         monederoDao.actualizarSaldo(usuarioNumero, saldo)
-        val usuario = usuarioDao.getByNumero(usuarioNumero)
-            ?: error("Usuario inexistente para registrar partida")
 
         return partidaEntity.copy(id = partidaId).toDomain(usuario.alias)
     }

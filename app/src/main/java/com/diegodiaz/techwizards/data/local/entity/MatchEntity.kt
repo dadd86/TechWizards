@@ -18,6 +18,7 @@ import androidx.room.PrimaryKey
     indices = [
         Index(value = ["estado", "createdAtMs"]),
         Index(value = ["lobbyId"]),
+        Index(value = ["createdByNum"]),
     ],
     foreignKeys = [
         ForeignKey(

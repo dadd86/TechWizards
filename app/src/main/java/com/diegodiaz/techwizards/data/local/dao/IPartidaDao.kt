@@ -34,7 +34,8 @@ interface IPartidaDao {
             p.usuarioNumero AS usuarioNumero,
             p.fecha         AS fecha,
             p.resultado     AS resultado,
-            p.cambioMonedas AS cambioMonedas,
+            p.cambioMonedas AS cambioMonedas,            
+            p.nombreJugador AS nombreJugador,
             u.usuario       AS alias
         FROM Partida p
         INNER JOIN Usuario u ON u.numero = p.usuarioNumero
@@ -97,6 +98,7 @@ interface IPartidaDao {
             p.fecha         AS fecha,
             p.resultado     AS resultado,
             p.cambioMonedas AS cambioMonedas,
+            p.nombreJugador AS nombreJugador,
             u.usuario       AS alias
         FROM Partida p
         INNER JOIN Usuario u ON u.numero = p.usuarioNumero
