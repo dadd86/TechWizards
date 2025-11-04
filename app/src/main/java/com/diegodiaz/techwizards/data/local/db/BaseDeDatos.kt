@@ -118,6 +118,231 @@ abstract class BaseDeDatos : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
+
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `evento` (
+                        `id` TEXT NOT NULL,
+                        `nombre` TEXT NOT NULL,
+                        `descripcion` TEXT NOT NULL,
+                        `fechaInicio` INTEGER NOT NULL,
+                        `fechaFin` INTEGER NOT NULL,
+                        `completado` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent()
+                )
+
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `Lobby` (
+                        `nombre` TEXT NOT NULL,
+                        `id` TEXT NOT NULL,
+                        `codigo` TEXT,
+                        `modo` TEXT NOT NULL,
+                        `estado` TEXT NOT NULL,
+                        `creadorNum` INTEGER NOT NULL,
+                        `createdAtMs` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`),
+                        FOREIGN KEY(`creadorNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_Lobby_estado` ON `Lobby` (`estado`)
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS `index_Lobby_codigo` ON `Lobby` (`codigo`)
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_Lobby_creadorNum` ON `Lobby` (`creadorNum`)
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_Lobby_estado_createdAtMs` ON `Lobby` (`estado`, `createdAtMs`)
+                    """.trimIndent()
+                )
+
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `Match` (
+                        `id` TEXT NOT NULL,
+                        `lobbyId` TEXT,
+                        `modo` TEXT NOT NULL,
+                        `estado` TEXT NOT NULL,
+                        `createdByNum` INTEGER NOT NULL,
+                        `createdAtMs` INTEGER NOT NULL,
+                        `startedAtMs` INTEGER,
+                        `finishedAtMs` INTEGER,
+                        PRIMARY KEY(`id`),
+                        FOREIGN KEY(`lobbyId`) REFERENCES `Lobby`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL,
+                        FOREIGN KEY(`createdByNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_Match_estado_createdAtMs` ON `Match` (`estado`, `createdAtMs`)
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_Match_lobbyId` ON `Match` (`lobbyId`)
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_Match_createdByNum` ON `Match` (`createdByNum`)
+                    """.trimIndent()
+                )
+
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `MatchEvent` (
+                        `id` TEXT NOT NULL,
+                        `matchId` TEXT NOT NULL,
+                        `seq` INTEGER NOT NULL,
+                        `type` TEXT NOT NULL,
+                        `actorNum` INTEGER NOT NULL,
+                        `payloadJson` TEXT,
+                        `createdAtMs` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`),
+                        FOREIGN KEY(`matchId`) REFERENCES `Match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`actorNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS `index_MatchEvent_matchId_seq` ON `MatchEvent` (`matchId`, `seq`)
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_MatchEvent_actorNum` ON `MatchEvent` (`actorNum`)
+                    """.trimIndent()
+                )
+
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `MatchParticipant` (
+                        `matchId` TEXT NOT NULL,
+                        `usuarioNum` INTEGER NOT NULL,
+                        `rol` TEXT,
+                        `teamId` TEXT,
+                        `joinedAtMs` INTEGER NOT NULL,
+                        `leftAtMs` INTEGER,
+                        `score` INTEGER NOT NULL,
+                        PRIMARY KEY(`matchId`, `usuarioNum`),
+                        FOREIGN KEY(`matchId`) REFERENCES `Match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`usuarioNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_MatchParticipant_matchId` ON `MatchParticipant` (`matchId`)
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_MatchParticipant_usuarioNum` ON `MatchParticipant` (`usuarioNum`)
+                    """.trimIndent()
+                )
+
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `MatchScore` (
+                        `matchId` TEXT NOT NULL,
+                        `usuarioNum` INTEGER NOT NULL,
+                        `score` INTEGER NOT NULL,
+                        PRIMARY KEY(`matchId`, `usuarioNum`),
+                        FOREIGN KEY(`matchId`) REFERENCES `Match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`usuarioNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_MatchScore_usuarioNum` ON `MatchScore` (`usuarioNum`)
+                    """.trimIndent()
+                )
+
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `Message` (
+                        `id` TEXT NOT NULL,
+                        `matchId` TEXT NOT NULL,
+                        `senderNum` INTEGER NOT NULL,
+                        `text` TEXT NOT NULL,
+                        `createdAtMs` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`),
+                        FOREIGN KEY(`matchId`) REFERENCES `Match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`senderNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_Message_matchId_createdAtMs` ON `Message` (`matchId`, `createdAtMs`)
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_Message_senderNum` ON `Message` (`senderNum`)
+                    """.trimIndent()
+                )
+
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `Outbox` (
+                        `operationId` TEXT NOT NULL,
+                        `entityType` TEXT NOT NULL,
+                        `entityId` TEXT NOT NULL,
+                        `op` TEXT NOT NULL,
+                        `payloadJson` TEXT NOT NULL,
+                        `attempt` INTEGER NOT NULL,
+                        `lastError` TEXT,
+                        `createdAtMs` INTEGER NOT NULL,
+                        `updatedAtMs` INTEGER NOT NULL,
+                        PRIMARY KEY(`operationId`)
+                    )
+                    """.trimIndent()
+                )
+
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `IdMap` (
+                        `localTable` TEXT NOT NULL,
+                        `localId` TEXT NOT NULL,
+                        `remoteCollection` TEXT NOT NULL,
+                        `remoteId` TEXT NOT NULL,
+                        PRIMARY KEY(`localTable`, `localId`)
+                    )
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS `index_IdMap_remoteCollection_remoteId` ON `IdMap` (`remoteCollection`, `remoteId`)
+                    """.trimIndent()
+                )
+
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `Tombstone` (
+                        `tableName` TEXT NOT NULL,
+                        `entityId` TEXT NOT NULL,
+                        `deletedAtMs` INTEGER NOT NULL,
+                        PRIMARY KEY(`tableName`, `entityId`)
+                    )
+                    """.trimIndent()
+                )
             }
         }
 
