@@ -5,6 +5,8 @@ import com.diegodiaz.techwizards.data.local.dao.IPartidaDao
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
 import com.diegodiaz.techwizards.data.repository.impl.JuegoRepositoryRoom
 import com.diegodiaz.techwizards.data.repository.impl.MatchRepositoryRoom
+import com.diegodiaz.techwizards.data.repository.impl.SettingsRepositoryDataStore
+import com.diegodiaz.techwizards.data.repository.impl.VictoryRepositoryRoom
 
 object ServiceLocator {
 
@@ -16,6 +18,7 @@ object ServiceLocator {
     private val usuarioDao by lazy { db.usuarioDao() }
     private val monederoDao by lazy { db.monederoDao() }
     private val partidaDao by lazy { db.partidaDao() }
+    private val victoryLocationDao by lazy { db.victoryLocationDao() }
 
     // --- Repos ---
     val juegoRepository by lazy {
@@ -31,6 +34,14 @@ object ServiceLocator {
             partidaDao = partidaDao,
             monederoDao = monederoDao
         )
+    }
+
+    val settingsRepository by lazy {
+        SettingsRepositoryDataStore(appContext)
+    }
+
+    val victoryRepository by lazy {
+        VictoryRepositoryRoom(victoryLocationDao)
     }
 
     // Llamar una vez al arrancar la app

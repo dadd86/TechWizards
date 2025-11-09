@@ -1,8 +1,10 @@
 package com.diegodiaz.techwizards.util.logging
 
 /**
- * Interfaz para destinos de log (sinks). Permite enrutar los mensajes
- * a múltiples salidas (Logcat, archivo, crash reporter, etc.).
+ * Interfaz para destinos de log (sinks). Permite enrutar los mensajes a múltiples salidas.
+ *
+ * @security
+ * - Los implementadores deben asumir que el mensaje llega sanitizado.
  */
 interface LogSink {
     /**

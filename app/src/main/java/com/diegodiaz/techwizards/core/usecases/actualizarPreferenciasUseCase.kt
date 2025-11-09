@@ -26,6 +26,8 @@ class ActualizarPreferenciasUseCase(
      *
      * @param settings Preferencias a almacenar.
      * @return Resultado vacío en éxito.
+     * @throws AgentError No se lanza directamente; se encapsula en Result.Err.
+     * @security La operación no registra datos personales, solo banderas de configuración.
      */
     suspend operator fun invoke(settings: GameSettings): Result<Unit, AgentError> =
         withContext(ioDispatcher) {

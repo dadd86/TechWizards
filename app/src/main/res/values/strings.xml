@@ -1,4 +1,34 @@
 <resources>
     <string name="app_name">Tech Wizards</string>
     <string name="title_activity_main">MainActivity</string>
-</resources>
+    <string name="victory_calendar_title">Victoria de %1$s</string>
+    <string name="victory_calendar_description">Recompensa obtenida: %1$d monedas.</string>
+    <string name="victory_notification_title">¡Has ganado!</string>
+    <string name="victory_notification_body">%1$s obtuvo una nueva victoria.</string>
+    <string name="victory_notification_saved_media">Captura guardada en la galería TechWizards.</string>
+    <string name="victory_notification_calendar_link">Evento #%1$d en calendario</string>
+    <string name="victory_channel_name">Victorias</string>
+    <string name="menu_title">Menú principal</string>
+    <string name="menu_play">Jugar</string>
+    <string name="menu_history">Historial</string>
+    <string name="menu_settings">Ajustes</string>
+    <string name="menu_help">Ayuda</string>
+    <string name="menu_exit">Salir</string>
+    <string name="menu_exit_confirm_title">Confirmar salida</string>
+    <string name="menu_exit_confirm_message">¿Deseas salir de la aplicación?</string>
+    <string name="menu_exit_confirm_accept">Confirmar</string>
+    <string name="menu_exit_confirm_cancel">Cancelar</string>
+    <string name="help_title">Centro de ayuda</string>
+    <string name="help_url">file:///android_asset/help/index.html</string>
+    <string name="settings_back_to_menu">Volver al menú</string>
+    <string name="settings_sound_section">Sonido</string>
+    <string name="settings_music_toggle">Música de fondo</string>
+    <string name="settings_sfx_toggle">Efectos de sonido</string>
+    <string name="settings_pick_track">Seleccionar pista personalizada</string>
+    <string name="settings_visual_section">Visualización</string>
+    <string name="settings_dark_mode_toggle">Tema oscuro</string>
+    <string name="settings_animations_toggle">Animaciones del juego</string>
+    <string name="settings_notifications_section">Notificaciones</string>
+    <string name="settings_notifications_toggle">Alertas de victorias</string>
+    <string name="settings_language_section">Idioma</string>
+</resources>>

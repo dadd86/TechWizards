@@ -4,24 +4,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.compose.runtime.mutableStateOf
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
-import com.diegodiaz.techwizards.data.repository.impl.JuegoRepositoryRoom
 import com.diegodiaz.techwizards.data.local.mapper.toDomain
+import com.diegodiaz.techwizards.data.repository.impl.JuegoRepositoryRoom
 import com.diegodiaz.techwizards.domain.model.Usuario
+import com.diegodiaz.techwizards.ui.controller.ControladorAjustesFactory
 import com.diegodiaz.techwizards.ui.controller.ControladorPartida
 import com.diegodiaz.techwizards.ui.controller.ControladorPartidaFactory
 import com.diegodiaz.techwizards.ui.responsive.Responsive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.rx3.await
-import androidx.compose.runtime.rememberCoroutineScope
 
 /**
  * Define la jerarquía de navegación y orquesta la inicialización del jugador en Room.
@@ -52,6 +52,10 @@ fun NavGraph(
     val partidaDao = db.partidaDao()
     val repo = remember { JuegoRepositoryRoom(usuarioDao, monederoDao, partidaDao) }
     val scope = rememberCoroutineScope()
+    val settingsRepository = remember { ServiceLocator.settingsRepository }
+    val obtenerPreferencias = remember { ObtenerPreferenciasUseCase(settingsRepository) }
+    val actualizarPreferencias = remember { ActualizarPreferenciasUseCase(settingsRepository) }
+    val ajustesFactory = remember { ControladorAjustesFactory(obtenerPreferencias, actualizarPreferencias) }
     val usuarioActual = remember { mutableStateOf<Usuario?>(null) }
     LaunchedEffect(Unit) {
         val existente = usuarioDao.obtenerUsuarioPrincipal()
@@ -95,7 +99,8 @@ fun NavGraph(
                 isDarkTheme = isDarkTheme,
                 onJugar = { navController.navigate("partida") },
                 onHistorial = { navController.navigate("historial") },
-                onAjustes = { navController.navigate("ajustes") }
+                onAjustes = { navController.navigate("ajustes") },
+                onAyuda = { navController.navigate("ayuda") }
             )
         }
         composable("partida") {
@@ -105,6 +110,7 @@ fun NavGraph(
             PantallaPartida(
                 isDarkTheme = isDarkTheme,
                 uiState = uiState,
+                eventos = controladorPartida.eventos,
                 onVolverAlMenu = { navController.navigate("menu") },
                 onElegirNumero = { num -> controladorPartida.elegirNumero(num) }
             )
@@ -119,11 +125,30 @@ fun NavGraph(
             )
         }
         composable("ajustes") {
+            val ajustesVm: ControladorAjustes = viewModel(factory = ajustesFactory)
+            val ajustesState by ajustesVm.ui.collectAsState()
             PantallaAjustes(
                 isDarkTheme = isDarkTheme,
-                onToggleTheme = onToggleTheme,
+                state = ajustesState,
+                eventos = ajustesVm.eventos,
+                onToggleTheme = { enabled ->
+                    ajustesVm.actualizarTemaOscuro(enabled)
+                    onToggleTheme(enabled)
+                },
+                onToggleMusic = ajustesVm::actualizarMusica,
+                onToggleSfx = ajustesVm::actualizarSfx,
+                onToggleAnimations = ajustesVm::actualizarAnimaciones,
+                onToggleNotifications = ajustesVm::actualizarNotificaciones,
+                onElegirPista = ajustesVm::seleccionarPista,
+                onSeleccionIdioma = { tag ->
+                    ajustesVm.actualizarIdioma(tag)
+                    AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
+                },
                 onVolverAlMenu = { navController.navigate("menu") }
             )
+        }
+        composable("ayuda") {
+            PantallaAyuda()
         }
     }
 }

@@ -11,9 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
 import com.diegodiaz.techwizards.ui.responsive.Responsive
 import com.diegodiaz.techwizards.ui.responsive.UiDims
 
@@ -23,7 +24,8 @@ fun PantallaMenu(
     isDarkTheme: Boolean,
     onJugar: () -> Unit,
     onHistorial: () -> Unit,
-    onAjustes: () -> Unit
+    onAjustes: () -> Unit,
+    onAyuda: () -> Unit
 ) = Responsive { dims ->
     var showDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -38,26 +40,27 @@ fun PantallaMenu(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(dims.spaceSm)
         ) {
-            Text("Menú principal", fontSize = dims.titleSp, fontWeight = FontWeight.Bold)
+            Text(stringResource(id = R.string.menu_title), fontSize = dims.titleSp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(dims.spaceSm))
-            MenuBoton("Jugar", dims, onJugar)
-            MenuBoton("Historial", dims, onHistorial)
-            MenuBoton("Ajustes", dims, onAjustes)
-            MenuBoton("Salir", dims) { showDialog = true }
+            MenuBoton(stringResource(id = R.string.menu_play), dims, onJugar)
+            MenuBoton(stringResource(id = R.string.menu_history), dims, onHistorial)
+            MenuBoton(stringResource(id = R.string.menu_settings), dims, onAjustes)
+            MenuBoton(stringResource(id = R.string.menu_help), dims, onAyuda)
+            MenuBoton(stringResource(id = R.string.menu_exit), dims) { showDialog = true }
 
             if (showDialog) {
                 AlertDialog(
                     onDismissRequest = { showDialog = false },
-                    title = { Text("Confirmar salida", fontSize = dims.bodySp) },
-                    text  = { Text("¿Deseas salir de la aplicación?", fontSize = dims.bodySp) },
+                    title = { Text(stringResource(id = R.string.menu_exit_confirm_title), fontSize = dims.bodySp) },
+                    text  = { Text(stringResource(id = R.string.menu_exit_confirm_message), fontSize = dims.bodySp) },
                     confirmButton = {
                         TextButton(onClick = {
                             showDialog = false
                             (context as? Activity)?.finish()
-                        }) { Text("Confirmar", fontSize = dims.bodySp) }
+                        }) { Text(stringResource(id = R.string.menu_exit_confirm_accept), fontSize = dims.bodySp) }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showDialog = false }) { Text("Cancelar", fontSize = dims.bodySp) }
+                        TextButton(onClick = { showDialog = false }) { Text(stringResource(id = R.string.menu_exit_confirm_cancel), fontSize = dims.bodySp) }
                     }
                 )
             }

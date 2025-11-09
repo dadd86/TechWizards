@@ -1,14 +1,17 @@
 package com.diegodiaz.techwizards.ui.controller
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import com.diegodiaz.techwizards.data.local.entity.Resultado
 import com.diegodiaz.techwizards.domain.model.Monedero
 import com.diegodiaz.techwizards.domain.model.Partida
 import com.diegodiaz.techwizards.domain.repository.JuegoRepository
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -32,6 +35,15 @@ data class JuegoUiState(
     val cargando: Boolean = false,
     val error: String? = null
 )
+/**
+ * Eventos de un solo uso que la UI debe manejar (p.ej. victoria).
+ *
+ * @security
+ * - Transporta únicamente datos de juego ya visibles para el usuario.
+ */
+sealed interface JuegoUiEvent {
+    data class Victoria(val partida: Partida) : JuegoUiEvent
+}
 
     /**
      * Devuelve un texto descriptivo del resultado más reciente incorporando el alias del jugador.
@@ -75,6 +87,10 @@ data class JuegoUiState(
             repo.observarHistorial(usuarioId = usuarioId, limit = 50)
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+
+        private val _eventos = MutableSharedFlow<JuegoUiEvent>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        val eventos: SharedFlow<JuegoUiEvent> = _eventos
+
         /**
          * Lanza un dado virtual actualizando el historial y el saldo.
          *
@@ -87,7 +103,12 @@ data class JuegoUiState(
             viewModelScope.launch {
                 try {
                     val partida = repo.lanzarDado(usuarioId)
+                    if (partida.resultado == Resultado.GANADO) {
+                        DecentralizedLogger.i(TAG, "Victoria detectada lanzar")
+                        _eventos.tryEmit(JuegoUiEvent.Victoria(partida))
+                    }
                 } catch (t: Throwable) {
+                    DecentralizedLogger.e(TAG, "Error al lanzar", t)
                 }
             }
         }
@@ -104,10 +125,17 @@ data class JuegoUiState(
         fun elegirNumero(num: Int) {
             viewModelScope.launch {
                 if (num in 1..6) {
-                    // Simulación de lanzar dado, usar lógica real de tu dominio
-                    repo.lanzarDado(usuarioId) // actualiza BD, los Flows cambian el UI
+                    val partida = repo.lanzarDado(usuarioId)
+                    if (partida.resultado == Resultado.GANADO) {
+                        DecentralizedLogger.i(TAG, "Victoria detectada elegir num=$num")
+                        _eventos.tryEmit(JuegoUiEvent.Victoria(partida))
+                    }
                 }
             }
+        }
+
+        private companion object {
+            private const val TAG = "ControladorPartida"
         }
     }
 

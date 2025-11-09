@@ -270,6 +270,20 @@ CREATE INDEX IF NOT EXISTS idx_partida_usuario_fecha ON Partida(usuarioNumero, f
    @ColumnInfo(name="cambioMonedas") val deltaMonedas: Int
    TypeConverter<Resultado↔String> (‘GANADO’/‘PERDIDO’)
 */
+-- =====================================================================
+-- 📍 VICTORY LOCATION – Ubicaciones al ganar
+--   Persistencia local para capturar la ubicación tras una victoria.
+--   Restricciones: latitud [-90,90], longitud [-180,180], exactitud ≥ 0.
+--   Integrado con Room (VictoryLocationEntity) y DAO de solo inserción/consulta.
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS victory_location (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    latitude        REAL    NOT NULL CHECK (latitude BETWEEN -90 AND 90),
+    longitude       REAL    NOT NULL CHECK (longitude BETWEEN -180 AND 180),
+    accuracyMetres  REAL    CHECK (accuracyMetres IS NULL OR accuracyMetres >= 0),
+    capturedAtMs    INTEGER NOT NULL CHECK (capturedAtMs > 0)
+);
+CREATE INDEX IF NOT EXISTS idx_victory_location_capturedAt ON victory_location(capturedAtMs DESC);
 
 -- =====================================================================
 -- 📚 Índices extra para columnas FK (evitan table scans en updates)

@@ -8,6 +8,8 @@ package com.diegodiaz.techwizards.domain.model
  * @property darkThemeEnabled Indica si se usa tema oscuro.
  * @property animationsEnabled Indica si las animaciones están activas.
  * @property notificationsEnabled Indica si las notificaciones in-app están permitidas.
+ * @property selectedMusicUri Ruta `content://` hacia la pista personalizada o `null` si se usa la oficial.
+ * @property selectedLanguageTag *Locale* elegido siguiendo la sintaxis BCP47.
  * @security
  * - No almacena información personal; solo banderas de configuración.
  */
@@ -17,4 +19,6 @@ data class GameSettings(
     val darkThemeEnabled: Boolean,
     val animationsEnabled: Boolean,
     val notificationsEnabled: Boolean,
+    val selectedMusicUri: String?,
+    val selectedLanguageTag: String,
 )

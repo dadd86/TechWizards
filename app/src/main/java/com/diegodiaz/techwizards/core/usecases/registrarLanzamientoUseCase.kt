@@ -33,6 +33,7 @@ class RegistrarLanzamientoUseCase(
      * @param monedasDelta Delta de monedas a aplicar (puede ser negativo).
      * @param gano Indica si el jugador ganó el lanzamiento.
      * @return Resultado vacío que indica éxito o error.
+     * @throws IllegalArgumentException Si [monedasDelta] supera los límites definidos.
      * @security
      * - Valida entradas para impedir saldos negativos y logs con PII.
      */

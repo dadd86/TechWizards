@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.plugin.parcelize")
 }
 
 android {
@@ -87,6 +88,8 @@ dependencies {
     implementation(libs.work.runtime.ktx)
     implementation(libs.security.crypto)
     implementation(libs.serialization.json)
+    implementation(libs.datastore.preferences)
+    implementation(libs.play.services.location)
 
     // Tus dependencias previas (si las necesitas)
     implementation(libs.androidx.core.ktx)

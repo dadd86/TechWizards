@@ -22,6 +22,7 @@ import com.diegodiaz.techwizards.data.local.dao.ITombstoneDao
 import com.diegodiaz.techwizards.data.local.dao.IMessageDao
 import com.diegodiaz.techwizards.data.local.dao.IMatchParticipantDao
 import com.diegodiaz.techwizards.data.local.dao.IOutboxDao
+import com.diegodiaz.techwizards.data.local.dao.IVictoryLocationDao
 
 // Entities
 import com.diegodiaz.techwizards.data.local.entity.UsuarioEntity
@@ -37,6 +38,7 @@ import com.diegodiaz.techwizards.data.local.entity.TombstoneEntity
 import com.diegodiaz.techwizards.data.local.entity.MessageEntity
 import com.diegodiaz.techwizards.data.local.entity.MatchParticipantEntity
 import com.diegodiaz.techwizards.data.local.entity.OutboxEntity
+import com.diegodiaz.techwizards.data.local.entity.VictoryLocationEntity
 
 
 import com.diegodiaz.techwizards.data.local.EnumConverters
@@ -49,7 +51,7 @@ import com.diegodiaz.techwizards.data.local.EnumConverters
  * - Ejecuta migraciones incrementales para evitar pérdidas de datos.
  */
 @Database(
-    version = 2, // Incrementa al añadir `nombreJugador` y aplica migración 1→2.
+    version = 3, // Incrementa para registrar ubicaciones de victoria.
     exportSchema = true,
     entities = [
         // Básicas P1
@@ -71,7 +73,8 @@ import com.diegodiaz.techwizards.data.local.EnumConverters
         // Sync
         OutboxEntity::class,
         IdMapEntity::class,
-        TombstoneEntity::class
+        TombstoneEntity::class,
+        VictoryLocationEntity::class
     ],
     //exportSchema = true
 )
@@ -96,6 +99,7 @@ abstract class BaseDeDatos : RoomDatabase() {
     abstract fun outboxDao(): IOutboxDao
     abstract fun idMapDao(): IIdMapDao
     abstract fun tombstoneDao(): ITombstoneDao
+    abstract fun victoryLocationDao(): IVictoryLocationDao
 
     companion object {
         @Volatile
@@ -345,6 +349,27 @@ abstract class BaseDeDatos : RoomDatabase() {
                 )
             }
         }
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `victory_location` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `latitude` REAL NOT NULL,
+                        `longitude` REAL NOT NULL,
+                        `accuracyMetres` REAL,
+                        `capturedAtMs` INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_victory_location_capturedAtMs`
+                    ON `victory_location` (`capturedAtMs` DESC)
+                    """.trimIndent()
+                )
+            }
+        }
 
         fun get(ctx: Context): BaseDeDatos =
             inst ?: synchronized(this) {
@@ -354,7 +379,7 @@ abstract class BaseDeDatos : RoomDatabase() {
                     "techwizards.db"
                 )
                     .addCallback(RoomCallbackPragmas())
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                     .also { inst = it }
             }

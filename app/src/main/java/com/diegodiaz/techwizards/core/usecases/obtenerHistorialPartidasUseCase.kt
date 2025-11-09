@@ -25,7 +25,8 @@ class ObtenerHistorialPartidasUseCase(
      * Obtiene el historial limitado por [limite].
      *
      * @param limite Número máximo de partidas.
-     * @return Resultado con la lista de partidas.
+     * @return Resultado con la lista de partidas.     *
+     * @throws IllegalArgumentException Si [limite] queda fuera del rango permitido.
      * @security
      * - El límite previene extracciones masivas no autorizadas.
      */
@@ -35,9 +36,9 @@ class ObtenerHistorialPartidasUseCase(
             val resultado = matchRepository.obtenerHistorial(limite)
             if (resultado is Result.Ok) {
                 DecentralizedLogger.i(
-                    "HistorialPartidas",
-                    "Historial recuperado cantidad=${resultado.value.size}",
-                    )
+                    tag = "HistorialPartidas",
+                    message = "Historial recuperado cantidad=${resultado.value.size}",
+                )
             }
             resultado
         }

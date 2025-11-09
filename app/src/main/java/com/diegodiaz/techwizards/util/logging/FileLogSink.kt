@@ -9,10 +9,13 @@ import java.util.Date
 import java.util.concurrent.Executors
 
 /**
- * Sink que escribe logs a archivo en el almacenamiento interno de la app,
- * con rotación simple por tamaño.
- *
- * Nota: escribe en un thread de un solo hilo para evitar bloqueos del main thread.
+ * Sink que escribe logs a archivo en el almacenamiento interno de la app con rotación simple.
+ * @param context Contexto de aplicación para ubicar `filesDir`.
+ * @param maxBytes Tamaño máximo del archivo activo antes de rotar.
+ * @param backupCount Cantidad de archivos históricos a mantener.
+ * @param fileName Nombre base del archivo principal.
+ * @security
+ * - Solo persiste mensajes ya sanitizados por [DecentralizedLogger].
  */
 class FileLogSink(
     context: Context,
@@ -26,6 +29,17 @@ class FileLogSink(
     private val ioExecutor = Executors.newSingleThreadExecutor()
     private val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
 
+    /**
+     * Persiste el mensaje en el archivo de log usando un hilo dedicado para no bloquear UI.
+     *
+     * @param level Nivel textual (VERBOSE..ERROR).
+     * @param tag Etiqueta de origen.
+     * @param message Mensaje sanitizado.
+     * @param throwable Excepción opcional.
+     * @return `Unit` tras encolar la operación.
+     * @throws IllegalStateException No se lanza; cualquier error I/O se registra en el executor.
+     * @security No añade PII extra; guarda exactamente la entrada recibida.
+     */
     override fun log(level: String, tag: String, message: String, throwable: Throwable?) {
         val line = buildString {
             append(stamp.format(Date()))
@@ -44,12 +58,27 @@ class FileLogSink(
         ioExecutor.execute { writeLine(line) }
     }
 
+    /**
+     * Escribe una línea en el archivo activo garantizando ejecución en hilo de I/O.
+     *
+     * @param line Cadena ya formateada.
+     * @return `Unit` tras completar la escritura.
+     * @throws IllegalStateException No se lanza; cualquier IOException se propaga como RuntimeException implícita.
+     * @security La línea ya llega sanitizada; no añade datos extra.
+     */
     @WorkerThread
     private fun writeLine(line: String) {
         rotateIfNeeded()
         logFile.appendText(line)
     }
 
+    /**
+     * Realiza la rotación básica cuando el archivo supera [maxBytes].
+     *
+     * @return `Unit` tras completar posibles renombrados.
+     * @throws IllegalStateException No se lanza; fallos de I/O se propagan automáticamente.
+     * @security No toca el contenido, solo administra archivos de log.
+     */
     @WorkerThread
     private fun rotateIfNeeded() {
         if (logFile.length() < maxBytes) return

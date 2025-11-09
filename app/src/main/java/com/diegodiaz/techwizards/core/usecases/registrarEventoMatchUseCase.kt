@@ -38,6 +38,7 @@ class RegistrarEventoMatchUseCase(
      * @param event Evento a guardar.
      * @param remoteCollection Nombre lógico de la colección remota (Firestore/API).
      * @return Resultado vacío en caso de éxito.
+     * @throws IllegalArgumentException No se lanza; validaciones devuelven `Result.Err`.
      * @security
      * - Limita el tamaño de payloads y normaliza JSON para evitar inyección.
      */
@@ -112,14 +113,28 @@ class RegistrarEventoMatchUseCase(
 
             Result.Ok(Unit)
         }
-
+    /**
+     * Normaliza el payload JSON opcional validando tamaño máximo.
+     *
+     * @param payload Cadena JSON original.
+     * @return Par con payload saneado y bandera de overflow.
+     * @throws IllegalStateException No se lanza.
+     * @security Evita guardar blobs excesivos que podrían contener PII.
+     */
     private fun sanitizePayload(payload: String?): Pair<String?, Boolean> {
         val raw = payload ?: return null to false
         val trimmed = raw.trim()
         if (trimmed.isEmpty()) return null to false
         return if (trimmed.length <= MAX_PAYLOAD_LENGTH) trimmed to false else null to true
     }
-
+    /**
+     * Construye un payload JSON mínimo cuando el evento no lo provee.
+     *
+     * @param event Evento de dominio con datos básicos.
+     * @return Cadena JSON sanitizada.
+     * @throws IllegalStateException No se lanza.
+     * @security Enmascara caracteres especiales para evitar inyección.
+     */
     private fun buildEventPayload(event: MatchEvent): String {
         val sanitizedType = event.type.escapeJson()
         val sanitizedMatch = event.matchId.escapeJson()
@@ -144,10 +159,25 @@ class RegistrarEventoMatchUseCase(
         }
     }
 
+    /**
+     * Escapa caracteres relevantes para incrustar en JSON.
+     *
+     * @return Cadena escapada.
+     * @throws IllegalStateException No se lanza.
+     * @security Previene inyección de comillas o barras.
+     */
     private fun String.escapeJson(): String =
         this.replace("\\", "\\\\")
             .replace("\"", "\\\"")
 
+    /**
+     * Aplica mascarado simple a identificadores.
+     *
+     * @param value Identificador original.
+     * @return Cadena redactada.
+     * @throws IllegalStateException No se lanza.
+     * @security Evita exponer identificadores completos en logs.
+     */
     private fun redact(value: String): String =
         if (value.length <= 4) "***" else value.take(2) + "***" + value.takeLast(2)
 
