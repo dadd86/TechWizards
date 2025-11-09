@@ -353,19 +353,20 @@ abstract class BaseDeDatos : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL(
                     """
-                    CREATE TABLE IF NOT EXISTS `victory_location` (
+                    CREATE TABLE IF NOT EXISTS `VictoryLocation` (
                         `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `partidaId` INTEGER NOT NULL,
+                        `aliasJugador` TEXT NOT NULL,
                         `latitude` REAL NOT NULL,
                         `longitude` REAL NOT NULL,
-                        `accuracyMetres` REAL,
-                        `capturedAtMs` INTEGER NOT NULL
+                        `timestampMs` INTEGER NOT NULL
                     )
                     """.trimIndent()
                 )
                 database.execSQL(
                     """
-                    CREATE INDEX IF NOT EXISTS `index_victory_location_capturedAtMs`
-                    ON `victory_location` (`capturedAtMs` DESC)
+                    CREATE INDEX IF NOT EXISTS `index_VictoryLocation_timestampMs`
+                    ON `VictoryLocation` (`timestampMs` DESC)
                     """.trimIndent()
                 )
             }

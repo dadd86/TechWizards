@@ -1,5 +1,6 @@
 package com.diegodiaz.techwizards.ui.view
 
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -13,14 +14,25 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.core.os.LocaleListCompat
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
 import com.diegodiaz.techwizards.data.local.mapper.toDomain
 import com.diegodiaz.techwizards.data.repository.impl.JuegoRepositoryRoom
 import com.diegodiaz.techwizards.domain.model.Usuario
+import com.diegodiaz.techwizards.core.ServiceLocator
+import com.diegodiaz.techwizards.core.usecases.ActualizarPreferenciasUseCase
+import com.diegodiaz.techwizards.core.usecases.ObtenerPreferenciasUseCase
+import com.diegodiaz.techwizards.core.usecases.ObservarPreferenciasUseCase
+import com.diegodiaz.techwizards.ui.controller.ControladorAjustes
 import com.diegodiaz.techwizards.ui.controller.ControladorAjustesFactory
 import com.diegodiaz.techwizards.ui.controller.ControladorPartida
 import com.diegodiaz.techwizards.ui.controller.ControladorPartidaFactory
 import com.diegodiaz.techwizards.ui.responsive.Responsive
+import com.diegodiaz.techwizards.ui.view.PantallaAjustes
+import com.diegodiaz.techwizards.ui.view.PantallaAyuda
+import com.diegodiaz.techwizards.ui.view.PantallaBienvenida
+import com.diegodiaz.techwizards.ui.view.PantallaHistorial
+import com.diegodiaz.techwizards.ui.view.PantallaMenu
 import kotlinx.coroutines.launch
 
 /**
@@ -55,7 +67,10 @@ fun NavGraph(
     val settingsRepository = remember { ServiceLocator.settingsRepository }
     val obtenerPreferencias = remember { ObtenerPreferenciasUseCase(settingsRepository) }
     val actualizarPreferencias = remember { ActualizarPreferenciasUseCase(settingsRepository) }
-    val ajustesFactory = remember { ControladorAjustesFactory(obtenerPreferencias, actualizarPreferencias) }
+    val observarPreferencias = remember { ObservarPreferenciasUseCase(settingsRepository) }
+    val ajustesFactory = remember {
+        ControladorAjustesFactory(obtenerPreferencias, actualizarPreferencias, observarPreferencias)
+    }
     val usuarioActual = remember { mutableStateOf<Usuario?>(null) }
     LaunchedEffect(Unit) {
         val existente = usuarioDao.obtenerUsuarioPrincipal()
@@ -104,7 +119,7 @@ fun NavGraph(
             )
         }
         composable("partida") {
-            val factory = ControladorPartidaFactory(repo, usuarioId)
+            val factory = ControladorPartidaFactory(repo, usuarioId, observarPreferencias)
             val controladorPartida: ControladorPartida = viewModel(factory = factory)
             val uiState = controladorPartida.ui.collectAsState().value
             PantallaPartida(
@@ -116,7 +131,7 @@ fun NavGraph(
             )
         }
         composable("historial") {
-            val viewModel: ControladorPartida = viewModel(factory = ControladorPartidaFactory(repo, usuarioId))
+            val viewModel: ControladorPartida = viewModel(factory = ControladorPartidaFactory(repo, usuarioId, observarPreferencias))
             val historial by viewModel.historial.collectAsState()
             PantallaHistorial(
                 isDarkTheme = isDarkTheme,

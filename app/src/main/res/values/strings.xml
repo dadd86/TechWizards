@@ -31,4 +31,6 @@
     <string name="settings_notifications_section">Notificaciones</string>
     <string name="settings_notifications_toggle">Alertas de victorias</string>
     <string name="settings_language_section">Idioma</string>
-</resources>>
+    <string name="settings_load_error">Error al cargar las preferencias.</string>
+    <string name="settings_save_error">No se guardaron los cambios. Inténtalo de nuevo.</string>
+</resources>

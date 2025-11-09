@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import com.diegodiaz.techwizards.R
 import com.diegodiaz.techwizards.integration.media.MusicPlaybackController
@@ -102,7 +103,9 @@ fun PantallaAjustes(
             }
         }
     }
-
+    LaunchedEffect(state.settings?.musicEnabled) {
+        state.settings?.musicEnabled?.let { musicController.setEnabled(it) }
+    }
     val abrirPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         onElegirPista(uri)
     }
@@ -143,87 +146,110 @@ fun PantallaAjustes(
                 .padding(innerPadding)
                 .padding(horizontal = dims.spaceMd)
                 .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(dims.spaceSm)
+            verticalArrangement = Arrangement.spacedBy(dims.spaceSm)
         ) {
             if (state.cargando) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             }
-                    AjustesSeccion(stringResource(id = R.string.settings_sound_section), dims) {
-                        val settings = state.settings
-                        AjusteSwitch(
-                            label = stringResource(id = R.string.settings_music_toggle),
-                            checked = settings?.musicEnabled ?: false,
-                            onCheckedChange = onToggleMusic,
-                        )
-                        AjusteSwitch(
-                            label = stringResource(id = R.string.settings_sfx_toggle),
-                            checked = settings?.sfxEnabled ?: false,
-                            onCheckedChange = onToggleSfx,
-                        )
-                        Button(
-                            onClick = { abrirPicker.launch(arrayOf("audio/*")) },
-                            modifier = Modifier.fillMaxWidth(0.7f)
-                        ) {
-                            Text(text = stringResource(id = R.string.settings_pick_track))
-                        }
-                    }
+            state.errorRes?.let { errorRes ->
+                Text(
+                    text = stringResource(id = errorRes),
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
 
 
-                    AjustesSeccion(stringResource(id = R.string.settings_visual_section), dims) {
-                        AjusteSwitch(
-                            label = stringResource(id = R.string.settings_dark_mode_toggle),
-                            checked = state.settings?.darkThemeEnabled ?: isDarkTheme,
-                            onCheckedChange = onToggleTheme,
-                        )
-                        AjusteSwitch(
-                            label = stringResource(id = R.string.settings_animations_toggle),
-                            checked = state.settings?.animationsEnabled ?: true,
-                            onCheckedChange = onToggleAnimations,
-                        )
-                    }
+            val settings = state.settings
 
-
-                    AjustesSeccion(stringResource(id = R.string.settings_notifications_section), dims) {
-                        AjusteSwitch(
-                            label = stringResource(id = R.string.settings_notifications_toggle),
-                            checked = state.settings?.notificationsEnabled ?: true,
-                            onCheckedChange = onToggleNotifications,
-                        )
-                    }
-
-                    AjustesSeccion(stringResource(id = R.string.settings_language_section), dims) {
-                        IdiomaSelector(
-                            seleccionado = state.settings?.selectedLanguageTag ?: "es-ES",
-                            onSeleccion = onSeleccionIdioma,
-                        )
-                    }
-
-                    Spacer(Modifier.height(dims.spaceLg))
+            AjustesSeccion(stringResource(id = R.string.settings_sound_section), dims) {
+                AjusteSwitch(
+                    label = stringResource(id = R.string.settings_music_toggle),
+                    checked = settings?.musicEnabled ?: false,
+                ) { checked ->
+                    musicController.setEnabled(checked)
+                    onToggleMusic(checked)
+                }
+                AjusteSwitch(
+                    label = stringResource(id = R.string.settings_sfx_toggle),
+                    checked = settings?.sfxEnabled ?: false,
+                    onCheckedChange = onToggleSfx
+                )
+                Button(
+                    onClick = { abrirPicker.launch(arrayOf("audio/*")) },
+                    modifier = Modifier.fillMaxWidth(0.7f)
+                ) {
+                    Text(text = stringResource(id = R.string.settings_pick_track))
                 }
             }
-        }
 
-        @Composable
-        private fun AjustesSeccion(
-            titulo: String,
-            dims: UiDims,
-            content: @Composable Column.() -> Unit
-        ) {
-            Text(
-                text = titulo,
-                fontSize = dims.titleSp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(dims.spaceXs), content = content)
-        }
 
-        @Composable
-        private fun AjusteSwitch(
-            label: String,
-            checked: Boolean,
-            onCheckedChange: (Boolean) -> Unit = {},
-        ) {
+            AjustesSeccion(stringResource(id = R.string.settings_visual_section), dims) {
+                AjusteSwitch(
+                    label = stringResource(id = R.string.settings_dark_mode_toggle),
+                    checked = settings?.darkThemeEnabled ?: isDarkTheme,
+                    onCheckedChange = onToggleTheme
+                )
+                AjusteSwitch(
+                    label = stringResource(id = R.string.settings_animations_toggle),
+                    checked = settings?.animationsEnabled ?: true,
+                    onCheckedChange = onToggleAnimations
+                )
+            }
+
+            AjustesSeccion(stringResource(id = R.string.settings_notifications_section), dims) {
+                AjusteSwitch(
+                    label = stringResource(id = R.string.settings_notifications_toggle),
+                    checked = settings?.notificationsEnabled ?: true,
+                    onCheckedChange = onToggleNotifications
+                )
+            }
+
+            AjustesSeccion(stringResource(id = R.string.settings_language_section), dims) {
+                IdiomaSelector(
+                    seleccionado = settings?.selectedLanguageTag ?: "es-ES",
+                    onSeleccion = onSeleccionIdioma
+                )
+            }
+            Spacer(Modifier.height(dims.spaceLg))
+        }
+    }
+
+    /**
+     * Encabezado y contenedor de una sección de ajustes.
+     *
+     * @param titulo Texto de la sección.
+     * @param dims Dimensiones responsivas.
+     * @param content Contenido composable interno.
+     */
+    @Composable
+    private fun AjustesSeccion(
+        titulo: String,
+        dims: UiDims,
+        content: @Composable Column.() -> Unit
+    ) {
+        Text(
+            text = titulo,
+            fontSize = dims.titleSp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(dims.spaceXs), content = content)
+    }
+
+    /**
+     * Conmutador reutilizable para los ajustes booleanos.
+     *
+     * @param label Texto descriptivo.
+     * @param checked Estado actual.
+     * @param onCheckedChange Acción al cambiar el valor.
+     */
+    @Composable
+    private fun AjusteSwitch(
+        label: String,
+        checked: Boolean,
+        onCheckedChange: (Boolean) -> Unit,
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -236,31 +262,46 @@ fun PantallaAjustes(
         }
     }
 
-        @Composable
-        private fun IdiomaSelector(seleccionado: String, onSeleccion: (String) -> Unit) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                LanguageChip(text = "ES", seleccionado = seleccionado == "es-ES") { onSeleccion("es-ES") }
-                LanguageChip(text = "EN", seleccionado = seleccionado == "en-US") { onSeleccion("en-US") }
-            }
+    /**
+     * Selector de idioma utilizando chips simples.
+     *
+     * @param seleccionado Tag actualmente seleccionado.
+     * @param onSeleccion Callback de selección.
+     */
+    @Composable
+    private fun IdiomaSelector(seleccionado: String, onSeleccion: (String) -> Unit) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            LanguageChip(text = "ES", seleccionado = seleccionado == "es-ES") { onSeleccion("es-ES") }
+            LanguageChip(text = "EN", seleccionado = seleccionado == "en-US") { onSeleccion("en-US") }
         }
+    }
 
-        @Composable
-        private fun LanguageChip(text: String, seleccionado: Boolean, onClick: () -> Unit) {
-            Button(
-                onClick = onClick,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (seleccionado) MaterialTheme.colorScheme.primary else Color.LightGray,
-                    contentColor = if (seleccionado) MaterialTheme.colorScheme.onPrimary else Color.Black
-                ),
-                modifier = Modifier
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(20.dp))
-            ) {
-                Text(text = text)
-            }
+
+    /**
+     * Botón estilo chip para seleccionar idioma.
+     *
+     * @param text Etiqueta del chip.
+     * @param seleccionado Indica si está activo.
+     * @param onClick Acción al pulsarlo.
+     */
+    @Composable
+    private fun LanguageChip(text: String, seleccionado: Boolean, onClick: () -> Unit) {
+        Button(
+            onClick = onClick,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (seleccionado) MaterialTheme.colorScheme.primary else Color.LightGray,
+                contentColor = if (seleccionado) MaterialTheme.colorScheme.onPrimary else Color.Black
+            ),
+            modifier = Modifier
+                .height(40.dp)
+                .clip(RoundedCornerShape(20.dp))
+        ) {
+            Text(text = text, fontSize = 14.sp)
         }
+    }
+}

@@ -31,4 +31,6 @@
     <string name="settings_notifications_section">Notifications</string>
     <string name="settings_notifications_toggle">Victory alerts</string>
     <string name="settings_language_section">Language</string>
+    <string name="settings_load_error">Unable to load preferences.</string>
+    <string name="settings_save_error">Changes could not be saved. Please try again.</string>
 </resources>

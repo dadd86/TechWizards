@@ -117,20 +117,23 @@ fun PantallaPartida(
         permissionLauncher.launch(permissions.toTypedArray())
     }
 
-    LaunchedEffect(eventos) {
+    LaunchedEffect(eventos, uiState.sfxEnabled) {
         eventos.collectLatest { evento ->
             if (evento is JuegoUiEvent.Victoria && evento.partida.resultado == Resultado.GANADO) {
                 val bitmap = view.drawToBitmap()
                 val stream = ByteArrayOutputStream()
                 bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
                 val payload = VictoryCelebrationPayload(
+                    partidaId = evento.partida.id,
                     aliasJugador = evento.partida.aliasJugador,
                     deltaMonedas = evento.partida.deltaMonedas,
                     timestampMs = System.currentTimeMillis(),
-                    screenshotBytes = stream.toByteArray(),
+                    screenshotBytes = stream.toByteArray()
                 )
                 VictoryCelebrationService.enqueue(context.applicationContext, payload)
-                toneGenerator.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP, 250)
+                if (uiState.sfxEnabled) {
+                    toneGenerator.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP, 250)
+                }
             }
         }
     }
@@ -138,15 +141,20 @@ fun PantallaPartida(
     val rotation = remember { Animatable(0f) }
     var lastResultado by remember { mutableStateOf("") }
 
-    LaunchedEffect(uiState.ultimoResultado) {
+
+    LaunchedEffect(uiState.ultimoResultado, uiState.animationsEnabled, uiState.sfxEnabled) {
         if (uiState.ultimoResultado.isNotBlank() && uiState.ultimoResultado != lastResultado) {
             lastResultado = uiState.ultimoResultado
-            rotation.snapTo(0f)
-            rotation.animateTo(
-                targetValue = 360f,
-                animationSpec = tween(durationMillis = 600)
-            )
-            toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP2, 120)
+            if (uiState.animationsEnabled) {
+                rotation.snapTo(0f)
+                rotation.animateTo(
+                    targetValue = 360f,
+                    animationSpec = tween(durationMillis = 600)
+                )
+            }
+            if (uiState.sfxEnabled) {
+                toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP2, 120)
+            }
         }
     }
     // Tamaños relativos a la pantalla
