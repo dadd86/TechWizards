@@ -149,3 +149,59 @@ ExampleInstrumentedTest: verifica nombre de paquete en entorno real.
 Ayuda HTML (app/src/main/assets/help/index.html): reglas del juego, celebraciones y privacidad.
 
 SQL/PrimerSQL.sql: esquema completo SQLite (v3) con PRAGMAs, índices y comentarios alineados con entidades Room.
+
+
+# Módulo `app`
+
+Este módulo contiene la aplicación Android completa de **Tech Wizards**, organizada en capas limpias (dominio, datos, núcleo de casos de uso, utilidades, integración y UI). La configuración de Gradle, el manifiesto y los recursos viven aquí junto con el código Kotlin.
+
+## Directorios principales
+
+| Carpeta | Propósito | Componentes destacados |
+| --- | --- | --- |
+| `src/main/java/com/diegodiaz/techwizards/app` | Punto de entrada Android. | `App` inicializa el `ServiceLocator` y el logger; `MainActivity` compone el árbol UI con `AppRoot`. |
+| `src/main/java/com/diegodiaz/techwizards/core` | Núcleo compartido (service locator, modelos de error y casos de uso). | `ServiceLocator`, paquete `common` con `Result`/`AgentError` y el paquete `usecases` con orquestadores de dominio. |
+| `src/main/java/com/diegodiaz/techwizards/domain` | Modelos y contratos de repositorio puros. | Modelos `Usuario`, `Partida`, `Match`, `GameSettings`, etc. Interfaces `JuegoRepository`, `MatchRepository`, `UsuarioRepository`, entre otras. |
+| `src/main/java/com/diegodiaz/techwizards/data` | Implementaciones Room/DataStore y mapeadores. | Base `Room`, DAOs, entidades, mapeadores y repositorios `*RepositoryRoom`. |
+| `src/main/java/com/diegodiaz/techwizards/ui` | Capas de presentación Jetpack Compose y controladores/ViewModels. | Navegación, controladores (`Controlador*`), screens `Pantalla*`, tema y utilidades responsive. |
+| `src/main/java/com/diegodiaz/techwizards/util` | Utilidades técnicas compartidas. | Logger descentralizado, formato de fechas, sincronización y proveedores de IDs. |
+| `src/main/java/com/diegodiaz/techwizards/integration` | Integraciones externas locales (multimedia, celebraciones). | Stubs para `musicPlaybackService`, `victoryCelebrationService`, etc. |
+| `src/main/java/com/diegodiaz/techwizards/credenciales` | Abstracciones de almacenamiento seguro. | `CredentialsStore` y `EncryptedCredentialsStore`. |
+
+## Flujo de inicialización
+
+1. `App.onCreate` registra los sinks de `DecentralizedLogger`, configura mascarado PII y levanta el `ServiceLocator`.
+2. `ServiceLocator.init` crea la base de datos `Room`, expone DAOs y repositorios (`JuegoRepositoryRoom`, `MatchRepositoryRoom`, `SettingsRepositoryDataStore`, `VictoryRepositoryRoom`).
+3. `MainActivity` habilita `EdgeToEdge`, inyecta `TechWizardsTheme` y delega a `AppRoot`, que a su vez crea el `NavGraph` Compose.
+
+## Casos de uso y datos
+
+Los casos de uso bajo `core/usecases` combinan repositorios de `domain` y `data` para exponer operaciones de alto nivel a los controladores de UI. Ejemplos: `ObtenerResumenJugadorUseCase`, `RegistrarLanzamientoUseCase`, `ObservarPreferenciasUseCase`.
+
+Los repositorios concretos viven en `data/repository/impl` y aprovechan la capa `data/local`:
+
+* `JuegoRepositoryRoom` sincroniza usuarios, monedero y partidas (`observarHistorial`, `lanzarDado`, `inicializarMonedas`).
+* `MatchRepositoryRoom` gestiona partidas multijugador (`upsertMatch`, `registrarEvento`, `guardarScore`).
+* `SettingsRepositoryDataStore` persiste `GameSettings` con `DataStore`.
+* `VictoryRepositoryRoom` almacena ubicaciones de victoria para celebraciones posteriores.
+
+## Presentación
+
+Los controladores en `ui/controller` componen estado y efectos unidireccionales para las composables de `ui/view`. El patrón típico es:
+
+1. `Controlador*` obtiene repositorios y casos de uso desde el `ServiceLocator`.
+2. Se expone un `StateFlow` con datos memoizados (`stateIn`, `combine`).
+3. Las screens Compose consumen ese estado mediante `collectAsStateWithLifecycle` o `collectAsState`.
+
+La navegación se centraliza en `ui/view/NavGraph.kt`, donde se declaran rutas (`ui/navigation/Ruta`) y se conectan con cada `Pantalla*`.
+
+## Utilidades destacadas
+
+* `DecentralizedLogger` agrega sinks (`AndroidLogSink`, `FileLogSink`) y aplica mascarado de PII.
+* `SyncWorker` coordina sincronización diferida usando WorkManager.
+* `UuidProvider` genera identificadores consistentes para entidades offline-first.
+
+## Recursos adicionales
+
+* `schemas/` contiene los esquemas exportados de Room para verificación.
+* `SQL.primer.sql` documenta la base SQL original para validaciones manuales.
