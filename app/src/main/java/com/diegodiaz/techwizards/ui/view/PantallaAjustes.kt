@@ -278,6 +278,7 @@ fun PantallaAjustes(
         ) {
             LanguageChip(text = "ES", seleccionado = seleccionado == "es-ES") { onSeleccion("es-ES") }
             LanguageChip(text = "EN", seleccionado = seleccionado == "en-US") { onSeleccion("en-US") }
+            LanguageChip(text = "DE", seleccionado = seleccionado == "de-DE") { onSeleccion("de-DE") }
         }
     }
 

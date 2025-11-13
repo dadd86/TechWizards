@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">Tech Wizards</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="victory_calendar_title">Sieg von %1$s</string>
+    <string name="victory_calendar_description">Belohnung erhalten: %1$d Münzen.</string>
+    <string name="victory_notification_title">Du hast gewonnen!</string>
+    <string name="victory_notification_body">%1$s hat einen neuen Sieg errungen.</string>
+    <string name="victory_notification_saved_media">Screenshot in der TechWizards-Galerie gespeichert.</string>
+    <string name="victory_notification_calendar_link">Kalendereintrag Nr. %1$d</string>
+    <string name="victory_channel_name">Siege</string>
+    <string name="menu_title">Hauptmenü</string>
+    <string name="menu_play">Spielen</string>
+    <string name="menu_history">Verlauf</string>
+    <string name="menu_settings">Einstellungen</string>
+    <string name="menu_help">Hilfe</string>
+    <string name="menu_exit">Beenden</string>
+    <string name="menu_exit_confirm_title">Beenden bestätigen</string>
+    <string name="menu_exit_confirm_message">Möchtest du die Anwendung schließen?</string>
+    <string name="menu_exit_confirm_accept">Bestätigen</string>
+    <string name="menu_exit_confirm_cancel">Abbrechen</string>
+    <string name="help_title">Hilfezentrum</string>
+    <string name="help_url">file:///android_asset/help/index_de.html</string>
+    <string name="settings_back_to_menu">Zurück zum Menü</string>
+    <string name="settings_sound_section">Ton</string>
+    <string name="settings_music_toggle">Hintergrundmusik</string>
+    <string name="settings_sfx_toggle">Soundeffekte</string>
+    <string name="settings_pick_track">Eigene Spur auswählen</string>
+    <string name="settings_visual_section">Anzeige</string>
+    <string name="settings_dark_mode_toggle">Dunkles Design</string>
+    <string name="settings_animations_toggle">Spielanimationen</string>
+    <string name="settings_notifications_section">Benachrichtigungen</string>
+    <string name="settings_notifications_toggle">Siegesmeldungen</string>
+    <string name="settings_language_section">Sprache</string>
+    <string name="settings_load_error">Einstellungen konnten nicht geladen werden.</string>
+    <string name="settings_save_error">Änderungen wurden nicht gespeichert. Bitte erneut versuchen.</string>
+</resources>

@@ -19,7 +19,7 @@
     <string name="menu_exit_confirm_accept">Confirm</string>
     <string name="menu_exit_confirm_cancel">Cancel</string>
     <string name="help_title">Help center</string>
-    <string name="help_url">file:///android_asset/help/index.html</string>
+    <string name="help_url">file:///android_asset/help/index_en.html</string>
     <string name="settings_back_to_menu">Back to menu</string>
     <string name="settings_sound_section">Sound</string>
     <string name="settings_music_toggle">Background music</string>
