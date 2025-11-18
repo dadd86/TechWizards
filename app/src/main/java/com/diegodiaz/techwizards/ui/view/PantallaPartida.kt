@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,6 +34,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -61,23 +64,12 @@ import com.diegodiaz.techwizards.integration.victory.VictoryCelebrationService
 import com.diegodiaz.techwizards.ui.controller.JuegoUiEvent
 import com.diegodiaz.techwizards.ui.controller.JuegoUiState
 import com.diegodiaz.techwizards.ui.responsive.Responsive
-import androidx.compose.ui.unit.dp
 import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
 
 /**
  * Pantalla principal del juego donde el usuario elige un número y lanza el dado.
- *
- * @param isDarkTheme Indica si debe usarse la paleta oscura.
- * @param uiState Estado observable con saldo, resultado y errores.
- * @param eventos Flujo de eventos de un solo uso emitidos por el ViewModel.
- * @param onVolverAlMenu Acción para regresar al menú principal.
- * @param onElegirNumero Callback cuando el jugador selecciona un número del 1 al 6.
- * @return Unit al tratarse de una función composable sin valor de retorno.
- * @throws IllegalStateException No lanza excepciones; delega validaciones al ViewModel.
- * @security
- * - Solo muestra alias y saldos provenientes del estado de UI, sin PII adicional.
  */
 @Composable
 fun PantallaPartida(
@@ -141,6 +133,9 @@ fun PantallaPartida(
     val rotation = remember { Animatable(0f) }
     var lastResultado by remember { mutableStateOf("") }
 
+    // ANIMACIÓN: ficha (número elegido) moviéndose en el tablero
+    val fichaOffsetY = remember { Animatable(60f) } // "dp virtuales"
+    val fichaScale = remember { Animatable(0f) }
 
     LaunchedEffect(uiState.ultimoResultado, uiState.animationsEnabled, uiState.sfxEnabled) {
         if (uiState.ultimoResultado.isNotBlank() && uiState.ultimoResultado != lastResultado) {
@@ -157,18 +152,39 @@ fun PantallaPartida(
             }
         }
     }
+
+    // Cuando cambia el número elegido, animamos su "entrada" como ficha
+    LaunchedEffect(uiState.numeroElegido, uiState.animationsEnabled) {
+        val numero = uiState.numeroElegido ?: return@LaunchedEffect
+        if (uiState.animationsEnabled) {
+            fichaOffsetY.snapTo(60f)
+            fichaScale.snapTo(0f)
+            fichaOffsetY.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = 400)
+            )
+            fichaScale.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 400)
+            )
+        } else {
+            fichaOffsetY.snapTo(0f)
+            fichaScale.snapTo(1f)
+        }
+    }
+
     // Tamaños relativos a la pantalla
     val boxSize = (dims.minSide * 0.8f).coerceAtMost(360.dp)     // contenedor del dado
     val diceSize = boxSize * 0.7f                                // imagen del dado
     val coinSize = (dims.minSide * 0.10f).coerceIn(24.dp, 48.dp) // icono moneda
+    val fichaSize = (diceSize * 0.55f).coerceIn(32.dp, 72.dp)    // tamaño ficha animada
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(if (!isDarkTheme) Color(0xFFD6E8CD) else MaterialTheme.colorScheme.background)
-            .padding(horizontal = dims.spaceSm) // margen lateral proporcional
+            .padding(horizontal = dims.spaceSm)
     ) {
-        // Scroll de emergencia (pantallas muy chicas/teclado abierto)
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -199,20 +215,20 @@ fun PantallaPartida(
                 )
             }
 
-            // Centro flexible: dado + botón lanzar
+            // Centro: dado + ficha + botón lanzar
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f), // reparte el espacio y evita “empujar” el botón fuera
+                    .weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Dado
                 Box(
                     modifier = Modifier
                         .size(boxSize)
                         .background(Color(0xFFF9F9EB), shape = RoundedCornerShape(dims.cardCorner)),
                     contentAlignment = Alignment.Center
                 ) {
+                    // Dado
                     Image(
                         painter = painterResource(id = R.drawable.dado_negro),
                         contentDescription = "Dado",
@@ -221,11 +237,33 @@ fun PantallaPartida(
                             .rotate(rotation.value),
                         contentScale = ContentScale.Fit
                     )
+
+                    // FICHA ANIMADA: número elegido que "sube" y aparece abajo del dado
+                    uiState.numeroElegido?.let { numero ->
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .offset(y = fichaOffsetY.value.dp)
+                                .graphicsLayer {
+                                    scaleX = fichaScale.value
+                                    scaleY = fichaScale.value
+                                }
+                                .size(fichaSize)
+                                .background(Color(0xFF5C6BC0), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = numero.toString(),
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = (dims.bodySp.value * 1.1f).sp
+                            )
+                        }
+                    }
                 }
 
                 Spacer(Modifier.height(dims.spaceMd))
 
-                // Botón Lanza
                 Button(
                     onClick = { showDialog = true },
                     modifier = Modifier
@@ -251,7 +289,6 @@ fun PantallaPartida(
                 )
             }
 
-            // Botón Volver al menú
             Spacer(Modifier.height(dims.spaceSm))
             Button(
                 onClick = onVolverAlMenu,
@@ -279,12 +316,10 @@ fun PantallaPartida(
 
             AlertDialog(
                 onDismissRequest = { showDialog = false },
-                properties = DialogProperties(
-                    usePlatformDefaultWidth = false // permite ocupar más ancho en pantallas pequeñas
-                ),
+                properties = DialogProperties(usePlatformDefaultWidth = false),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = dims.spaceMd), // margen lateral del diálogo
+                    .padding(horizontal = dims.spaceMd),
                 title = {
                     Text(
                         "Elige un número del 1 al 6",
@@ -300,6 +335,7 @@ fun PantallaPartida(
                         (1..6).forEach { number ->
                             Button(
                                 onClick = {
+                                    // Aquí disparamos la lógica del VM (que actualiza numeroElegido)
                                     onElegirNumero(number)
                                     showDialog = false
                                 },
@@ -319,7 +355,7 @@ fun PantallaPartida(
                         }
                     }
                 },
-                confirmButton = {}, // sin botón de confirmar; seleccionas directo
+                confirmButton = {},
                 dismissButton = {
                     TextButton(onClick = { showDialog = false }) {
                         Text("Cancelar", fontSize = dims.bodySp)

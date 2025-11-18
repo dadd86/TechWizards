@@ -12,6 +12,7 @@ import com.diegodiaz.techwizards.domain.repository.JuegoRepository
 import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,6 +42,7 @@ data class JuegoUiState(
     val animationsEnabled: Boolean = true,
     val sfxEnabled: Boolean = true
 )
+
 /**
  * Eventos de un solo uso que la UI debe manejar (p.ej. victoria).
  *
@@ -80,17 +82,26 @@ class ControladorPartida(
     private val usuarioId: String,
     observarPreferencias: ObservarPreferenciasUseCase
 ) : ViewModel() {
+
     private val preferencias: StateFlow<GameSettings> = observarPreferencias()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), defaultSettings)
 
-    /** Estado compuesto que sincroniza saldo, historial y preferencias. */
+    // Estado local para la ficha (número) elegida
+    private val _numeroElegido = MutableStateFlow<Int?>(null)
+
+    /** Estado compuesto que sincroniza saldo, historial, preferencias y número elegido. */
     val ui: StateFlow<JuegoUiState> = combine(
         repo.observarMonedero(usuarioId),
         repo.observarHistorial(usuarioId),
-        preferencias
-    ) { monedero: Monedero, historial: List<Partida>, settings: GameSettings ->
+        preferencias,
+        _numeroElegido
+    ) { monedero: Monedero,
+        historial: List<Partida>,
+        settings: GameSettings,
+        numeroElegido: Int? ->
         JuegoUiState(
             monedas = monedero.saldo,
+            numeroElegido = numeroElegido,
             ultimoResultado = historial.firstOrNull()?.formatoResumen() ?: "",
             cargando = false,
             error = null,
@@ -98,6 +109,7 @@ class ControladorPartida(
             sfxEnabled = settings.sfxEnabled
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), JuegoUiState())
+
     /** Historial reactivo de partidas recientes. */
     val historial: StateFlow<List<Partida>> =
         repo.observarHistorial(usuarioId = usuarioId, limit = 50)
@@ -111,11 +123,6 @@ class ControladorPartida(
 
     /**
      * Lanza un dado virtual actualizando el historial y el saldo.
-     *
-     * @return Unit porque la respuesta llega vía Flows observados por la UI.
-     * @throws IllegalStateException Propaga errores al obtener el usuario inexistente.
-     * @security
-     * - No registra PII; delega en el repositorio la persistencia del alias.
      */
     fun lanzar() {
         viewModelScope.launch {
@@ -133,16 +140,13 @@ class ControladorPartida(
 
     /**
      * Permite al jugador elegir un número y dispara el lanzamiento cuando es válido.
-     *
-     * @param num Número seleccionado por el usuario.
-     * @return Unit porque delega la actualización al repositorio.
-     * @throws IllegalArgumentException No lanza excepciones; números inválidos se ignoran.
-     * @security
-     * - Solo procesa identificadores y saldos locales.
      */
     fun elegirNumero(num: Int) {
         viewModelScope.launch {
             if (num in 1..6) {
+                // Actualizamos la ficha elegida para que la UI pueda animarla
+                _numeroElegido.value = num
+
                 val partida = repo.lanzarDado(usuarioId)
                 if (partida.resultado == Resultado.GANADO) {
                     DecentralizedLogger.i(TAG, "Victoria detectada elegir num=$num")
@@ -151,32 +155,25 @@ class ControladorPartida(
             }
         }
     }
-        private companion object {
-            private const val TAG = "ControladorPartida"
-        }
-    }
 
-    /**
-     * Factory de ViewModel que inyecta el repositorio y el identificador del jugador.
-     *
-     * @param repo Repositorio respaldado por Room.
-     * @param usuarioId Identificador en texto del jugador.
-     * @param observarPreferencias Use case reactivo de preferencias.
-     * @return Instancia de [ControladorPartida].
-     * @throws IllegalArgumentException Si la clase solicitada no coincide con el ViewModel esperado.
-     * @security
-     * - No persiste ni expone datos sensibles; solo pasa referencias de infraestructura.
-     */
-    class ControladorPartidaFactory(
-        private val repo: JuegoRepository,
-        private val usuarioId: String,
-        private val observarPreferencias: ObservarPreferenciasUseCase
-    ) : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(ControladorPartida::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return ControladorPartida(repo, usuarioId, observarPreferencias) as T
-            }
-            throw IllegalArgumentException("Unknown ViewModel class")
-        }
+    private companion object {
+        private const val TAG = "ControladorPartida"
     }
+}
+
+/**
+ * Factory de ViewModel que inyecta el repositorio y el identificador del jugador.
+ */
+class ControladorPartidaFactory(
+    private val repo: JuegoRepository,
+    private val usuarioId: String,
+    private val observarPreferencias: ObservarPreferenciasUseCase
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ControladorPartida::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return ControladorPartida(repo, usuarioId, observarPreferencias) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
