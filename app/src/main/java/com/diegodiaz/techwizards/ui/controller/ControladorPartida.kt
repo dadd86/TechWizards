@@ -9,6 +9,8 @@ import com.diegodiaz.techwizards.domain.model.GameSettings
 import com.diegodiaz.techwizards.domain.model.Monedero
 import com.diegodiaz.techwizards.domain.model.Partida
 import com.diegodiaz.techwizards.domain.repository.JuegoRepository
+import com.diegodiaz.techwizards.integration.victory.VictoryCelebrationPayload
+import com.diegodiaz.techwizards.integration.victory.VictoryCelebrationService
 import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -41,6 +43,7 @@ data class JuegoUiState(
     val animationsEnabled: Boolean = true,
     val sfxEnabled: Boolean = true
 )
+
 /**
  * Eventos de un solo uso que la UI debe manejar (p.ej. victoria).
  *
@@ -72,14 +75,17 @@ private val defaultSettings = GameSettings(
  * @param repo Repositorio con acceso a Room.
  * @param usuarioId Identificador del jugador en formato String.
  * @param observarPreferencias Use case para obtener las preferencias multimedia.
+ * @param victoryService Servicio de integración que dispara galería/calendario/notificación.
  * @security
  * - No almacena secretos, solo id locales y alias.
  */
 class ControladorPartida(
     private val repo: JuegoRepository,
     private val usuarioId: String,
-    observarPreferencias: ObservarPreferenciasUseCase
+    observarPreferencias: ObservarPreferenciasUseCase,
+    private val victoryService: VictoryCelebrationService // NUEVO (Victory)
 ) : ViewModel() {
+
     private val preferencias: StateFlow<GameSettings> = observarPreferencias()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), defaultSettings)
 
@@ -98,6 +104,7 @@ class ControladorPartida(
             sfxEnabled = settings.sfxEnabled
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), JuegoUiState())
+
     /** Historial reactivo de partidas recientes. */
     val historial: StateFlow<List<Partida>> =
         repo.observarHistorial(usuarioId = usuarioId, limit = 50)
@@ -121,10 +128,7 @@ class ControladorPartida(
         viewModelScope.launch {
             try {
                 val partida = repo.lanzarDado(usuarioId)
-                if (partida.resultado == Resultado.GANADO) {
-                    DecentralizedLogger.i(TAG, "Victoria detectada lanzar")
-                    _eventos.tryEmit(JuegoUiEvent.Victoria(partida))
-                }
+                handleVictoriaSiNecesario(partida, origen = "lanzar")
             } catch (t: Throwable) {
                 DecentralizedLogger.e(TAG, "Error al lanzar", t)
             }
@@ -144,39 +148,63 @@ class ControladorPartida(
         viewModelScope.launch {
             if (num in 1..6) {
                 val partida = repo.lanzarDado(usuarioId)
-                if (partida.resultado == Resultado.GANADO) {
-                    DecentralizedLogger.i(TAG, "Victoria detectada elegir num=$num")
-                    _eventos.tryEmit(JuegoUiEvent.Victoria(partida))
-                }
+                handleVictoriaSiNecesario(partida, origen = "elegirNumero($num)")
             }
-        }
-    }
-        private companion object {
-            private const val TAG = "ControladorPartida"
         }
     }
 
-    /**
-     * Factory de ViewModel que inyecta el repositorio y el identificador del jugador.
-     *
-     * @param repo Repositorio respaldado por Room.
-     * @param usuarioId Identificador en texto del jugador.
-     * @param observarPreferencias Use case reactivo de preferencias.
-     * @return Instancia de [ControladorPartida].
-     * @throws IllegalArgumentException Si la clase solicitada no coincide con el ViewModel esperado.
-     * @security
-     * - No persiste ni expone datos sensibles; solo pasa referencias de infraestructura.
-     */
-    class ControladorPartidaFactory(
-        private val repo: JuegoRepository,
-        private val usuarioId: String,
-        private val observarPreferencias: ObservarPreferenciasUseCase
-    ) : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(ControladorPartida::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return ControladorPartida(repo, usuarioId, observarPreferencias) as T
-            }
-            throw IllegalArgumentException("Unknown ViewModel class")
+    // Lógica común para manejar victoria
+    private suspend fun handleVictoriaSiNecesario(partida: Partida, origen: String) {
+        if (partida.resultado == Resultado.GANADO) {
+            DecentralizedLogger.i(TAG, "Victoria detectada origen=$origen")
+
+            // 1) Evento para la UI (ya lo tenías)
+            _eventos.tryEmit(JuegoUiEvent.Victoria(partida))
+
+            // 2) Disparar integración: galería + calendario + notificación
+            //    (usa solo datos de juego, nada sensible)
+            val payload = VictoryCelebrationPayload(
+                playerName = partida.aliasJugador,
+                coinsWon = partida.deltaMonedas,
+                timestampMillis = System.currentTimeMillis()
+            )
+            victoryService.celebrate(payload)
         }
     }
+
+    private companion object {
+        private const val TAG = "ControladorPartida"
+    }
+}
+
+/**
+ * Factory de ViewModel que inyecta el repositorio y el identificador del jugador.
+ *
+ * @param repo Repositorio respaldado por Room.
+ * @param usuarioId Identificador en texto del jugador.
+ * @param observarPreferencias Use case reactivo de preferencias.
+ * @param victoryService Servicio de celebración de victorias. //
+ * @return Instancia de [ControladorPartida].
+ * @throws IllegalArgumentException Si la clase solicitada no coincide con el ViewModel esperado.
+ * @security
+ * - No persiste ni expone datos sensibles; solo pasa referencias de infraestructura.
+ */
+class ControladorPartidaFactory(
+    private val repo: JuegoRepository,
+    private val usuarioId: String,
+    private val observarPreferencias: ObservarPreferenciasUseCase,
+    private val victoryService: VictoryCelebrationService // NUEVO (Victory)
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ControladorPartida::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return ControladorPartida(
+                repo = repo,
+                usuarioId = usuarioId,
+                observarPreferencias = observarPreferencias,
+                victoryService = victoryService
+            ) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}

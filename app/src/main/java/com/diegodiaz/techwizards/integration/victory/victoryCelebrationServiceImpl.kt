@@ -17,6 +17,9 @@ interface VictoryCelebrationService {
     fun celebrate(payload: VictoryCelebrationPayload)
 }
 
+/**
+ * Implementación basada en WorkManager.
+ */
 class WorkManagerVictoryCelebrationService(
     private val appContext: Context
 ) : VictoryCelebrationService {

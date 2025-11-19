@@ -1,0 +1,1016 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 3,
+    "identityHash": "f042dfbbbc33d45f84667d829c229e2d",
+    "entities": [
+      {
+        "tableName": "Usuario",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`numero` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `usuario` TEXT NOT NULL, `fechaAlta` INTEGER NOT NULL, `monedas` INTEGER NOT NULL, `gano` INTEGER NOT NULL, `firebaseUid` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "numero",
+            "columnName": "numero",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alias",
+            "columnName": "usuario",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaAltaMs",
+            "columnName": "fechaAlta",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "monedas",
+            "columnName": "monedas",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ganoUltimaPartida",
+            "columnName": "gano",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "firebaseUid",
+            "columnName": "firebaseUid",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "numero"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "Monedero",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `usuarioNumero` INTEGER NOT NULL, `saldo` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usuarioNumero",
+            "columnName": "usuarioNumero",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "saldo",
+            "columnName": "saldo",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "Partida",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `usuarioNumero` INTEGER NOT NULL, `fecha` INTEGER NOT NULL, `resultado` TEXT NOT NULL, `cambioMonedas` INTEGER NOT NULL, `nombreJugador` TEXT NOT NULL, FOREIGN KEY(`usuarioNumero`) REFERENCES `Usuario`(`numero`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usuarioNumero",
+            "columnName": "usuarioNumero",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fecha",
+            "columnName": "fecha",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "resultado",
+            "columnName": "resultado",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cambioMonedas",
+            "columnName": "cambioMonedas",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombreJugador",
+            "columnName": "nombreJugador",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_Partida_usuarioNumero",
+            "unique": false,
+            "columnNames": [
+              "usuarioNumero"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Partida_usuarioNumero` ON `${TABLE_NAME}` (`usuarioNumero`)"
+          },
+          {
+            "name": "index_Partida_usuarioNumero_fecha",
+            "unique": false,
+            "columnNames": [
+              "usuarioNumero",
+              "fecha"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Partida_usuarioNumero_fecha` ON `${TABLE_NAME}` (`usuarioNumero`, `fecha`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Usuario",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "usuarioNumero"
+            ],
+            "referencedColumns": [
+              "numero"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "evento",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `nombre` TEXT NOT NULL, `descripcion` TEXT NOT NULL, `fechaInicio` INTEGER NOT NULL, `fechaFin` INTEGER NOT NULL, `completado` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "descripcion",
+            "columnName": "descripcion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaInicio",
+            "columnName": "fechaInicio",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaFin",
+            "columnName": "fechaFin",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completado",
+            "columnName": "completado",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "Lobby",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`nombre` TEXT NOT NULL, `id` TEXT NOT NULL, `codigo` TEXT, `modo` TEXT NOT NULL, `estado` TEXT NOT NULL, `creadorNum` INTEGER NOT NULL, `createdAtMs` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`creadorNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "codigo",
+            "columnName": "codigo",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "modo",
+            "columnName": "modo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "estado",
+            "columnName": "estado",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creadorNumero",
+            "columnName": "creadorNum",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtMs",
+            "columnName": "createdAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_Lobby_estado",
+            "unique": false,
+            "columnNames": [
+              "estado"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Lobby_estado` ON `${TABLE_NAME}` (`estado`)"
+          },
+          {
+            "name": "index_Lobby_codigo",
+            "unique": true,
+            "columnNames": [
+              "codigo"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_Lobby_codigo` ON `${TABLE_NAME}` (`codigo`)"
+          },
+          {
+            "name": "index_Lobby_creadorNum",
+            "unique": false,
+            "columnNames": [
+              "creadorNum"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Lobby_creadorNum` ON `${TABLE_NAME}` (`creadorNum`)"
+          },
+          {
+            "name": "index_Lobby_estado_createdAtMs",
+            "unique": false,
+            "columnNames": [
+              "estado",
+              "createdAtMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Lobby_estado_createdAtMs` ON `${TABLE_NAME}` (`estado`, `createdAtMs`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Usuario",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "creadorNum"
+            ],
+            "referencedColumns": [
+              "numero"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Match",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `lobbyId` TEXT, `modo` TEXT NOT NULL, `estado` TEXT NOT NULL, `createdByNum` INTEGER NOT NULL, `createdAtMs` INTEGER NOT NULL, `startedAtMs` INTEGER, `finishedAtMs` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`lobbyId`) REFERENCES `Lobby`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`createdByNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lobbyId",
+            "columnName": "lobbyId",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "modo",
+            "columnName": "modo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "estado",
+            "columnName": "estado",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdByNumero",
+            "columnName": "createdByNum",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtMs",
+            "columnName": "createdAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startedAtMs",
+            "columnName": "startedAtMs",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "finishedAtMs",
+            "columnName": "finishedAtMs",
+            "affinity": "INTEGER",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_Match_estado_createdAtMs",
+            "unique": false,
+            "columnNames": [
+              "estado",
+              "createdAtMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Match_estado_createdAtMs` ON `${TABLE_NAME}` (`estado`, `createdAtMs`)"
+          },
+          {
+            "name": "index_Match_lobbyId",
+            "unique": false,
+            "columnNames": [
+              "lobbyId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Match_lobbyId` ON `${TABLE_NAME}` (`lobbyId`)"
+          },
+          {
+            "name": "index_Match_createdByNum",
+            "unique": false,
+            "columnNames": [
+              "createdByNum"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Match_createdByNum` ON `${TABLE_NAME}` (`createdByNum`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Lobby",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "lobbyId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "Usuario",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "createdByNum"
+            ],
+            "referencedColumns": [
+              "numero"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "MatchEvent",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `matchId` TEXT NOT NULL, `seq` INTEGER NOT NULL, `type` TEXT NOT NULL, `actorNum` INTEGER NOT NULL, `payloadJson` TEXT, `createdAtMs` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`matchId`) REFERENCES `Match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`actorNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "matchId",
+            "columnName": "matchId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "seq",
+            "columnName": "seq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actorNumero",
+            "columnName": "actorNum",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadJson",
+            "columnName": "payloadJson",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAtMs",
+            "columnName": "createdAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_MatchEvent_matchId_seq",
+            "unique": true,
+            "columnNames": [
+              "matchId",
+              "seq"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_MatchEvent_matchId_seq` ON `${TABLE_NAME}` (`matchId`, `seq`)"
+          },
+          {
+            "name": "index_MatchEvent_actorNum",
+            "unique": false,
+            "columnNames": [
+              "actorNum"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_MatchEvent_actorNum` ON `${TABLE_NAME}` (`actorNum`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Match",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "matchId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "Usuario",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "actorNum"
+            ],
+            "referencedColumns": [
+              "numero"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "MatchParticipant",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`matchId` TEXT NOT NULL, `usuarioNum` INTEGER NOT NULL, `rol` TEXT, `teamId` TEXT, `joinedAtMs` INTEGER NOT NULL, `leftAtMs` INTEGER, `score` INTEGER NOT NULL, PRIMARY KEY(`matchId`, `usuarioNum`), FOREIGN KEY(`matchId`) REFERENCES `Match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`usuarioNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "matchId",
+            "columnName": "matchId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usuarioNumero",
+            "columnName": "usuarioNum",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rol",
+            "columnName": "rol",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "teamId",
+            "columnName": "teamId",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "joinedAtMs",
+            "columnName": "joinedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "leftAtMs",
+            "columnName": "leftAtMs",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "score",
+            "columnName": "score",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "matchId",
+            "usuarioNum"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_MatchParticipant_matchId",
+            "unique": false,
+            "columnNames": [
+              "matchId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_MatchParticipant_matchId` ON `${TABLE_NAME}` (`matchId`)"
+          },
+          {
+            "name": "index_MatchParticipant_usuarioNum",
+            "unique": false,
+            "columnNames": [
+              "usuarioNum"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_MatchParticipant_usuarioNum` ON `${TABLE_NAME}` (`usuarioNum`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Match",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "matchId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "Usuario",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "usuarioNum"
+            ],
+            "referencedColumns": [
+              "numero"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "MatchScore",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`matchId` TEXT NOT NULL, `usuarioNum` INTEGER NOT NULL, `score` INTEGER NOT NULL, PRIMARY KEY(`matchId`, `usuarioNum`), FOREIGN KEY(`matchId`) REFERENCES `Match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`usuarioNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "matchId",
+            "columnName": "matchId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usuarioNumero",
+            "columnName": "usuarioNum",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "score",
+            "columnName": "score",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "matchId",
+            "usuarioNum"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_MatchScore_usuarioNum",
+            "unique": false,
+            "columnNames": [
+              "usuarioNum"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_MatchScore_usuarioNum` ON `${TABLE_NAME}` (`usuarioNum`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Match",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "matchId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "Usuario",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "usuarioNum"
+            ],
+            "referencedColumns": [
+              "numero"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Message",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `matchId` TEXT NOT NULL, `senderNum` INTEGER NOT NULL, `text` TEXT NOT NULL, `createdAtMs` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`matchId`) REFERENCES `Match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`senderNum`) REFERENCES `Usuario`(`numero`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "matchId",
+            "columnName": "matchId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "senderNumero",
+            "columnName": "senderNum",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "text",
+            "columnName": "text",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtMs",
+            "columnName": "createdAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_Message_matchId_createdAtMs",
+            "unique": false,
+            "columnNames": [
+              "matchId",
+              "createdAtMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Message_matchId_createdAtMs` ON `${TABLE_NAME}` (`matchId`, `createdAtMs`)"
+          },
+          {
+            "name": "index_Message_senderNum",
+            "unique": false,
+            "columnNames": [
+              "senderNum"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Message_senderNum` ON `${TABLE_NAME}` (`senderNum`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Match",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "matchId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "Usuario",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "senderNum"
+            ],
+            "referencedColumns": [
+              "numero"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Outbox",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`operationId` TEXT NOT NULL, `entityType` TEXT NOT NULL, `entityId` TEXT NOT NULL, `op` TEXT NOT NULL, `payloadJson` TEXT NOT NULL, `attempt` INTEGER NOT NULL, `lastError` TEXT, `createdAtMs` INTEGER NOT NULL, `updatedAtMs` INTEGER NOT NULL, PRIMARY KEY(`operationId`))",
+        "fields": [
+          {
+            "fieldPath": "operationId",
+            "columnName": "operationId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityType",
+            "columnName": "entityType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityId",
+            "columnName": "entityId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "op",
+            "columnName": "op",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadJson",
+            "columnName": "payloadJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attempt",
+            "columnName": "attempt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastError",
+            "columnName": "lastError",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAtMs",
+            "columnName": "createdAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtMs",
+            "columnName": "updatedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "operationId"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "IdMap",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`localTable` TEXT NOT NULL, `localId` TEXT NOT NULL, `remoteCollection` TEXT NOT NULL, `remoteId` TEXT NOT NULL, PRIMARY KEY(`localTable`, `localId`))",
+        "fields": [
+          {
+            "fieldPath": "localTable",
+            "columnName": "localTable",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "localId",
+            "columnName": "localId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remoteCollection",
+            "columnName": "remoteCollection",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remoteId",
+            "columnName": "remoteId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "localTable",
+            "localId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_IdMap_remoteCollection_remoteId",
+            "unique": true,
+            "columnNames": [
+              "remoteCollection",
+              "remoteId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_IdMap_remoteCollection_remoteId` ON `${TABLE_NAME}` (`remoteCollection`, `remoteId`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "Tombstone",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tableName` TEXT NOT NULL, `entityId` TEXT NOT NULL, `deletedAtMs` INTEGER NOT NULL, PRIMARY KEY(`tableName`, `entityId`))",
+        "fields": [
+          {
+            "fieldPath": "tableName",
+            "columnName": "tableName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityId",
+            "columnName": "entityId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAtMs",
+            "columnName": "deletedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "tableName",
+            "entityId"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "victory_location",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `matchId` INTEGER, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `timestampMillis` INTEGER NOT NULL, FOREIGN KEY(`matchId`) REFERENCES `Match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "matchId",
+            "columnName": "matchId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestampMillis",
+            "columnName": "timestampMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_victory_location_matchId",
+            "unique": false,
+            "columnNames": [
+              "matchId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_victory_location_matchId` ON `${TABLE_NAME}` (`matchId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Match",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "matchId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f042dfbbbc33d45f84667d829c229e2d')"
+    ]
+  }
+}
