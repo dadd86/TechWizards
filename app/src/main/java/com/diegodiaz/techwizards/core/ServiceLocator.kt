@@ -41,7 +41,7 @@ object ServiceLocator {
     }
 
     val victoryRepository by lazy {
-        VictoryRepositoryRoom(victoryLocationDao)
+        VictoryRepositoryRoom(VictoryLocationDao)
     }
 
     // Llamar una vez al arrancar la app
