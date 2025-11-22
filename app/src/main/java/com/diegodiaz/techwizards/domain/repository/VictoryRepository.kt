@@ -9,7 +9,7 @@ import com.diegodiaz.techwizards.domain.model.victoryLocation
  * - Sin Result ni AgentError en esta capa.
  * - Las excepciones de datos se propagan y las gestionan los casos de uso.
  */
-interface victoryRepository {
+interface VictoryRepository {
 
     /**
      * Registra una nueva ubicación de victoria.
