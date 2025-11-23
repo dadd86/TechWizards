@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 3,
-    "identityHash": "f042dfbbbc33d45f84667d829c229e2d",
+    "identityHash": "695e66f448369f8470b1f4fc27466f62",
     "entities": [
       {
         "tableName": "Usuario",
@@ -942,19 +942,13 @@
       },
       {
         "tableName": "victory_location",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `matchId` INTEGER, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `timestampMillis` INTEGER NOT NULL, FOREIGN KEY(`matchId`) REFERENCES `Match`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `accuracyMetres` REAL, `capturedAtMs` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
             "affinity": "INTEGER",
             "notNull": true
-          },
-          {
-            "fieldPath": "matchId",
-            "columnName": "matchId",
-            "affinity": "INTEGER",
-            "notNull": false
           },
           {
             "fieldPath": "latitude",
@@ -969,8 +963,14 @@
             "notNull": true
           },
           {
-            "fieldPath": "timestampMillis",
-            "columnName": "timestampMillis",
+            "fieldPath": "accuracyMetres",
+            "columnName": "accuracyMetres",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "capturedAtMs",
+            "columnName": "capturedAtMs",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -981,36 +981,14 @@
             "id"
           ]
         },
-        "indices": [
-          {
-            "name": "index_victory_location_matchId",
-            "unique": false,
-            "columnNames": [
-              "matchId"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_victory_location_matchId` ON `${TABLE_NAME}` (`matchId`)"
-          }
-        ],
-        "foreignKeys": [
-          {
-            "table": "Match",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "matchId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          }
-        ]
+        "indices": [],
+        "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f042dfbbbc33d45f84667d829c229e2d')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '695e66f448369f8470b1f4fc27466f62')"
     ]
   }
 }

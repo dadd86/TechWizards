@@ -3,10 +3,10 @@ package com.diegodiaz.techwizards.domain.model
 /**
  * Modelo de dominio para la ubicación del jugador al ganar.
  */
-data class victoryLocation(
+data class VictoryLocation(
     val id: Long? = null,
-    val matchId: Long? = null,
     val latitude: Double,
     val longitude: Double,
-    val timestampMillis: Long
+    val accuracyMetres: Double? = null,
+    val capturedAtMs: Long
 )

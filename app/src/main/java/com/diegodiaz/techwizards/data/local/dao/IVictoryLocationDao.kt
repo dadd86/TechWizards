@@ -14,10 +14,9 @@ interface IVictoryLocationDao {
 
     @Query(
         """
-            SELECT * FROM victory_location
-            WHERE matchId = :matchId
-            ORDER BY timestampMillis DESC
+        SELECT * FROM victory_location
+        ORDER BY capturedAtMs DESC
         """
     )
-    suspend fun getByMatch(matchId: Long): List<VictoryLocationEntity>
+    suspend fun getAll(): List<VictoryLocationEntity>
 }
