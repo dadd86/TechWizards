@@ -30,28 +30,13 @@ import com.diegodiaz.techwizards.ui.controller.ControladorPartidaFactory
 import com.diegodiaz.techwizards.ui.responsive.Responsive
 import kotlinx.coroutines.launch
 
-/**
- * Define la jerarquía de navegación y orquesta la inicialización del jugador en Room.
- *
- * Usa el repositorio respaldado por Room para garantizar que la escritura del alias se realice
- * mediante las APIs reactivas de RxJava antes de navegar hacia el menú principal.
- *
- * @param navController Controlador de navegación de Compose.
- * @param isDarkTheme Indica si el tema actual es oscuro.
- * @param onToggleTheme Acción para alternar el tema desde ajustes.
- * @param modifier Modificador opcional de la raíz del NavHost.
- * @return Unit porque solo construye composición de navegación.
- * @throws IllegalStateException Solo propaga errores inesperados de Room o repositorio.
- * @security
- * - Obtiene y persiste únicamente el alias del jugador y su saldo local.
- */
 @Composable
 fun NavGraph(
     navController: NavHostController,
     isDarkTheme: Boolean,
     onToggleTheme: (Boolean) -> Unit,
     modifier: Modifier = Modifier
-)= Responsive { dims ->
+) = Responsive { dims ->
     val context = LocalContext.current
     val db = remember { BaseDeDatos.get(context) }
     val usuarioDao = db.usuarioDao()
@@ -115,7 +100,13 @@ fun NavGraph(
             )
         }
         composable("partida") {
-            val factory = ControladorPartidaFactory(repo, usuarioId, observarPreferencias, victoryService)
+            val factory = ControladorPartidaFactory(
+                repo = repo,
+                usuarioId = usuarioId,
+                observarPreferencias = observarPreferencias,
+                victoryService = victoryService,
+                registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase
+            )
             val controladorPartida: ControladorPartida = viewModel(factory = factory)
             val uiState = controladorPartida.ui.collectAsState().value
             PantallaPartida(
@@ -127,12 +118,20 @@ fun NavGraph(
             )
         }
         composable("historial") {
-            val viewModel: ControladorPartida = viewModel(factory = ControladorPartidaFactory(repo, usuarioId, observarPreferencias, victoryService))
+            val viewModel: ControladorPartida = viewModel(
+                factory = ControladorPartidaFactory(
+                    repo = repo,
+                    usuarioId = usuarioId,
+                    observarPreferencias = observarPreferencias,
+                    victoryService = victoryService,
+                    registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase
+                )
+            )
             val historial by viewModel.historial.collectAsState()
             PantallaHistorial(
                 isDarkTheme = isDarkTheme,
                 historial = historial,
-                onVolverAlMenu = {  navController.navigate("menu") }
+                onVolverAlMenu = { navController.navigate("menu") }
             )
         }
         composable("ajustes") {

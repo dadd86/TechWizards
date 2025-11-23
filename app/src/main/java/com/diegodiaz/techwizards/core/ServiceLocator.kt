@@ -3,12 +3,13 @@ package com.diegodiaz.techwizards.core
 import android.content.Context
 import com.diegodiaz.techwizards.data.local.dao.IPartidaDao
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
+import com.diegodiaz.techwizards.data.local.mapper.VictoryLocationLocalMapper
 import com.diegodiaz.techwizards.data.repository.impl.JuegoRepositoryRoom
 import com.diegodiaz.techwizards.data.repository.impl.MatchRepositoryRoom
 import com.diegodiaz.techwizards.data.repository.impl.SettingsRepositoryDataStore
 import com.diegodiaz.techwizards.data.repository.impl.VictoryRepositoryRoom
 import com.diegodiaz.techwizards.data.transaction.RoomTransactionRunner
-import com.diegodiaz.techwizards.data.local.mapper.VictoryLocationLocalMapper
+import com.diegodiaz.techwizards.core.usecases.RegistrarUbicacionVictoriaUseCase
 import com.diegodiaz.techwizards.integration.victory.WorkManagerVictoryCelebrationService
 
 object ServiceLocator {
@@ -20,7 +21,7 @@ object ServiceLocator {
 
     private val usuarioDao by lazy { db.usuarioDao() }
     private val monederoDao by lazy { db.monederoDao() }
-    private val partidaDao by lazy { db.partidaDao() }
+    private val partidaDao: IPartidaDao by lazy { db.partidaDao() }
     private val victoryLocationDao by lazy { db.victoryLocationDao() }
     private val victoryTransactionRunner by lazy { RoomTransactionRunner(db) }
     private val victoryMapper by lazy { VictoryLocationLocalMapper() }
@@ -51,6 +52,11 @@ object ServiceLocator {
             victoryTransactionRunner,
             victoryMapper
         )
+    }
+
+    // --- Use cases ---
+    val registrarUbicacionVictoriaUseCase by lazy {
+        RegistrarUbicacionVictoriaUseCase(victoryRepository)
     }
 
     val victoryCelebrationService by lazy {
