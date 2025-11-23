@@ -10,13 +10,15 @@ import com.diegodiaz.techwizards.domain.model.Partida
  */
 data class VictoryCelebrationPayload(
     val aliasJugador: String,
-    val deltaMonedas: Int
+    val deltaMonedas: Int,
+    val timestampMillis: Long
 ) {
     companion object {
         fun fromPartida(partida: Partida): VictoryCelebrationPayload =
             VictoryCelebrationPayload(
                 aliasJugador = partida.aliasJugador,
-                deltaMonedas = partida.deltaMonedas
+                deltaMonedas = partida.deltaMonedas,
+                timestampMillis = System.currentTimeMillis()
             )
     }
 }

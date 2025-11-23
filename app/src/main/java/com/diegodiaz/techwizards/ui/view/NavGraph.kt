@@ -28,11 +28,6 @@ import com.diegodiaz.techwizards.ui.controller.ControladorAjustesFactory
 import com.diegodiaz.techwizards.ui.controller.ControladorPartida
 import com.diegodiaz.techwizards.ui.controller.ControladorPartidaFactory
 import com.diegodiaz.techwizards.ui.responsive.Responsive
-import com.diegodiaz.techwizards.ui.view.PantallaAjustes
-import com.diegodiaz.techwizards.ui.view.PantallaAyuda
-import com.diegodiaz.techwizards.ui.view.PantallaBienvenida
-import com.diegodiaz.techwizards.ui.view.PantallaHistorial
-import com.diegodiaz.techwizards.ui.view.PantallaMenu
 import kotlinx.coroutines.launch
 
 /**
@@ -68,6 +63,7 @@ fun NavGraph(
     val obtenerPreferencias = remember { ObtenerPreferenciasUseCase(settingsRepository) }
     val actualizarPreferencias = remember { ActualizarPreferenciasUseCase(settingsRepository) }
     val observarPreferencias = remember { ObservarPreferenciasUseCase(settingsRepository) }
+    val victoryService = remember { ServiceLocator.victoryCelebrationService }
     val ajustesFactory = remember {
         ControladorAjustesFactory(obtenerPreferencias, actualizarPreferencias, observarPreferencias)
     }
@@ -119,7 +115,7 @@ fun NavGraph(
             )
         }
         composable("partida") {
-            val factory = ControladorPartidaFactory(repo, usuarioId, observarPreferencias)
+            val factory = ControladorPartidaFactory(repo, usuarioId, observarPreferencias, victoryService)
             val controladorPartida: ControladorPartida = viewModel(factory = factory)
             val uiState = controladorPartida.ui.collectAsState().value
             PantallaPartida(
@@ -131,7 +127,7 @@ fun NavGraph(
             )
         }
         composable("historial") {
-            val viewModel: ControladorPartida = viewModel(factory = ControladorPartidaFactory(repo, usuarioId, observarPreferencias))
+            val viewModel: ControladorPartida = viewModel(factory = ControladorPartidaFactory(repo, usuarioId, observarPreferencias, victoryService))
             val historial by viewModel.historial.collectAsState()
             PantallaHistorial(
                 isDarkTheme = isDarkTheme,
@@ -144,8 +140,7 @@ fun NavGraph(
             val ajustesState by ajustesVm.ui.collectAsState()
             PantallaAjustes(
                 isDarkTheme = isDarkTheme,
-                state = ajustesState,
-                eventos = ajustesVm.eventos,
+                ajustesState = ajustesState,
                 onToggleTheme = { enabled ->
                     ajustesVm.actualizarTemaOscuro(enabled)
                     onToggleTheme(enabled)

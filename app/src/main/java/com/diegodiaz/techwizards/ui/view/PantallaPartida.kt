@@ -57,16 +57,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.view.drawToBitmap
-import com.diegodiaz.techwizards.R
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.diegodiaz.techwizards.data.local.entity.Resultado
 import com.diegodiaz.techwizards.integration.victory.VictoryCelebrationPayload
 import com.diegodiaz.techwizards.integration.victory.VictoryCelebrationService
+import com.diegodiaz.techwizards.integration.victory.WorkManagerVictoryCelebrationService
 import com.diegodiaz.techwizards.ui.controller.JuegoUiEvent
 import com.diegodiaz.techwizards.ui.controller.JuegoUiState
 import com.diegodiaz.techwizards.ui.responsive.Responsive
 import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import com.diegodiaz.techwizards.R
 
 /**
  * Pantalla principal del juego donde el usuario elige un número y lanza el dado.
@@ -116,13 +118,12 @@ fun PantallaPartida(
                 val stream = ByteArrayOutputStream()
                 bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
                 val payload = VictoryCelebrationPayload(
-                    partidaId = evento.partida.id,
                     aliasJugador = evento.partida.aliasJugador,
                     deltaMonedas = evento.partida.deltaMonedas,
-                    timestampMs = System.currentTimeMillis(),
-                    screenshotBytes = stream.toByteArray()
+                    timestampMillis = System.currentTimeMillis()
                 )
-                VictoryCelebrationService.enqueue(context.applicationContext, payload)
+                val service = WorkManagerVictoryCelebrationService(context.applicationContext)
+                service.celebrate(payload)
                 if (uiState.sfxEnabled) {
                     toneGenerator.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP, 250)
                 }

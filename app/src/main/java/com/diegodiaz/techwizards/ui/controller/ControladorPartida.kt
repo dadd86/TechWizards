@@ -82,8 +82,8 @@ private val defaultSettings = GameSettings(
 class ControladorPartida(
     private val repo: JuegoRepository,
     private val usuarioId: String,
-    observarPreferencias: ObservarPreferenciasUseCase,
-    private val victoryService: VictoryCelebrationService // NUEVO (Victory)
+    private val observarPreferencias: ObservarPreferenciasUseCase,
+    private val victoryService: VictoryCelebrationService
 ) : ViewModel() {
 
     private val preferencias: StateFlow<GameSettings> = observarPreferencias()
@@ -164,8 +164,8 @@ class ControladorPartida(
             // 2) Disparar integración: galería + calendario + notificación
             //    (usa solo datos de juego, nada sensible)
             val payload = VictoryCelebrationPayload(
-                playerName = partida.aliasJugador,
-                coinsWon = partida.deltaMonedas,
+                aliasJugador = partida.aliasJugador,
+                deltaMonedas = partida.deltaMonedas,
                 timestampMillis = System.currentTimeMillis()
             )
             victoryService.celebrate(payload)
@@ -193,7 +193,7 @@ class ControladorPartidaFactory(
     private val repo: JuegoRepository,
     private val usuarioId: String,
     private val observarPreferencias: ObservarPreferenciasUseCase,
-    private val victoryService: VictoryCelebrationService // NUEVO (Victory)
+    private val victoryService: VictoryCelebrationService
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ControladorPartida::class.java)) {
