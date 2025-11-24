@@ -38,6 +38,7 @@ fun PantallaBienvenida(
     nombrePredeterminado: String? = null,
     onJugar: (String) -> Unit
 ) = Responsive { dims ->
+    val invalidNameMessage = stringResource(id = R.string.welcome_invalid_name)
     var mostrarDialogo by remember { mutableStateOf(false) }
     var nombreJugador by rememberSaveable(nombrePredeterminado) { mutableStateOf(nombrePredeterminado.orEmpty()) }
     var errorNombre by remember { mutableStateOf<String?>(null) }
@@ -124,7 +125,7 @@ fun PantallaBienvenida(
                     onClick = {
                         val nombreNormalizado = nombreJugador.trim()
                         if (nombreNormalizado.isEmpty()) {
-                            errorNombre = stringResource(id = R.string.welcome_invalid_name)
+                            errorNombre = invalidNameMessage
                         } else {
                             onJugar(nombreNormalizado)
                             mostrarDialogo = false
