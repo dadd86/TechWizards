@@ -8,6 +8,9 @@
     <string name="victory_notification_saved_media">Screenshot stored in the TechWizards gallery.</string>
     <string name="victory_notification_calendar_link">Calendar event #%1$d</string>
     <string name="victory_channel_name">Victories</string>
+    <string name="music_channel_name">Background music</string>
+    <string name="music_notification_title">Music playing</string>
+    <string name="music_notification_body">Playing Tech Wizards soundtrack</string>
     <string name="menu_title">Main menu</string>
     <string name="menu_play">Play</string>
     <string name="menu_history">History</string>

@@ -27,8 +27,9 @@ import java.util.TimeZone
  * 2) Genera una imagen "captura" en la galería.
  * 3) Lanza una notificación de victoria.
  *
- * @security
- * Solo usa alias del jugador y datos de juego.
+ * @return `Result.success` cuando todas las acciones se completan.
+ * @throws IllegalStateException No se lanza directamente; errores se traducen en `Result.retry`.
+ * @security Solo usa alias del jugador y datos de juego.
  */
 class VictoryCelebrationWorker(
     appContext: Context,
@@ -43,6 +44,7 @@ class VictoryCelebrationWorker(
             guardarEnCalendario(alias, delta)
             guardarCapturaEnGaleria(alias, delta)
             mostrarNotificacion(alias, delta)
+            DecentralizedLogger.i(TAG, "Celebración de victoria completada")
             Result.success()
         } catch (t: Throwable) {
             DecentralizedLogger.e(TAG, "Error celebrando victoria", t)
@@ -129,16 +131,16 @@ class VictoryCelebrationWorker(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "Victorias Tech Wizards",
+                ctx.getString(R.string.victory_channel_name),
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             manager.createNotificationChannel(channel)
         }
 
         val notification = NotificationCompat.Builder(ctx, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground) // cámbialo si tienes icono propio
-            .setContentTitle("¡Victoria!")
-            .setContentText("$alias ha ganado $deltaMonedas monedas")
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(ctx.getString(R.string.victory_notification_title))
+            .setContentText(ctx.getString(R.string.victory_notification_body, alias))
             .setAutoCancel(true)
             .build()
 

@@ -13,7 +13,7 @@ Expone casos de uso que orquestan uno o más repositorios del dominio. Cada clas
 | `ObtenerPreferenciasUseCase` | — | `Result<GameSettings, AgentError>` | Lectura puntual de ajustes almacenados en DataStore. |
 | `ActualizarPreferenciasUseCase` | `GameSettings` | `Result<Unit, AgentError>` | Persiste la configuración recibida en DataStore asegurando coherencia de flags. |
 | `RegistrarEventoMatchUseCase` | `MatchEvent` | `Result<Unit, AgentError>` | Llama a `MatchRepository.registrarEvento` para auditar acciones en partidas multijugador. |
-| `RegistrarUbicacionVictoriaUseCase` | `VictoryLocation` | `Result<Unit, AgentError>` | Usa `VictoryRepository.guardarUbicacion` para registrar dónde ocurrió una victoria. |
+| `RegistrarUbicacionVictoriaUseCase` | `latitude: Double`, `longitude: Double`, `accuracyMetres: Double?` | `Unit` | Valida rangos de coordenadas, registra logs con `DecentralizedLogger` y delega en `VictoryRepository.registrarUbicacion`. |
 
 ## Patrones
 
