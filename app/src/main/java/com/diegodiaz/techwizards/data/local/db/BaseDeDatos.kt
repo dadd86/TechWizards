@@ -351,25 +351,20 @@ abstract class BaseDeDatos : RoomDatabase() {
         }
         private val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("""DROP TABLE IF EXISTS `VictoryLocation`""")
                 database.execSQL(
                     """
-                    CREATE TABLE IF NOT EXISTS `VictoryLocation` (
+                    CREATE TABLE IF NOT EXISTS `victory_location` (
                         `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                        `partidaId` INTEGER NOT NULL,
-                        `aliasJugador` TEXT NOT NULL,
                         `latitude` REAL NOT NULL,
                         `longitude` REAL NOT NULL,
-                        `timestampMs` INTEGER NOT NULL
+                        `accuracyMetres` REAL,
+                        `capturedAtMs` INTEGER NOT NULL
                     )
                     """.trimIndent()
                 )
-                database.execSQL(
-                    """
-                    CREATE INDEX IF NOT EXISTS `index_VictoryLocation_timestampMs`
-                    ON `VictoryLocation` (`timestampMs` DESC)
-                    """.trimIndent()
-                )
-            }
+
+                }
         }
 
         fun get(ctx: Context): BaseDeDatos =

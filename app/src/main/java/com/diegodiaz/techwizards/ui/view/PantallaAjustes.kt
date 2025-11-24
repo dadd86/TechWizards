@@ -4,18 +4,9 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,13 +24,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.diegodiaz.techwizards.R
 import com.diegodiaz.techwizards.integration.media.*
 import com.diegodiaz.techwizards.ui.controller.AjustesState
 import com.diegodiaz.techwizards.ui.responsive.Responsive
 import com.diegodiaz.techwizards.ui.responsive.UiDims
-import com.diegodiaz.techwizards.R
 
 
 /**
@@ -180,7 +171,8 @@ fun PantallaAjustes(
             AjustesSeccion(stringResource(id = R.string.settings_language_section), dims) {
                 IdiomaSelector(
                     seleccionado = settings.selectedLanguageTag,
-                    onSeleccion = onSeleccionIdioma
+                    onSeleccion = onSeleccionIdioma,
+                    dims = dims
                 )
             }
             Spacer(Modifier.height(dims.spaceLg))
@@ -242,16 +234,28 @@ fun AjusteSwitch(
  * @param onSeleccion Callback de selección.
  */
 @Composable
-fun IdiomaSelector(seleccionado: String, onSeleccion: (String) -> Unit) {
+fun IdiomaSelector(seleccionado: String, onSeleccion: (String) -> Unit, dims: UiDims) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(horizontal = dims.spaceSm),
+        horizontalArrangement = Arrangement.spacedBy(dims.spaceSm)
     ) {
-        LanguageChip(text = "ES", seleccionado = seleccionado == "es-ES") { onSeleccion("es-ES") }
-        LanguageChip(text = "EN", seleccionado = seleccionado == "en-US") { onSeleccion("en-US") }
-        LanguageChip(text = "DE", seleccionado = seleccionado == "de-DE") { onSeleccion("de-DE") }
+        LanguageChip(
+            text = stringResource(id = R.string.language_es_label),
+            seleccionado = seleccionado == "es-ES",
+            dims = dims
+        ) { onSeleccion("es-ES") }
+        LanguageChip(
+            text = stringResource(id = R.string.language_en_label),
+            seleccionado = seleccionado == "en-US",
+            dims = dims
+        ) { onSeleccion("en-US") }
+        LanguageChip(
+            text = stringResource(id = R.string.language_de_label),
+            seleccionado = seleccionado == "de-DE",
+            dims = dims
+        ) { onSeleccion("de-DE") }
     }
 }
 
@@ -264,7 +268,7 @@ fun IdiomaSelector(seleccionado: String, onSeleccion: (String) -> Unit) {
  * @param onClick Acción al pulsarlo.
  */
 @Composable
-fun LanguageChip(text: String, seleccionado: Boolean, onClick: () -> Unit) {
+fun LanguageChip(text: String, seleccionado: Boolean, dims: UiDims, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
@@ -272,8 +276,8 @@ fun LanguageChip(text: String, seleccionado: Boolean, onClick: () -> Unit) {
             contentColor = if (seleccionado) MaterialTheme.colorScheme.onPrimary else Color.Black
         ),
         modifier = Modifier
-            .height(40.dp)
-            .clip(RoundedCornerShape(20.dp))
+            .height(dims.buttonHeightSm)
+            .clip(RoundedCornerShape(dims.cardCorner / 2))
     ) {
         Text(text = text, fontSize = 14.sp)
     }

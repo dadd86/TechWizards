@@ -52,6 +52,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -204,7 +205,7 @@ fun PantallaPartida(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.moneda),
-                    contentDescription = "Moneda",
+                    contentDescription = stringResource(id = R.string.game_coin_content_description),
                     modifier = Modifier.size(coinSize)
                 )
                 Spacer(Modifier.width(dims.spaceXs))
@@ -232,7 +233,7 @@ fun PantallaPartida(
                     // Dado
                     Image(
                         painter = painterResource(id = R.drawable.dado_negro),
-                        contentDescription = "Dado",
+                        contentDescription = stringResource(id = R.string.game_dice_content_description),
                         modifier = Modifier
                             .size(diceSize)
                             .rotate(rotation.value),
@@ -274,7 +275,7 @@ fun PantallaPartida(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF96C78F))
                 ) {
                     Text(
-                        text = "Lanzar",
+                        text = stringResource(id = R.string.game_roll),
                         fontWeight = FontWeight.Bold,
                         fontSize = dims.titleSp
                     )
@@ -283,7 +284,7 @@ fun PantallaPartida(
                 Spacer(Modifier.height(dims.spaceSm))
 
                 Text(
-                    text = uiState.ultimoResultado.ifEmpty { "Último lanzamiento: ..." },
+                    text = uiState.ultimoResultado.ifEmpty { stringResource(id = R.string.game_last_roll_placeholder) },
                     fontWeight = FontWeight.Medium,
                     fontSize = dims.bodySp,
                     color = MaterialTheme.colorScheme.onBackground
@@ -300,7 +301,7 @@ fun PantallaPartida(
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White)
             ) {
                 Text(
-                    text = "Volver al menú",
+                    text = stringResource(id = R.string.game_back_to_menu),
                     color = Color(0xFF96C78F),
                     fontWeight = FontWeight.SemiBold,
                     fontSize = dims.bodySp
@@ -323,7 +324,7 @@ fun PantallaPartida(
                     .padding(horizontal = dims.spaceMd),
                 title = {
                     Text(
-                        "Elige un número del 1 al 6",
+                        stringResource(id = R.string.game_pick_number_prompt),
                         fontSize = dims.bodySp
                     )
                 },
@@ -359,7 +360,7 @@ fun PantallaPartida(
                 confirmButton = {},
                 dismissButton = {
                     TextButton(onClick = { showDialog = false }) {
-                        Text("Cancelar", fontSize = dims.bodySp)
+                        Text(stringResource(id = R.string.action_cancel), fontSize = dims.bodySp)
                     }
                 }
             )

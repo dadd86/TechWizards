@@ -24,41 +24,62 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.diegodiaz.techwizards.R
 import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import java.util.Locale
+import com.diegodiaz.techwizards.ui.responsive.Responsive
+import com.diegodiaz.techwizards.ui.responsive.UiDims
 
 /**
- * Sección de ayuda basada en WebView con soporte para EN/DE.
+ * Sección de ayuda basada en WebView con soporte para ES/EN/DE.
  *
  * @return `Unit` tras componer la pantalla.
  * @throws IllegalStateException No se lanza directamente; los fallos del WebView se propagan al sistema.
  * @security El contenido se sirve desde `assets/` sin exponer datos sensibles.
  */
 @Composable
-fun PantallaAyuda() {
+fun PantallaAyuda() = Responsive { dims ->
     val context = LocalContext.current
     var selectedLanguage by remember { mutableStateOf(resolveDefaultLanguage()) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(horizontal = dims.spaceMd, vertical = dims.spaceSm),
+        verticalArrangement = Arrangement.spacedBy(dims.spaceSm)
     ) {
         Text(
             text = stringResource(id = R.string.help_title),
-            style = MaterialTheme.typography.headlineSmall
+            fontSize = dims.titleSp,
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(dims.spaceSm)
         ) {
-            Button(onClick = { selectedLanguage = "en"; logLanguage("en") }) {
-                Text(text = "EN")
+            HelpLanguageChip(
+                label = stringResource(id = R.string.language_es_label),
+                selected = selectedLanguage == "es",
+                dims = dims
+            ) {
+                selectedLanguage = "es"
+                logLanguage("es")
             }
-            Button(onClick = { selectedLanguage = "de"; logLanguage("de") }) {
-                Text(text = "DE")
+                HelpLanguageChip(
+                    label = stringResource(id = R.string.language_en_label),
+                    selected = selectedLanguage == "en",
+                    dims = dims
+                ) {
+                    selectedLanguage = "en"
+                    logLanguage("en")
+                }
+                HelpLanguageChip(
+                    label = stringResource(id = R.string.language_de_label),
+                    selected = selectedLanguage == "de",
+                    dims = dims
+                ) {
+                    selectedLanguage = "de"
+                    logLanguage("de")
+                }
             }
-        }
 
         AndroidView(
             modifier = Modifier.fillMaxSize(),
@@ -79,14 +100,34 @@ fun PantallaAyuda() {
     }
 }
 
+@Composable
+private fun HelpLanguageChip(label: String, selected: Boolean, dims: UiDims, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+            contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+        ),
+        modifier = Modifier.height(dims.buttonHeightSm),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Text(text = label, fontSize = dims.bodySp)
+    }
+}
 private fun resolveDefaultLanguage(): String {
     val locale = Locale.getDefault().language.lowercase(Locale.ROOT)
-    return if (locale == "de") "de" else "en"
+    return when {
+        locale.startsWith("es") -> "es"
+        locale.startsWith("de") -> "de"
+        locale.startsWith("en") -> "en"
+        else -> "es"
+    }
 }
 
 private fun getHelpAsset(language: String): String =
     when (language.lowercase(Locale.ROOT)) {
         "de" -> "file:///android_asset/help/index_de.html"
+        "es" -> "file:///android_asset/help/index.html"
         else -> "file:///android_asset/help/index_en.html"
     }
 

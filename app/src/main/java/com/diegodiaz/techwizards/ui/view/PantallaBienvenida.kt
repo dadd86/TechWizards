@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -58,12 +59,12 @@ fun PantallaBienvenida(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.dado),
-                    contentDescription = "Dado",
+                    contentDescription = stringResource(id = R.string.welcome_dice_content_description),
                     modifier = Modifier.size(dims.imageLg)
                 )
             }
             Text(
-                text = "¡Bienvenido a\nJuegosAzar!",
+                text = stringResource(id = R.string.welcome_title),
                 fontSize = dims.titleSp,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
@@ -77,7 +78,12 @@ fun PantallaBienvenida(
                     .clip(RoundedCornerShape(dims.cardCorner)),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White)
             ) {
-                Text("JUGAR", fontSize = dims.bodySp, color = Color(0xFF3B71B8), fontWeight = FontWeight.Bold)
+                Text(
+                    stringResource(id = R.string.welcome_play),
+                    fontSize = dims.bodySp,
+                    color = Color(0xFF3B71B8),
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
@@ -87,7 +93,7 @@ fun PantallaBienvenida(
                 mostrarDialogo = false
                 errorNombre = null
             },
-            title = { Text(text = "Ingresa tu nombre") },
+            title = { Text(text = stringResource(id = R.string.welcome_enter_name)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(dims.spaceSm)) {
                     OutlinedTextField(
@@ -96,7 +102,7 @@ fun PantallaBienvenida(
                             nombreJugador = it
                             if (errorNombre != null) errorNombre = null
                         },
-                        label = { Text("Nombre del jugador") },
+                        label = { Text(stringResource(id = R.string.welcome_player_name_label)) },
                         singleLine = true,
                         isError = errorNombre != null,
                         supportingText = {
@@ -106,7 +112,7 @@ fun PantallaBienvenida(
                         }
                     )
                     Text(
-                        text = "El alias aparecerá en el historial de partidas.",
+                        text = stringResource(id = R.string.welcome_alias_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Start
@@ -118,14 +124,14 @@ fun PantallaBienvenida(
                     onClick = {
                         val nombreNormalizado = nombreJugador.trim()
                         if (nombreNormalizado.isEmpty()) {
-                            errorNombre = "Ingresa un nombre válido"
+                            errorNombre = stringResource(id = R.string.welcome_invalid_name)
                         } else {
                             onJugar(nombreNormalizado)
                             mostrarDialogo = false
                         }
                     }
                 ) {
-                    Text("Aceptar")
+                    Text(stringResource(id = R.string.action_accept))
                 }
             },
             dismissButton = {
@@ -135,7 +141,7 @@ fun PantallaBienvenida(
                         errorNombre = null
                     }
                 ) {
-                    Text("Cancelar")
+                    Text(stringResource(id = R.string.action_cancel))
                 }
             }
         )
