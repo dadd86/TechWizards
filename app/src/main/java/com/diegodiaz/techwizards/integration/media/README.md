@@ -1,12 +1,13 @@
 # `integration.media`
 
-Punto de extensión para reproducir música o efectos sonoros en segundo plano.
+Servicios y controladores multimedia desacoplados de la UI.
 
 ## Clases
 
-| Clase | Estado actual | Futuras responsabilidades |
+| Clase | Rol | Consideraciones |
 | --- | --- | --- |
-| `musicPlaybackService` | Stub sin implementación. | Conectar con `MediaBrowserServiceCompat` o `ExoPlayer` para reproducir playlists, reaccionar a eventos de victoria y respetar AudioFocus. |
-| `musicPlaybackController` | Stub sin implementación. | Exponer API sencilla para la UI (`play(uri)`, `pause()`, `toggle()`) delegando en el servicio y actualizando `GameSettings`. |
+| `musicPlaybackService` | Servicio `START_STICKY` y *foreground* que reproduce música de fondo, gestiona `AudioFocus`, responde a llamadas/alarma (pausa automática) y evita PII en logs vía `DecentralizedLogger`. | Usa `MediaPlayer` con `AudioAttributes.USAGE_GAME`, receptor `ACTION_AUDIO_BECOMING_NOISY` y notificación persistente `music_channel` con textos localizados. |
+| `musicPlaybackController` | API ligera para que la UI encienda/apague la música o seleccione pistas desde el dispositivo. | Arranca el servicio con acciones `PLAY_OFFICIAL`, `PLAY_CUSTOM` o `STOP`, y ofrece `applySettings(enabled, uri)` para respetar la pista personalizada almacenada en preferencias. |
 
-Al implementar, seguir las políticas de privacidad indicadas en `AGENTS.md` (sin PII en logs) y usar `DecentralizedLogger` para telemetría.
+
+Todos los archivos siguen la convención lowerCamelCase y deben documentarse con KDoc en español incluyendo la etiqueta `@security`.

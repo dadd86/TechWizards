@@ -1,157 +1,154 @@
-package com.diegodiaz.techwizards.integration.victory
+package com.diegodiaz.techwizards.ui.controller
 
-import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.content.ContentValues
-import android.content.Context
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.os.Build
-import android.provider.CalendarContract
-import android.provider.MediaStore
-import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
-import androidx.work.CoroutineWorker
-import androidx.work.WorkerParameters
-import com.diegodiaz.techwizards.R
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
+import com.diegodiaz.techwizards.domain.model.GameSettings
+import kotlinx.coroutines.launch
+import android.net.Uri
+import com.diegodiaz.techwizards.core.usecases.ActualizarPreferenciasUseCase
+import com.diegodiaz.techwizards.core.usecases.ObtenerPreferenciasUseCase
+import com.diegodiaz.techwizards.core.usecases.ObservarPreferenciasUseCase
 import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
-import java.util.TimeZone
 
 /**
- * Worker que:
- * 1) Guarda una entrada en el calendario.
- * 2) Genera una imagen "captura" en la galería.
- * 3) Lanza una notificación de victoria.
+ * Controlador (ViewModel) para la pantalla de ajustes.
  *
- * @return `Result.success` cuando todas las acciones se completan.
- * @throws IllegalStateException No se lanza directamente; errores se traducen en `Result.retry`.
- * @security Solo usa alias del jugador y datos de juego.
+ * @param obtenerPreferencias Caso de uso para leer preferencias locales.
+ * @param actualizarPreferencias Caso de uso que persiste cambios de configuración.
+ * @param observarPreferencias Flujo reactivo con los ajustes actuales.
+ * @return `ViewModel` listo para exponer `StateFlow` a la UI.
+ * @throws IllegalStateException No se lanza directamente; excepciones de flujos se propagan.
+ * @security No registra PII; los logs solo informan cambios de flags sin datos sensibles.
  */
-class VictoryCelebrationWorker(
-    appContext: Context,
-    workerParams: WorkerParameters
-) : CoroutineWorker(appContext, workerParams) {
+class ControladorAjustes(
+    private val obtenerPreferencias: ObtenerPreferenciasUseCase,
+    private val actualizarPreferencias: ActualizarPreferenciasUseCase,
+    private val observarPreferencias: ObservarPreferenciasUseCase
 
-    override suspend fun doWork(): Result {
-        val alias = inputData.getString(KEY_ALIAS) ?: "Jugador"
-        val delta = inputData.getInt(KEY_DELTA_MONEDAS, 0)
+    ) : ViewModel() {
+        private val gameSettingsDefault = GameSettings(
 
-        return try {
-            guardarEnCalendario(alias, delta)
-            guardarCapturaEnGaleria(alias, delta)
-            mostrarNotificacion(alias, delta)
-            DecentralizedLogger.i(TAG, "Celebración de victoria completada")
-            Result.success()
-        } catch (t: Throwable) {
-            DecentralizedLogger.e(TAG, "Error celebrando victoria", t)
-            Result.retry()
-        }
-    }
-
-    // 1) Guardar evento en calendario
-    private fun guardarEnCalendario(alias: String, deltaMonedas: Int) {
-        val ctx = applicationContext
-
-        if (ActivityCompat.checkSelfPermission(ctx, Manifest.permission.WRITE_CALENDAR)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            // La Activity debe pedir este permiso antes
-            return
-        }
-
-        val now = System.currentTimeMillis()
-        val calId = 1L // para la práctica, usamos el calendario 1
-
-        val values = ContentValues().apply {
-            put(CalendarContract.Events.DTSTART, now)
-            put(CalendarContract.Events.DTEND, now + 30 * 60 * 1000L)
-            put(CalendarContract.Events.TITLE, "Victoria en Tech Wizards")
-            put(
-                CalendarContract.Events.DESCRIPTION,
-                "$alias ha ganado $deltaMonedas monedas en Tech Wizards"
+            musicEnabled = true,
+            sfxEnabled = true,
+            darkThemeEnabled = false,
+            animationsEnabled = true,
+            notificationsEnabled = true,
+            selectedMusicUri = null,
+            selectedLanguageTag = "es-ES"
+        )
+        private val _ui = MutableStateFlow(
+            AjustesState(
+                cargando = false,
+                errorRes = null,
+                settings = gameSettingsDefault
             )
-            put(CalendarContract.Events.CALENDAR_ID, calId)
-            put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
-        }
+        )
 
-        ctx.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
-    }
+        val ui: StateFlow<AjustesState> = _ui
 
-    // 2) Guardar "captura" en la galería
-    private fun guardarCapturaEnGaleria(alias: String, deltaMonedas: Int) {
-        val ctx = applicationContext
-
-        val fileName = "victoria_${System.currentTimeMillis()}.jpg"
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
-            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/TechWizards")
+        init {
+            viewModelScope.launch {
+                observarPreferencias().collect { nuevosSettings ->
+                    DecentralizedLogger.d("AjustesViewModel", "Preferencias actualizadas en flujo")
+                    _ui.update { it.copy(settings = nuevosSettings, cargando = false, errorRes = null) }
+                }
             }
         }
 
-        val uri = ctx.contentResolver.insert(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            contentValues
-        ) ?: return
-
-        // Bitmap simple que hace de "captura" de victoria
-        val bitmap = Bitmap.createBitmap(1080, 600, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        val paint = Paint().apply {
-            isAntiAlias = true
-            textSize = 64f
+        /**
+         * Alterna el tema oscuro en configuración.
+         *
+         * @param enabled Indica si se activa el tema oscuro.
+         * @return `Unit` tras programar la persistencia.
+         * @throws IllegalStateException No se lanza; las excepciones del flujo se propagan.
+         * @security No registra preferencias de usuario más allá del flag.
+         */
+        fun actualizarTemaOscuro(enabled: Boolean) {
+            actualizarYGuardar { it.copy(darkThemeEnabled = enabled) }
         }
 
-        canvas.drawARGB(255, 0, 0, 0)
-        paint.setARGB(255, 255, 215, 0)
-        canvas.drawText("¡Victoria de $alias!", 80f, 250f, paint)
-        canvas.drawText("+$deltaMonedas monedas", 80f, 350f, paint)
-
-        ctx.contentResolver.openOutputStream(uri)?.use { out ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+        /**
+         * Actualiza el estado de la música de fondo.
+         *
+         * @param enabled `true` si la música debe sonar.
+         * @return `Unit` tras despachar el guardado.
+         * @throws IllegalStateException No se lanza.
+         * @security No guarda información de pistas; solo el flag.
+         */
+        fun actualizarMusica(enabled: Boolean) {
+            actualizarYGuardar { it.copy(musicEnabled = enabled) }
         }
 
-        bitmap.recycle()
-    }
-
-    // 3) Notificación
-    private fun mostrarNotificacion(alias: String, deltaMonedas: Int) {
-        val ctx = applicationContext
-        val manager = ContextCompat.getSystemService(
-            ctx,
-            NotificationManager::class.java
-        ) ?: return
-
-        val channelId = "victory_channel"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                ctx.getString(R.string.victory_channel_name),
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-            manager.createNotificationChannel(channel)
+        /**
+         * Actualiza el estado de los efectos de sonido.
+         *
+         * @param enabled `true` para habilitarlos.
+         * @return `Unit` tras persistir.
+         * @throws IllegalStateException No se lanza.
+         * @security Solo registra el cambio en logs generales.
+         */
+        fun actualizarSfx(enabled: Boolean) {
+            actualizarYGuardar { it.copy(sfxEnabled = enabled) }
         }
 
-        val notification = NotificationCompat.Builder(ctx, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(ctx.getString(R.string.victory_notification_title))
-            .setContentText(ctx.getString(R.string.victory_notification_body, alias))
-            .setAutoCancel(true)
-            .build()
+        /**
+         * Alterna las animaciones de fichas.
+         *
+         * @param enabled Si las animaciones deben mostrarse.
+         * @return `Unit` tras guardar.
+         * @throws IllegalStateException No se lanza.
+         * @security No incluye PII en logs.
+         */
+        fun actualizarAnimaciones(enabled: Boolean) {
+            actualizarYGuardar { it.copy(animationsEnabled = enabled) }
+        }
 
-        manager.notify(NOTIFICATION_ID, notification)
+        /**
+         * Activa o desactiva notificaciones de victoria.
+         *
+         * @param enabled Si las notificaciones deben enviarse.
+         * @return `Unit` tras persistir la preferencia.
+         * @throws IllegalStateException No se lanza.
+         * @security No registra detalles de usuario.
+         */
+        fun actualizarNotificaciones(enabled: Boolean) {
+            actualizarYGuardar { it.copy(notificationsEnabled = enabled) }
+        }
+
+        /**
+         * Selecciona una pista personalizada para la música de fondo.
+         *
+         * @param uri URI seleccionada o `null` para volver a la pista oficial.
+         * @return `Unit` tras persistir la selección.
+         * @throws IllegalStateException No se lanza.
+         * @security No se almacena ruta en logs; solo se persiste en preferencias.
+         */
+        fun seleccionarPista(uri: Uri?) {
+            actualizarYGuardar { it.copy(selectedMusicUri = uri?.toString()) }
+        }
+
+        /**
+         * Cambia el idioma preferido de la aplicación.
+         *
+         * @param tag Etiqueta BCP47 seleccionada.
+         * @return `Unit` tras guardar.
+         * @throws IllegalStateException No se lanza.
+         * @security No registra idiomas anteriores.
+         */
+        fun actualizarIdioma(tag: String) {
+            actualizarYGuardar { it.copy(selectedLanguageTag = tag) }
+        }
+
+        private fun actualizarYGuardar(modificar: (GameSettings) -> GameSettings) {
+            val prev = _ui.value.settings ?: gameSettingsDefault
+            val modificado = modificar(prev)
+            _ui.update { it.copy(settings = modificado) }
+            viewModelScope.launch {
+                DecentralizedLogger.i("AjustesViewModel", "Persistiendo cambios de ajustes")
+                actualizarPreferencias(modificado)
+            }
+        }
     }
-
-    companion object {
-        private const val TAG = "VictoryWorker"
-
-        const val KEY_ALIAS = "alias"
-        const val KEY_DELTA_MONEDAS = "deltaMonedas"
-        private const val NOTIFICATION_ID = 1001
-    }
-}

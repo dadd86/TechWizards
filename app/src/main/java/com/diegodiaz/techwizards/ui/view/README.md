@@ -22,6 +22,6 @@ Pantallas Jetpack Compose y el `NavGraph` principal de Tech Wizards.
 | `PantallaLobby` | Gestión visual de lobbies (crear, seleccionar existentes). | `onCrearLobby`, `onSeleccionLobby`, `onVolver`. |
 | `PantallaMatch` | Detalle de un match en curso: participantes, puntuaciones y acciones rápidas. | `onIniciar`, `onFinalizar`, `onSumarPuntos`. |
 | `PantallaEventos` | Muestra eventos temporales y su estado de progreso. | `onVolver`, `onMarcarCompletado`. |
-| `PantallaAyuda` | Sección de ayuda/FAQ con enlaces útiles y atajos. | `onVolver` si aplica. |
+| `PantallaAyuda` | WebView multilingüe (EN/DE) que carga ayuda desde `assets/help`, registra la selección en `DecentralizedLogger` y evita contenido dinámico inseguro. | `onVolver` si aplica. |
 
 Todas las pantallas usan el helper `Responsive` para adaptar tamaños según el espacio disponible y se apoyan en el tema definido en `ui/theme`.

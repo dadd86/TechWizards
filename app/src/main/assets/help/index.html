@@ -1,50 +1,56 @@
-<resources>
-    <!-- Pantalla Bienvenida -->
-    <string name="app_name">TechWizards</string>
-    <string name="welcome_title">¡Bienvenido a\nJuegosAzar!</string>
-    <string name="play">JUGAR</string>
-
-    <!-- Menú -->
-    <string name="main_menu_title">Menú principal</string>
-    <string name="menu_play">Jugar</string>
-    <string name="menu_history">Historial</string>
-    <string name="menu_settings">Ajustes</string>
-    <string name="menu_exit">Salir</string>
-    <string name="dialog_exit_title">Confirmar salida</string>
-    <string name="dialog_exit_msg">¿Deseas salir de la aplicación?</string>
-    <string name="btn_confirm">Confirmar</string>
-    <string name="btn_cancel">Cancelar</string>
-
-    <!-- Partida -->
-    <string name="coins">Monedas</string>
-    <string name="roll">Lanzar</string>
-    <string name="last_roll">Último lanzamiento: ...</string>
-    <string name="choose_number_title">Elige un número del 1 al 6</string>
-    <string name="back_to_menu">Volver al menú</string>
-
-    <!-- Historial -->
-    <string name="history_title">Historial de partidas</string>
-    <string name="history_empty">Sin partidas todavía</string>
-    <string name="col_date">Fecha</string>
-    <string name="col_result">Resultado</string>
-    <string name="col_delta">Monedas</string>
-
-    <!-- Ajustes -->
-    <string name="settings_title">Ajustes</string>
-    <string name="settings_sound">Sonido</string>
-    <string name="settings_music">Música de fondo</string>
-    <string name="settings_sfx">Efectos de sonido</string>
-    <string name="settings_display">Visualización</string>
-    <string name="settings_theme">Tema claro/oscuro</string>
-    <string name="settings_animations">Animaciones gráficas del juego</string>
-    <string name="settings_notifications">Notificaciones</string>
-    <string name="settings_notify_results">Notificaciones de resultado o logros</string>
-    <string name="settings_wallet_title">Monedas / Datos de jugador</string>
-    <string name="settings_reset_wallet">Reiniciar monedas</string>
-    <string name="settings_info">Información</string>
-    <string name="settings_app_version">Versión de la app</string>
-    <string name="settings_about">Acerca de</string>
-
-    <!-- No traducibles -->
-    <string name="brand_primary" translatable="false">TechWizards</string>
-</resources>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ayuda de Tech Wizards</title>
+    <style>
+        body { font-family: "Roboto", Arial, sans-serif; margin: 16px; line-height: 1.6; background-color: #0b0b10; color: #e8e8f0; }
+        h1, h2 { color: #9ad1ff; }
+        section { margin-bottom: 20px; padding: 12px; border: 1px solid #1d2a36; border-radius: 8px; background: #111827; }
+        ul { padding-left: 18px; }
+        strong { color: #ffd166; }
+    </style>
+</head>
+<body>
+<h1>Centro de ayuda</h1>
+<section>
+    <h2>Cómo jugar</h2>
+    <ul>
+        <li>Elige un número del <strong>1 al 6</strong> y lanza los dados.</li>
+        <li>Consulta el historial para ver tus partidas recientes y resultados.</li>
+        <li>Las animaciones y sonidos de las fichas se pueden activar o desactivar en Ajustes.</li>
+    </ul>
+</section>
+<section>
+    <h2>Sonido y música</h2>
+    <ul>
+        <li>La música de fondo se ejecuta como servicio en segundo plano y respeta llamadas y alarmas.</li>
+        <li>Activa o desactiva la banda sonora oficial o selecciona una pista desde tus recursos locales.</li>
+        <li>Los efectos de sonido acompañan el movimiento de las fichas cuando las animaciones están activas.</li>
+    </ul>
+</section>
+<section>
+    <h2>Notificaciones y celebraciones</h2>
+    <ul>
+        <li>Al ganar, recibirás una notificación con enlace directo al evento guardado en calendario.</li>
+        <li>La app puede tomar una captura de tu victoria y guardarla en la galería para compartirla.</li>
+        <li>Si las notificaciones están desactivadas en Ajustes, la celebración se limita a la pantalla actual.</li>
+    </ul>
+</section>
+<section>
+    <h2>Privacidad y ubicación</h2>
+    <ul>
+        <li>La ubicación de victoria se almacena en SQLite solo para uso dentro del juego.</li>
+        <li>No se envía información personal a servicios externos y los logs omiten datos sensibles.</li>
+    </ul>
+</section>
+<section>
+    <h2>Accesibilidad e idiomas</h2>
+    <ul>
+        <li>La interfaz está traducida a <strong>español, inglés y alemán</strong>; elige tu idioma en Ajustes.</li>
+        <li>El WebView de ayuda carga contenido local sin scripts para mantener la experiencia segura.</li>
+    </ul>
+</section>
+</body>
+</html>

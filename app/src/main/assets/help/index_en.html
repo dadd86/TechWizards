@@ -1,42 +1,56 @@
-<resources>
-    <string name="app_name">TechWizards</string>
-    <string name="welcome_title">Welcome to\nJuegosAzar!</string>
-    <string name="play">PLAY</string>
-
-    <string name="main_menu_title">Main menu</string>
-    <string name="menu_play">Play</string>
-    <string name="menu_history">History</string>
-    <string name="menu_settings">Settings</string>
-    <string name="menu_exit">Exit</string>
-    <string name="dialog_exit_title">Confirm exit</string>
-    <string name="dialog_exit_msg">Do you want to exit the app?</string>
-    <string name="btn_confirm">Confirm</string>
-    <string name="btn_cancel">Cancel</string>
-
-    <string name="coins">Coins</string>
-    <string name="roll">Roll</string>
-    <string name="last_roll">Last roll: ...</string>
-    <string name="choose_number_title">Choose a number from 1 to 6</string>
-    <string name="back_to_menu">Back to menu</string>
-
-    <string name="history_title">Game history</string>
-    <string name="history_empty">No games yet</string>
-    <string name="col_date">Date</string>
-    <string name="col_result">Result</string>
-    <string name="col_delta">Coins</string>
-
-    <string name="settings_title">Settings</string>
-    <string name="settings_sound">Sound</string>
-    <string name="settings_music">Background music</string>
-    <string name="settings_sfx">Sound effects</string>
-    <string name="settings_display">Display</string>
-    <string name="settings_theme">Light/Dark theme</string>
-    <string name="settings_animations">Game animations</string>
-    <string name="settings_notifications">Notifications</string>
-    <string name="settings_notify_results">Result/achievements notifications</string>
-    <string name="settings_wallet_title">Wallet / Player data</string>
-    <string name="settings_reset_wallet">Reset coins</string>
-    <string name="settings_info">Information</string>
-    <string name="settings_app_version">App version</string>
-    <string name="settings_about">About</string>
-</resources>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tech Wizards Help</title>
+    <style>
+        body { font-family: "Roboto", Arial, sans-serif; margin: 16px; line-height: 1.6; background-color: #0b0b10; color: #e8e8f0; }
+        h1, h2 { color: #9ad1ff; }
+        section { margin-bottom: 20px; padding: 12px; border: 1px solid #1d2a36; border-radius: 8px; background: #111827; }
+        ul { padding-left: 18px; }
+        strong { color: #ffd166; }
+    </style>
+</head>
+<body>
+<h1>Help center</h1>
+<section>
+    <h2>How to play</h2>
+    <ul>
+        <li>Pick a number from <strong>1 to 6</strong> and roll the dice.</li>
+        <li>Open the history screen to review your recent games and results.</li>
+        <li>You can enable or disable chip animations and sounds from Settings.</li>
+    </ul>
+</section>
+<section>
+    <h2>Sound and music</h2>
+    <ul>
+        <li>Background music runs as a foreground service and honors calls or alarms.</li>
+        <li>Toggle the official soundtrack or select a custom track from your device media.</li>
+        <li>Sound effects play together with chip movements when animations are on.</li>
+    </ul>
+</section>
+<section>
+    <h2>Notifications and celebrations</h2>
+    <ul>
+        <li>When you win, a notification links directly to the calendar event created for the victory.</li>
+        <li>The app may capture your winning screen and store it in the gallery for easy sharing.</li>
+        <li>If notifications are disabled in Settings, celebrations stay within the current screen.</li>
+    </ul>
+</section>
+<section>
+    <h2>Privacy and location</h2>
+    <ul>
+        <li>Winning locations are stored locally in SQLite only for in-game features.</li>
+        <li>No personal data is sent outside the app and logs avoid sensitive information.</li>
+    </ul>
+</section>
+<section>
+    <h2>Accessibility and languages</h2>
+    <ul>
+        <li>The interface is localized in <strong>Spanish, English, and German</strong>; choose your language in Settings.</li>
+        <li>The help WebView loads local content with scripts disabled to keep the experience safe.</li>
+    </ul>
+</section>
+</body>
+</html>

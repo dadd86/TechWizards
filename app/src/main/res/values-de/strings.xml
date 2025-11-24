@@ -23,6 +23,9 @@
     <string name="menu_exit_confirm_cancel">Abbrechen</string>
     <string name="help_title">Hilfezentrum</string>
     <string name="help_url">file:///android_asset/help/index_de.html</string>
+    <string name="help_language_es">Spanisch</string>
+    <string name="help_language_en">Englisch</string>
+    <string name="help_language_de">Deutsch</string>
     <string name="settings_back_to_menu">Zurück zum Menü</string>
     <string name="settings_sound_section">Ton</string>
     <string name="settings_music_toggle">Hintergrundmusik</string>

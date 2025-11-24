@@ -1,42 +1,56 @@
-<resources>
-    <string name="app_name">TechWizards</string>
-    <string name="welcome_title">Willkommen bei\nJuegosAzar!</string>
-    <string name="play">SPIELEN</string>
-
-    <string name="main_menu_title">Hauptmenü</string>
-    <string name="menu_play">Spielen</string>
-    <string name="menu_history">Verlauf</string>
-    <string name="menu_settings">Einstellungen</string>
-    <string name="menu_exit">Beenden</string>
-    <string name="dialog_exit_title">Beenden bestätigen</string>
-    <string name="dialog_exit_msg">Möchten Sie die App verlassen?</string>
-    <string name="btn_confirm">Bestätigen</string>
-    <string name="btn_cancel">Abbrechen</string>
-
-    <string name="coins">Münzen</string>
-    <string name="roll">Würfeln</string>
-    <string name="last_roll">Letzter Wurf: ...</string>
-    <string name="choose_number_title">Zahl von 1 bis 6 wählen</string>
-    <string name="back_to_menu">Zurück zum Menü</string>
-
-    <string name="history_title">Spielverlauf</string>
-    <string name="history_empty">Noch keine Spiele</string>
-    <string name="col_date">Datum</string>
-    <string name="col_result">Ergebnis</string>
-    <string name="col_delta">Münzen</string>
-
-    <string name="settings_title">Einstellungen</string>
-    <string name="settings_sound">Sound</string>
-    <string name="settings_music">Hintergrundmusik</string>
-    <string name="settings_sfx">Soundeffekte</string>
-    <string name="settings_display">Anzeige</string>
-    <string name="settings_theme">Helles/Dunkles Thema</string>
-    <string name="settings_animations">Spielanimationen</string>
-    <string name="settings_notifications">Benachrichtigungen</string>
-    <string name="settings_notify_results">Ergebnis-/Erfolgsbenachrichtigungen</string>
-    <string name="settings_wallet_title">Geldbörse / Spieler Daten</string>
-    <string name="settings_reset_wallet">Münzen zurücksetzen</string>
-    <string name="settings_info">Information</string>
-    <string name="settings_app_version">App-Version</string>
-    <string name="settings_about">Über</string>
-</resources>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tech Wizards Hilfe</title>
+    <style>
+        body { font-family: "Roboto", Arial, sans-serif; margin: 16px; line-height: 1.6; background-color: #0b0b10; color: #e8e8f0; }
+        h1, h2 { color: #9ad1ff; }
+        section { margin-bottom: 20px; padding: 12px; border: 1px solid #1d2a36; border-radius: 8px; background: #111827; }
+        ul { padding-left: 18px; }
+        strong { color: #ffd166; }
+    </style>
+</head>
+<body>
+<h1>Hilfezentrum</h1>
+<section>
+    <h2>So wird gespielt</h2>
+    <ul>
+        <li>Wähle eine Zahl von <strong>1 bis 6</strong> und würfle.</li>
+        <li>Im Verlauf siehst du deine letzten Spiele und Ergebnisse.</li>
+        <li>Animationen und Geräusche der Spielsteine lassen sich in den Einstellungen an- oder ausschalten.</li>
+    </ul>
+</section>
+<section>
+    <h2>Sound und Musik</h2>
+    <ul>
+        <li>Die Hintergrundmusik läuft als Vordergrunddienst und reagiert auf Anrufe oder Alarme.</li>
+        <li>Aktiviere den offiziellen Soundtrack oder wähle eine eigene Spur aus deinen Medien.</li>
+        <li>Soundeffekte begleiten die Bewegungen der Steine, wenn Animationen aktiv sind.</li>
+    </ul>
+</section>
+<section>
+    <h2>Benachrichtigungen und Feier</h2>
+    <ul>
+        <li>Nach einem Sieg erhältst du eine Benachrichtigung mit direktem Link zum Kalendereintrag.</li>
+        <li>Die App kann deinen Sieg als Screenshot speichern, damit du ihn in der Galerie teilen kannst.</li>
+        <li>Sind Benachrichtigungen in den Einstellungen aus, bleibt die Feier auf den aktuellen Bildschirm beschränkt.</li>
+    </ul>
+</section>
+<section>
+    <h2>Datenschutz und Standort</h2>
+    <ul>
+        <li>Sieges-Standorte werden lokal in SQLite gespeichert und nur spielintern genutzt.</li>
+        <li>Es werden keine persönlichen Daten nach außen gesendet; Logs enthalten keine sensiblen Informationen.</li>
+    </ul>
+</section>
+<section>
+    <h2>Barrierefreiheit und Sprachen</h2>
+    <ul>
+        <li>Die Oberfläche ist auf <strong>Spanisch, Englisch und Deutsch</strong> lokalisiert; wähle deine Sprache in den Einstellungen.</li>
+        <li>Der Hilfe-WebView lädt lokale Inhalte ohne Skripte, um die Nutzung sicher zu halten.</li>
+    </ul>
+</section>
+</body>
+</html>
