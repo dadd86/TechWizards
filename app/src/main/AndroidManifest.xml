@@ -45,7 +45,7 @@
         </activity>
 
         <service
-            android:name="com.diegodiaz.techwizards.integration.media.MusicPlaybackService"
+            android:name="com.diegodiaz.techwizards.integration.media.musicPlaybackService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 
