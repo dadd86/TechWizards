@@ -75,8 +75,8 @@ fun PantallaAjustes(
     val context = LocalContext.current
     val musicController = remember { musicPlaybackController(context.applicationContext) }
 
-    LaunchedEffect(ajustesState.settings?.musicEnabled) {
-        ajustesState.settings?.musicEnabled?.let { musicController.setEnabled(it) }
+    LaunchedEffect(ajustesState.settings.musicEnabled) {
+        musicController.setEnabled(ajustesState.settings.musicEnabled)
     }
     val abrirPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         onElegirPista(uri)
@@ -137,14 +137,14 @@ fun PantallaAjustes(
             AjustesSeccion(stringResource(id = R.string.settings_sound_section), dims) {
                 AjusteSwitch(
                     label = stringResource(id = R.string.settings_music_toggle),
-                    checked = ajustesState.settings?.musicEnabled ?: false,
+                    checked = ajustesState.settings.musicEnabled,
                 ) { checked ->
                     musicController.setEnabled(checked)
                     onToggleMusic(checked)
                 }
                 AjusteSwitch(
                     label = stringResource(id = R.string.settings_sfx_toggle),
-                    checked = settings?.sfxEnabled ?: false,
+                    checked = settings.sfxEnabled,
                     onCheckedChange = onToggleSfx
                 )
                 Button(
@@ -159,12 +159,12 @@ fun PantallaAjustes(
             AjustesSeccion(stringResource(id = R.string.settings_visual_section), dims) {
                 AjusteSwitch(
                     label = stringResource(id = R.string.settings_dark_mode_toggle),
-                    checked = settings?.darkThemeEnabled ?: isDarkTheme,
+                    checked = settings.darkThemeEnabled,
                     onCheckedChange = onToggleTheme
                 )
                 AjusteSwitch(
                     label = stringResource(id = R.string.settings_animations_toggle),
-                    checked = settings?.animationsEnabled ?: true,
+                    checked = settings.animationsEnabled,
                     onCheckedChange = onToggleAnimations
                 )
             }
@@ -172,14 +172,14 @@ fun PantallaAjustes(
             AjustesSeccion(stringResource(id = R.string.settings_notifications_section), dims) {
                 AjusteSwitch(
                     label = stringResource(id = R.string.settings_notifications_toggle),
-                    checked = settings?.notificationsEnabled ?: true,
+                    checked = settings.notificationsEnabled,
                     onCheckedChange = onToggleNotifications
                 )
             }
 
             AjustesSeccion(stringResource(id = R.string.settings_language_section), dims) {
                 IdiomaSelector(
-                    seleccionado = settings?.selectedLanguageTag ?: "es-ES",
+                    seleccionado = settings.selectedLanguageTag,
                     onSeleccion = onSeleccionIdioma
                 )
             }
