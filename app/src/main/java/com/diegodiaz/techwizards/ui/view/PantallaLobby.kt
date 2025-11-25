@@ -13,11 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.diegodiaz.techwizards.R
-import com.diegodiaz.techwizards.ui.responsive.Responsive
 import com.diegodiaz.techwizards.ui.responsive.UiDims
 
-
-@Composable fun PantallaLobby() = Responsive { dims ->
+@Composable
+fun PantallaLobby(
+    dims: UiDims
+) {
     val lobbies = listOf(
         "#234" to stringResource(id = R.string.lobby_status_open),
         "#235" to stringResource(id = R.string.lobby_status_waiting),
@@ -35,6 +36,7 @@ import com.diegodiaz.techwizards.ui.responsive.UiDims
             fontSize = dims.titleSp,
             fontWeight = FontWeight.Bold
         )
+
         Text(
             text = stringResource(id = R.string.lobby_description),
             fontSize = dims.bodySp,
@@ -52,32 +54,49 @@ import com.diegodiaz.techwizards.ui.responsive.UiDims
             horizontalArrangement = Arrangement.spacedBy(dims.spaceSm)
         ) {
             Button(
-                onClick = { /* TODO navegación */ },
+                onClick = { /* TODO navegación crear lobby */ },
                 modifier = Modifier
                     .weight(1f)
                     .height(dims.buttonHeightSm),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             ) {
-                Text(stringResource(id = R.string.lobby_create), fontSize = dims.bodySp)
+                Text(
+                    text = stringResource(id = R.string.lobby_create),
+                    fontSize = dims.bodySp
+                )
             }
+
             Button(
-                onClick = { /* TODO navegación */ },
+                onClick = { /* TODO navegación unir a lobby */ },
                 modifier = Modifier
                     .weight(1f)
                     .height(dims.buttonHeightSm),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary
+                )
             ) {
-                Text(stringResource(id = R.string.lobby_join), fontSize = dims.bodySp)
+                Text(
+                    text = stringResource(id = R.string.lobby_join),
+                    fontSize = dims.bodySp
+                )
             }
         }
     }
 }
 
 @Composable
-private fun LobbyCard(codigo: String, estado: String, dims: UiDims) {
+private fun LobbyCard(
+    codigo: String,
+    estado: String,
+    dims: UiDims
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
         shape = MaterialTheme.shapes.medium
     ) {
         Row(
@@ -88,14 +107,28 @@ private fun LobbyCard(codigo: String, estado: String, dims: UiDims) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(dims.spaceXs)) {
-                Text(text = stringResource(id = R.string.lobby_code, codigo), fontSize = dims.bodySp, fontWeight = FontWeight.Bold)
-                Text(text = estado, fontSize = dims.bodySp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = stringResource(id = R.string.lobby_code, codigo),
+                    fontSize = dims.bodySp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = estado,
+                    fontSize = dims.bodySp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
+
             Button(
                 onClick = { /* TODO join */ },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             ) {
-                Text(stringResource(id = R.string.lobby_action_join), fontSize = dims.bodySp)
+                Text(
+                    text = stringResource(id = R.string.lobby_action_join),
+                    fontSize = dims.bodySp
+                )
             }
         }
     }

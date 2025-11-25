@@ -1,4 +1,5 @@
 package com.diegodiaz.techwizards.ui.view
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -12,12 +13,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.diegodiaz.techwizards.R
-import com.diegodiaz.techwizards.ui.responsive.Responsive
 import com.diegodiaz.techwizards.ui.responsive.UiDims
 
-@Composable fun PantallaMatch() = Responsive { dims ->
+@Composable
+fun PantallaMatch(
+    dims: UiDims
+) {
     val jugadores = remember {
         listOf(
             "Ana" to 12,
@@ -37,6 +39,7 @@ import com.diegodiaz.techwizards.ui.responsive.UiDims
             fontSize = dims.titleSp,
             fontWeight = FontWeight.Bold
         )
+
         Text(
             text = stringResource(id = R.string.match_subtitle),
             fontSize = dims.bodySp,
@@ -56,24 +59,45 @@ import com.diegodiaz.techwizards.ui.responsive.UiDims
                 modifier = Modifier
                     .weight(1f)
                     .height(dims.buttonHeightSm),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-            ) { Text(stringResource(id = R.string.match_start), fontSize = dims.bodySp) }
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text(
+                    text = stringResource(id = R.string.match_start),
+                    fontSize = dims.bodySp
+                )
+            }
+
             Button(
                 onClick = { /* TODO finalizar */ },
                 modifier = Modifier
                     .weight(1f)
                     .height(dims.buttonHeightSm),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-            ) { Text(stringResource(id = R.string.match_finish), fontSize = dims.bodySp) }
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary
+                )
+            ) {
+                Text(
+                    text = stringResource(id = R.string.match_finish),
+                    fontSize = dims.bodySp
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun MatchCard(nombre: String, puntos: Int, dims: UiDims) {
+private fun MatchCard(
+    nombre: String,
+    puntos: Int,
+    dims: UiDims
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
         shape = MaterialTheme.shapes.medium
     ) {
         Row(
@@ -84,14 +108,27 @@ private fun MatchCard(nombre: String, puntos: Int, dims: UiDims) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(dims.spaceXs)) {
-                Text(text = nombre, fontSize = dims.bodySp, fontWeight = FontWeight.Bold)
-                Text(text = stringResource(id = R.string.match_points, puntos), fontSize = dims.bodySp)
+                Text(
+                    text = nombre,
+                    fontSize = dims.bodySp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = stringResource(id = R.string.match_points, puntos),
+                    fontSize = dims.bodySp
+                )
             }
+
             Button(
                 onClick = { /* TODO sumar puntos */ },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             ) {
-                Text(stringResource(id = R.string.match_add_points), fontSize = dims.bodySp)
+                Text(
+                    text = stringResource(id = R.string.match_add_points),
+                    fontSize = dims.bodySp
+                )
             }
         }
     }

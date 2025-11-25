@@ -15,11 +15,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
 import com.diegodiaz.techwizards.R
-import com.diegodiaz.techwizards.ui.responsive.Responsive
+import com.diegodiaz.techwizards.ui.responsive.UiDims
+import androidx.compose.ui.text.font.FontWeight
+
 
 /**
  * Pantalla de bienvenida que solicita el alias del jugador antes de iniciar.
@@ -27,25 +26,28 @@ import com.diegodiaz.techwizards.ui.responsive.Responsive
  * @param isDarkTheme Indica si el tema actual es oscuro.
  * @param nombrePredeterminado Alias previamente registrado para prellenar el diálogo.
  * @param onJugar Acción a ejecutar cuando el usuario confirma su alias.
- * @return Unit ya que únicamente emite efectos de UI.
- * @throws IllegalArgumentException No lanza excepciones; se valida el nombre en memoria.
- * @security
- * - El alias se mantiene en memoria hasta confirmarse y luego se envía al ViewModel para persistirlo.
  */
 @Composable
 fun PantallaBienvenida(
     isDarkTheme: Boolean,
     nombrePredeterminado: String? = null,
-    onJugar: (String) -> Unit
-) = Responsive { dims ->
+    onJugar: (String) -> Unit,
+    dims: UiDims
+) {
     val invalidNameMessage = stringResource(id = R.string.welcome_invalid_name)
     var mostrarDialogo by remember { mutableStateOf(false) }
-    var nombreJugador by rememberSaveable(nombrePredeterminado) { mutableStateOf(nombrePredeterminado.orEmpty()) }
+    var nombreJugador by rememberSaveable(nombrePredeterminado) {
+        mutableStateOf(nombrePredeterminado.orEmpty())
+    }
     var errorNombre by remember { mutableStateOf<String?>(null) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(if (!isDarkTheme) Color(0xFF7EC8E3) else MaterialTheme.colorScheme.background),
+            .background(
+                if (!isDarkTheme) Color(0xFF7EC8E3)
+                else MaterialTheme.colorScheme.background
+            ),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -64,6 +66,7 @@ fun PantallaBienvenida(
                     modifier = Modifier.size(dims.imageLg)
                 )
             }
+
             Text(
                 text = stringResource(id = R.string.welcome_title),
                 fontSize = dims.titleSp,
@@ -71,6 +74,7 @@ fun PantallaBienvenida(
                 fontWeight = FontWeight.Bold,
                 lineHeight = (dims.titleSp * 1.2f)
             )
+
             Button(
                 onClick = { mostrarDialogo = true },
                 modifier = Modifier
@@ -88,6 +92,7 @@ fun PantallaBienvenida(
             }
         }
     }
+
     if (mostrarDialogo) {
         AlertDialog(
             onDismissRequest = {
@@ -108,7 +113,10 @@ fun PantallaBienvenida(
                         isError = errorNombre != null,
                         supportingText = {
                             if (errorNombre != null) {
-                                Text(text = errorNombre ?: "", color = MaterialTheme.colorScheme.error)
+                                Text(
+                                    text = errorNombre ?: "",
+                                    color = MaterialTheme.colorScheme.error
+                                )
                             }
                         }
                     )

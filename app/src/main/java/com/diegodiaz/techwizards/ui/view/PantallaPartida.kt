@@ -10,21 +10,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,13 +21,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,34 +38,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.view.drawToBitmap
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.diegodiaz.techwizards.R
 import com.diegodiaz.techwizards.data.local.entity.Resultado
 import com.diegodiaz.techwizards.integration.victory.VictoryCelebrationPayload
-import com.diegodiaz.techwizards.integration.victory.VictoryCelebrationService
 import com.diegodiaz.techwizards.integration.victory.WorkManagerVictoryCelebrationService
 import com.diegodiaz.techwizards.ui.controller.JuegoUiEvent
 import com.diegodiaz.techwizards.ui.controller.JuegoUiState
-import com.diegodiaz.techwizards.ui.responsive.Responsive
-import java.io.ByteArrayOutputStream
+import com.diegodiaz.techwizards.ui.responsive.UiDims
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
-import com.diegodiaz.techwizards.R
 
-/**
- * Pantalla principal del juego donde el usuario elige un número y lanza el dado.
- */
 @Composable
 fun PantallaPartida(
     isDarkTheme: Boolean,
     uiState: JuegoUiState,
     eventos: SharedFlow<JuegoUiEvent>,
     onVolverAlMenu: () -> Unit,
-    onElegirNumero: (Int) -> Unit
-) = Responsive { dims ->
+    onElegirNumero: (Int) -> Unit,
+    dims: UiDims
+) {
     var showDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val view = LocalView.current
     val toneGenerator = remember { ToneGenerator(AudioManager.STREAM_MUSIC, 80) }
+
     DisposableEffect(Unit) {
         onDispose { toneGenerator.release() }
     }
@@ -102,8 +78,6 @@ fun PantallaPartida(
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.POST_NOTIFICATIONS)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
             permissions.add(Manifest.permission.READ_MEDIA_AUDIO)
         } else {
@@ -116,8 +90,9 @@ fun PantallaPartida(
         eventos.collectLatest { evento ->
             if (evento is JuegoUiEvent.Victoria && evento.partida.resultado == Resultado.GANADO) {
                 val bitmap = view.drawToBitmap()
-                val stream = ByteArrayOutputStream()
+                val stream = java.io.ByteArrayOutputStream()
                 bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
+
                 val payload = VictoryCelebrationPayload(
                     aliasJugador = evento.partida.aliasJugador,
                     deltaMonedas = evento.partida.deltaMonedas,
@@ -125,6 +100,7 @@ fun PantallaPartida(
                 )
                 val service = WorkManagerVictoryCelebrationService(context.applicationContext)
                 service.celebrate(payload)
+
                 if (uiState.sfxEnabled) {
                     toneGenerator.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP, 250)
                 }
@@ -135,8 +111,7 @@ fun PantallaPartida(
     val rotation = remember { Animatable(0f) }
     var lastResultado by remember { mutableStateOf("") }
 
-    // ANIMACIÓN: ficha (número elegido) moviéndose en el tablero
-    val fichaOffsetY = remember { Animatable(60f) } // "dp virtuales"
+    val fichaOffsetY = remember { Animatable(60f) }
     val fichaScale = remember { Animatable(0f) }
 
     LaunchedEffect(uiState.ultimoResultado, uiState.animationsEnabled, uiState.sfxEnabled) {
@@ -155,7 +130,6 @@ fun PantallaPartida(
         }
     }
 
-    // Cuando cambia el número elegido, animamos su "entrada" como ficha
     LaunchedEffect(uiState.numeroElegido, uiState.animationsEnabled) {
         val numero = uiState.numeroElegido ?: return@LaunchedEffect
         if (uiState.animationsEnabled) {
@@ -175,16 +149,18 @@ fun PantallaPartida(
         }
     }
 
-    // Tamaños relativos a la pantalla
-    val boxSize = (dims.minSide * 0.8f).coerceAtMost(360.dp)     // contenedor del dado
-    val diceSize = boxSize * 0.7f                                // imagen del dado
-    val coinSize = (dims.minSide * 0.10f).coerceIn(24.dp, 48.dp) // icono moneda
-    val fichaSize = (diceSize * 0.55f).coerceIn(32.dp, 72.dp)    // tamaño ficha animada
+    val boxSize = (dims.minSide * 0.8f).coerceAtMost(360.dp)
+    val diceSize = boxSize * 0.7f
+    val coinSize = (dims.minSide * 0.10f).coerceIn(24.dp, 48.dp)
+    val fichaSize = (diceSize * 0.55f).coerceIn(32.dp, 72.dp)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(if (!isDarkTheme) Color(0xFFD6E8CD) else MaterialTheme.colorScheme.background)
+            .background(
+                if (!isDarkTheme) Color(0xFFD6E8CD)
+                else MaterialTheme.colorScheme.background
+            )
             .padding(horizontal = dims.spaceSm)
     ) {
         Column(
@@ -195,7 +171,6 @@ fun PantallaPartida(
         ) {
             Spacer(Modifier.height(dims.spaceMd))
 
-            // Barra de monedas
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
@@ -217,7 +192,6 @@ fun PantallaPartida(
                 )
             }
 
-            // Centro: dado + ficha + botón lanzar
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -230,7 +204,6 @@ fun PantallaPartida(
                         .background(Color(0xFFF9F9EB), shape = RoundedCornerShape(dims.cardCorner)),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Dado
                     Image(
                         painter = painterResource(id = R.drawable.dado_negro),
                         contentDescription = stringResource(id = R.string.game_dice_content_description),
@@ -240,7 +213,6 @@ fun PantallaPartida(
                         contentScale = ContentScale.Fit
                     )
 
-                    // FICHA ANIMADA: número elegido que "sube" y aparece abajo del dado
                     uiState.numeroElegido?.let { numero ->
                         Box(
                             modifier = Modifier
@@ -284,7 +256,9 @@ fun PantallaPartida(
                 Spacer(Modifier.height(dims.spaceSm))
 
                 Text(
-                    text = uiState.ultimoResultado.ifEmpty { stringResource(id = R.string.game_last_roll_placeholder) },
+                    text = uiState.ultimoResultado.ifEmpty {
+                        stringResource(id = R.string.game_last_roll_placeholder)
+                    },
                     fontWeight = FontWeight.Medium,
                     fontSize = dims.bodySp,
                     color = MaterialTheme.colorScheme.onBackground
@@ -292,6 +266,7 @@ fun PantallaPartida(
             }
 
             Spacer(Modifier.height(dims.spaceSm))
+
             Button(
                 onClick = onVolverAlMenu,
                 modifier = Modifier
@@ -311,10 +286,10 @@ fun PantallaPartida(
             Spacer(Modifier.height(dims.spaceMd))
         }
 
-        @OptIn(ExperimentalLayoutApi::class)
+        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
         if (showDialog) {
             val chipSize = (dims.minSide * 0.20f).coerceIn(40.dp, 64.dp)
-            val spacing  = dims.spaceSm
+            val spacing = dims.spaceSm
 
             AlertDialog(
                 onDismissRequest = { showDialog = false },
@@ -324,20 +299,19 @@ fun PantallaPartida(
                     .padding(horizontal = dims.spaceMd),
                 title = {
                     Text(
-                        stringResource(id = R.string.game_pick_number_prompt),
+                        text = stringResource(id = R.string.game_pick_number_prompt),
                         fontSize = dims.bodySp
                     )
                 },
                 text = {
-                    FlowRow(
+                    androidx.compose.foundation.layout.FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(spacing),
-                        verticalArrangement   = Arrangement.spacedBy(spacing)
+                        verticalArrangement = Arrangement.spacedBy(spacing)
                     ) {
                         (1..6).forEach { number ->
                             Button(
                                 onClick = {
-                                    // Aquí disparamos la lógica del VM (que actualiza numeroElegido)
                                     onElegirNumero(number)
                                     showDialog = false
                                 },
@@ -360,7 +334,10 @@ fun PantallaPartida(
                 confirmButton = {},
                 dismissButton = {
                     TextButton(onClick = { showDialog = false }) {
-                        Text(stringResource(id = R.string.action_cancel), fontSize = dims.bodySp)
+                        Text(
+                            text = stringResource(id = R.string.action_cancel),
+                            fontSize = dims.bodySp
+                        )
                     }
                 }
             )

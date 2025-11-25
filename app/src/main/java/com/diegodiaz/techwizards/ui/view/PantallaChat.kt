@@ -1,15 +1,8 @@
 package com.diegodiaz.techwizards.ui.view
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -18,23 +11,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlin.random.Random
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.diegodiaz.techwizards.R
-import com.diegodiaz.techwizards.ui.responsive.Responsive
 import com.diegodiaz.techwizards.ui.responsive.UiDims
 
 @Composable
-fun PantallaChat() = Responsive { dims ->
+fun PantallaChat(
+    dims: UiDims
+) {
     val welcome = stringResource(id = R.string.chat_system_welcome)
     val hint = stringResource(id = R.string.chat_hint_controls)
+
     val mensajes = remember(welcome, hint) {
         mutableStateListOf(
             welcome,
             hint
         )
     }
+
     var input by remember { mutableStateOf("") }
 
     Column(
@@ -71,6 +66,7 @@ fun PantallaChat() = Responsive { dims ->
                 modifier = Modifier.weight(1f),
                 placeholder = { Text(stringResource(id = R.string.chat_placeholder)) }
             )
+
             Button(
                 onClick = {
                     if (input.isNotBlank()) {
@@ -79,9 +75,14 @@ fun PantallaChat() = Responsive { dims ->
                     }
                 },
                 modifier = Modifier.height(dims.buttonHeightSm),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             ) {
-                Text(text = stringResource(id = R.string.chat_send), fontSize = dims.bodySp)
+                Text(
+                    text = stringResource(id = R.string.chat_send),
+                    fontSize = dims.bodySp
+                )
             }
         }
     }
@@ -96,7 +97,10 @@ private fun ChatBubble(texto: String, dims: UiDims) {
     ) {
         Text(
             text = texto,
-            modifier = Modifier.padding(horizontal = dims.spaceSm, vertical = dims.spaceXs),
+            modifier = Modifier.padding(
+                horizontal = dims.spaceSm,
+                vertical = dims.spaceXs
+            ),
             fontSize = dims.bodySp
         )
     }
