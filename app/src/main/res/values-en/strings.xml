@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Tech Wizards</string>
-    <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_main">TechWizards</string>
     <string name="victory_calendar_title">Victory by %1$s</string>
     <string name="victory_calendar_description">Reward obtained: %1$d coins.</string>
     <string name="victory_notification_title">You won!</string>
@@ -65,4 +65,29 @@
     <string name="language_es_label">Spanish</string>
     <string name="language_en_label">English</string>
     <string name="language_de_label">German</string>
+    <string name="chat_title">Match chat</string>
+    <string name="chat_placeholder">Type a message…</string>
+    <string name="chat_send">Send</string>
+    <string name="chat_system_welcome">Channel ready: share your plays with the team.</string>
+    <string name="chat_hint_controls">Use Send to coordinate strategies.</string>
+    <string name="lobby_title">Match lobby</string>
+    <string name="lobby_description">Pick an active lobby or create a new one to invite your squad.</string>
+    <string name="lobby_status_open">Open</string>
+    <string name="lobby_status_waiting">Waiting for players</string>
+    <string name="lobby_status_private">Private</string>
+    <string name="lobby_create">Create lobby</string>
+    <string name="lobby_join">Join</string>
+    <string name="lobby_code">Code %1$s</string>
+    <string name="lobby_action_join">Enter</string>
+    <string name="events_title">Ongoing events</string>
+    <string name="events_daily_challenge">Daily challenge</string>
+    <string name="events_weekend_tournament">Weekend tournament</string>
+    <string name="events_special_drop">Special reward drop</string>
+    <string name="events_progress_label">Progress</string>
+    <string name="match_title">Current match</string>
+    <string name="match_subtitle">Track score and quick actions for every player.</string>
+    <string name="match_start">Start</string>
+    <string name="match_finish">Finish</string>
+    <string name="match_points">Points: %1$d</string>
+    <string name="match_add_points">+1 point</string>
 </resources>

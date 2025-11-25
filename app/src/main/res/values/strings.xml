@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Tech Wizards</string>
-    <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_main">TechWizards</string>
     <string name="victory_calendar_title">Victoria de %1$s</string>
     <string name="victory_calendar_description">Recompensa obtenida: %1$d monedas.</string>
     <string name="victory_notification_title">¡Has ganado!</string>
@@ -65,4 +65,29 @@
     <string name="language_es_label">Español</string>
     <string name="language_en_label">Inglés</string>
     <string name="language_de_label">Alemán</string>
+    <string name="chat_title">Chat de partida</string>
+    <string name="chat_placeholder">Escribe un mensaje…</string>
+    <string name="chat_send">Enviar</string>
+    <string name="chat_system_welcome">Canal listo: comparte jugadas con tu equipo.</string>
+    <string name="chat_hint_controls">Usa el botón Enviar para compartir estrategias.</string>
+    <string name="lobby_title">Lobby de partida</string>
+    <string name="lobby_description">Elige un lobby activo o crea uno nuevo para invitar a tu equipo.</string>
+    <string name="lobby_status_open">Abierto</string>
+    <string name="lobby_status_waiting">Esperando jugadores</string>
+    <string name="lobby_status_private">Privado</string>
+    <string name="lobby_create">Crear lobby</string>
+    <string name="lobby_join">Unirse</string>
+    <string name="lobby_code">Código %1$s</string>
+    <string name="lobby_action_join">Entrar</string>
+    <string name="events_title">Eventos en curso</string>
+    <string name="events_daily_challenge">Desafío diario</string>
+    <string name="events_weekend_tournament">Torneo de fin de semana</string>
+    <string name="events_special_drop">Drop especial de recompensas</string>
+    <string name="events_progress_label">Progreso</string>
+    <string name="match_title">Partida en curso</string>
+    <string name="match_subtitle">Controla la puntuación y acciones rápidas de cada jugador.</string>
+    <string name="match_start">Iniciar</string>
+    <string name="match_finish">Finalizar</string>
+    <string name="match_points">Puntos: %1$d</string>
+    <string name="match_add_points">+1 punto</string>
 </resources>

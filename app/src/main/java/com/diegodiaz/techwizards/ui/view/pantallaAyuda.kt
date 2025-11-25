@@ -28,6 +28,8 @@ import com.diegodiaz.techwizards.ui.responsive.Responsive
 import com.diegodiaz.techwizards.ui.responsive.UiDims
 import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import java.util.Locale
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 
 /**
  * Sección de ayuda basada en WebView con soporte para ES/EN/DE.
@@ -61,27 +63,18 @@ fun PantallaAyuda() = Responsive { dims ->
                 label = stringResource(id = R.string.language_es_label),
                 selected = selectedLanguage == "es",
                 dims = dims
-            ) {
-                selectedLanguage = "es"
-                logLanguage("es")
-            }
-                HelpLanguageChip(
-                    label = stringResource(id = R.string.language_en_label),
-                    selected = selectedLanguage == "en",
-                    dims = dims
-                ) {
-                    selectedLanguage = "en"
-                    logLanguage("en")
-                }
-                HelpLanguageChip(
-                    label = stringResource(id = R.string.language_de_label),
-                    selected = selectedLanguage == "de",
-                    dims = dims
-                ) {
-                    selectedLanguage = "de"
-                    logLanguage("de")
-                }
-            }
+            ) { actualizarIdiomaAyuda("es") { selectedLanguage = it } }
+            HelpLanguageChip(
+                label = stringResource(id = R.string.language_en_label),
+                selected = selectedLanguage == "en",
+                dims = dims
+            ) { actualizarIdiomaAyuda("en") { selectedLanguage = it } }
+            HelpLanguageChip(
+                label = stringResource(id = R.string.language_de_label),
+                selected = selectedLanguage == "de",
+                dims = dims
+            ) { actualizarIdiomaAyuda("de") { selectedLanguage = it } }
+        }
 
         AndroidView(
             modifier = Modifier.fillMaxSize(),
@@ -117,13 +110,12 @@ private fun HelpLanguageChip(label: String, selected: Boolean, dims: UiDims, onC
     }
 }
 private fun resolveDefaultLanguage(): String {
+    val localeList = AppCompatDelegate.getApplicationLocales()
+    val explicit = localeList[0]?.language?.lowercase(Locale.ROOT)
+    if (!explicit.isNullOrBlank()) return explicit
+
     val locale = Locale.getDefault().language.lowercase(Locale.ROOT)
-    return when {
-        locale.startsWith("es") -> "es"
-        locale.startsWith("de") -> "de"
-        locale.startsWith("en") -> "en"
-        else -> "es"
-    }
+    return if (locale.startsWith("de")) "de" else if (locale.startsWith("en")) "en" else "es"
 }
 
 private fun getHelpAsset(language: String): String =
@@ -133,7 +125,14 @@ private fun getHelpAsset(language: String): String =
         else -> "file:///android_asset/help/index_en.html"
     }
 
-private fun logLanguage(language: String) {
+private fun actualizarIdiomaAyuda(language: String, onSelected: (String) -> Unit) {
+    onSelected(language)
+    val tag = when (language.lowercase(Locale.ROOT)) {
+        "de" -> "de-DE"
+        "en" -> "en-US"
+        else -> "es-ES"
+    }
+    AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
     DecentralizedLogger.i(
         tag = "Help",
         message = "Idioma de ayuda seleccionado=$language"
