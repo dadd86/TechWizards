@@ -11,6 +11,7 @@ import com.diegodiaz.techwizards.data.repository.impl.VictoryRepositoryRoom
 import com.diegodiaz.techwizards.data.transaction.RoomTransactionRunner
 import com.diegodiaz.techwizards.core.usecases.RegistrarUbicacionVictoriaUseCase
 import com.diegodiaz.techwizards.integration.victory.WorkManagerVictoryCelebrationService
+import com.diegodiaz.techwizards.util.location.LocationTracker
 
 object ServiceLocator {
 
