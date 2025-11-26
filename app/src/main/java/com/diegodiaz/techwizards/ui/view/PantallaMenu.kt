@@ -90,10 +90,6 @@ fun PantallaMenu(
                 showDialog = true
             }
 
-            LaunchedEffect(usuario) {
-                println("Usuario para reset: $usuario")
-            }
-
             if (usuario != null) {
                 Button(
                     modifier = Modifier
@@ -106,7 +102,7 @@ fun PantallaMenu(
                 }
             }
 
-            Spacer(Modifier.height(dims.spaceMd)) // margen final extra
+            Spacer(Modifier.height(dims.spaceMd)) // Margen final extra
 
             if (showDialog) {
                 AlertDialog(

@@ -205,7 +205,6 @@ class MusicPlaybackService : Service() {
     companion object {
         private const val TAG = "MusicPlaybackService"
 
-        // ⬇⬇ AHORA SON PÚBLICAS ⬇⬇
         const val ACTION_PLAY_OFFICIAL = "com.diegodiaz.techwizards.action.PLAY_OFFICIAL"
         const val ACTION_PLAY_CUSTOM = "com.diegodiaz.techwizards.action.PLAY_CUSTOM"
         const val ACTION_STOP = "com.diegodiaz.techwizards.action.STOP"

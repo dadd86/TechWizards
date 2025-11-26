@@ -60,11 +60,10 @@ fun PantallaAjustes(
     val context = LocalContext.current
     val musicController = remember { MusicPlaybackController(context.applicationContext) }
 
-    // Mantengo tu lógica de sincronización con preferencias
-    LaunchedEffect(ajustesState.settings.musicEnabled) {
+    LaunchedEffect(ajustesState.settings.musicEnabled, ajustesState.settings.selectedMusicUri) {
         musicController.applySettings(
             enabled = ajustesState.settings.musicEnabled,
-            selectedUri = null
+            selectedUri = ajustesState.settings.selectedMusicUri
         )
     }
 
