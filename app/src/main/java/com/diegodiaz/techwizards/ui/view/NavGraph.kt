@@ -106,19 +106,29 @@ fun NavGraph(
         }
 
         composable("menu") {
+            // Crea el ViewModel de partida aquí para acceder desde el menú
+            val factory = ControladorPartidaFactory(
+                repo = repo,
+                usuarioId = usuarioId,
+                observarPreferencias = observarPreferencias,
+                victoryService = victoryService,
+                registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase
+            )
+            val controladorPartida: ControladorPartida = viewModel(factory = factory)
+            val usuario = usuarioActual.value
+
             PantallaMenu(
                 isDarkTheme = isDarkTheme,
                 onJugar = { navController.navigate("partida") },
                 onHistorial = { navController.navigate("historial") },
                 onAjustes = { navController.navigate("ajustes") },
                 onAyuda = { navController.navigate("ayuda") },
-                //onLobby = { navController.navigate("lobby") },
-                //onChat = { navController.navigate("chat") },
-                //onEventos = { navController.navigate("eventos") },
-                //onMatch = { navController.navigate("match") },
-                dims = dims
+                dims = dims,
+                controladorPartida = controladorPartida,
+                usuario = usuario
             )
         }
+
 
         composable("partida") {
             val factory = ControladorPartidaFactory(

@@ -22,7 +22,7 @@ import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
  *
  * @security No se almacena PII; los logs solo incluyen el tipo de acción solicitada.
  */
-class musicPlaybackService : Service() {
+class MusicPlaybackService : Service() {
     private var mediaPlayer: MediaPlayer? = null
     private lateinit var audioManager: AudioManager
     private var focusRequest: Any? = null

@@ -24,8 +24,8 @@
     <string name="menu_exit_confirm_cancel">Abbrechen</string>
     <string name="help_title">Hilfezentrum</string>
     <string name="help_url">file:///android_asset/help/index_de.html</string>
-    <string name="help_language_es">Spanisch</string>
-    <string name="help_language_en">Englisch</string>
+    <string name="help_language_es">Español</string>
+    <string name="help_language_en">English</string>
     <string name="help_language_de">Deutsch</string>
     <string name="settings_back_to_menu">Zurück zum Menü</string>
     <string name="settings_sound_section">Ton</string>
@@ -63,8 +63,8 @@
     <string name="history_empty">Noch keine Spiele</string>
     <string name="history_win">Gewonnen</string>
     <string name="history_loss">Verloren</string>
-    <string name="language_es_label">Spanisch</string>
-    <string name="language_en_label">Englisch</string>
+    <string name="language_es_label">Español</string>
+    <string name="language_en_label">English</string>
     <string name="language_de_label">Deutsch</string>
     <string name="chat_title">Match-Chat</string>
     <string name="chat_placeholder">Nachricht eingeben…</string>
@@ -91,4 +91,7 @@
     <string name="match_finish">Beenden</string>
     <string name="match_points">Punkte: %1$d</string>
     <string name="match_add_points">+1 Punkt</string>
+    <string name="no_money_title">Münzlos</string>
+    <string name="no_money_message">Du kannst nicht weiter werfen, weil du keine münzen mehr hast.</string>
+    <string name="no_money_action">Zurück zum menü</string>
 </resources>

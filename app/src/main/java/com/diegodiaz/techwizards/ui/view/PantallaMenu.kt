@@ -18,6 +18,8 @@ import com.diegodiaz.techwizards.R
 import com.diegodiaz.techwizards.ui.responsive.UiDims
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import com.diegodiaz.techwizards.domain.model.Usuario
+import com.diegodiaz.techwizards.ui.controller.ControladorPartida
 
 
 @Composable
@@ -31,10 +33,20 @@ fun PantallaMenu(
     //onChat: () -> Unit,
     //onEventos: () -> Unit,
     //onMatch: () -> Unit,
-    dims: UiDims
+    dims: UiDims,
+    controladorPartida: ControladorPartida,
+    usuario: Usuario?
 ) {
     var showDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
+    val saldo by controladorPartida.saldo.collectAsState()
+
+    Text(
+        text = "Monedas actuales: $saldo",
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(bottom = 12.dp)
+    )
 
     Box(
         modifier = Modifier
@@ -76,6 +88,22 @@ fun PantallaMenu(
             // 🚪 Salir
             MenuBoton(texto = stringResource(id = R.string.menu_exit), dims = dims) {
                 showDialog = true
+            }
+
+            LaunchedEffect(usuario) {
+                println("Usuario para reset: $usuario")
+            }
+
+            if (usuario != null) {
+                Button(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(0.7f)
+                        .clip(RoundedCornerShape(16.dp)),
+                    onClick = { controladorPartida.resetMonedas(usuario, 100) }
+                ) {
+                    Text("Reiniciar monedas")
+                }
             }
 
             Spacer(Modifier.height(dims.spaceMd)) // margen final extra

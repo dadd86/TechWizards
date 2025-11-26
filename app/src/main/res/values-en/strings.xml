@@ -24,9 +24,9 @@
     <string name="menu_exit_confirm_cancel">Cancel</string>
     <string name="help_title">Help center</string>
     <string name="help_url">file:///android_asset/help/index_en.html</string>
-    <string name="help_language_es">Spanish</string>
+    <string name="help_language_es">Español</string>
     <string name="help_language_en">English</string>
-    <string name="help_language_de">German</string>
+    <string name="help_language_de">Deutsch</string>
     <string name="settings_back_to_menu">Back to menu</string>
     <string name="settings_sound_section">Sound</string>
     <string name="settings_music_toggle">Background music</string>
@@ -63,9 +63,9 @@
     <string name="history_empty">No matches yet</string>
     <string name="history_win">Won</string>
     <string name="history_loss">Lost</string>
-    <string name="language_es_label">Spanish</string>
+    <string name="language_es_label">Español</string>
     <string name="language_en_label">English</string>
-    <string name="language_de_label">German</string>
+    <string name="language_de_label">Deutsch</string>
     <string name="chat_title">Match chat</string>
     <string name="chat_placeholder">Type a message…</string>
     <string name="chat_send">Send</string>
@@ -91,4 +91,7 @@
     <string name="match_finish">Finish</string>
     <string name="match_points">Points: %1$d</string>
     <string name="match_add_points">+1 point</string>
+    <string name="no_money_title">No coins left</string>
+    <string name="no_money_message">You can´t continua playing, you have no coins.</string>
+    <string name="no_money_action">Go back to menu</string>
 </resources>

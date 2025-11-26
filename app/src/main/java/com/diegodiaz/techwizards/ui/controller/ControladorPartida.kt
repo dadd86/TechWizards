@@ -9,6 +9,7 @@ import com.diegodiaz.techwizards.data.local.entity.Resultado
 import com.diegodiaz.techwizards.domain.model.GameSettings
 import com.diegodiaz.techwizards.domain.model.Monedero
 import com.diegodiaz.techwizards.domain.model.Partida
+import com.diegodiaz.techwizards.domain.model.Usuario
 import com.diegodiaz.techwizards.domain.repository.JuegoRepository
 import com.diegodiaz.techwizards.integration.victory.VictoryCelebrationPayload
 import com.diegodiaz.techwizards.integration.victory.VictoryCelebrationService
@@ -59,6 +60,15 @@ class ControladorPartida(
 
     private val preferencias: StateFlow<GameSettings> = observarPreferencias()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), defaultSettings)
+
+    val saldo: StateFlow<Int> =
+        repo.observarMonedero(usuarioId) // usuarioId debe ser el string correcto del jugador
+            .map { it.saldo }
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5_000),
+                100 // valor por defecto inicial
+            )
 
     val ui: StateFlow<JuegoUiState> = combine(
         repo.observarMonedero(usuarioId),
@@ -146,6 +156,12 @@ class ControladorPartida(
 
     private companion object {
         private const val TAG = "ControladorPartida"
+    }
+
+    fun resetMonedas(usuario: Usuario, nuevoSaldo: Int = 100) {
+        viewModelScope.launch {
+            repo.inicializarMonedas(usuario, nuevoSaldo)
+        }
     }
 }
 

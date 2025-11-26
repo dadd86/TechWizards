@@ -83,6 +83,25 @@ fun PantallaPartida(
     val context = LocalContext.current
     val view = LocalView.current
     val toneGenerator = remember { ToneGenerator(AudioManager.STREAM_MUSIC, 80) }
+    var showSinMonedasDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.monedas) {
+        showSinMonedasDialog = uiState.monedas <= 0
+    }
+
+    if (showSinMonedasDialog) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text(stringResource(id = R.string.no_money_title)) },
+            text = { Text(stringResource(id = R.string.no_money_message)) },
+            confirmButton = {
+                TextButton(onClick = onVolverAlMenu) {
+                    Text(stringResource(id = R.string.no_money_action))
+                }
+            },
+            dismissButton = {}
+        )
+    }
 
     DisposableEffect(Unit) {
         onDispose { toneGenerator.release() }
@@ -264,7 +283,8 @@ fun PantallaPartida(
                         .fillMaxWidth(0.85f)
                         .height(dims.buttonHeight)
                         .clip(RoundedCornerShape(dims.cardCorner)),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF96C78F))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF96C78F)),
+                    enabled = uiState.monedas > 0
                 ) {
                     Text(
                         text = stringResource(id = R.string.game_roll),
@@ -307,7 +327,7 @@ fun PantallaPartida(
         }
 
         @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-        if (showDialog) {
+        if (showDialog && uiState.monedas > 0) {
             val chipSize = (dims.minSide * 0.20f).coerceIn(40.dp, 64.dp)
             val spacing = dims.spaceSm
 
@@ -332,8 +352,10 @@ fun PantallaPartida(
                         (1..6).forEach { number ->
                             Button(
                                 onClick = {
-                                    onElegirNumero(number)
-                                    showDialog = false
+                                    if (uiState.monedas > 0) {
+                                        onElegirNumero(number)
+                                        showDialog = false
+                                    }
                                 },
                                 shape = CircleShape,
                                 colors = ButtonDefaults.buttonColors(

@@ -39,7 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diegodiaz.techwizards.R
-import com.diegodiaz.techwizards.integration.media.musicPlaybackController
+import com.diegodiaz.techwizards.integration.media.MusicPlaybackController
 import com.diegodiaz.techwizards.ui.controller.AjustesState
 import com.diegodiaz.techwizards.ui.responsive.UiDims
 
@@ -58,7 +58,7 @@ fun PantallaAjustes(
     dims: UiDims
 ) {
     val context = LocalContext.current
-    val musicController = remember { musicPlaybackController(context.applicationContext) }
+    val musicController = remember { MusicPlaybackController(context.applicationContext) }
 
     // Mantengo tu lógica de sincronización con preferencias
     LaunchedEffect(ajustesState.settings.musicEnabled) {

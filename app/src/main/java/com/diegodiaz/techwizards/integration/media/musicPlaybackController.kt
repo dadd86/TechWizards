@@ -11,7 +11,7 @@ import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
  * @param appContext Contexto de aplicación usado para arrancar o detener el servicio.
  * @security No registra PII; solo acciones genéricas y URIs sin datos sensibles.
  */
-class musicPlaybackController(private val appContext: Context) {
+class MusicPlaybackController(private val appContext: Context) {
 
     /**
      * API "amigable" para la UI: aplica un estado global de música.
@@ -41,16 +41,16 @@ class musicPlaybackController(private val appContext: Context) {
 
     fun playOfficial() {
         DecentralizedLogger.d(TAG, "Iniciando música oficial")
-        val intent = Intent(appContext, musicPlaybackService::class.java).apply {
-            action = musicPlaybackService.ACTION_PLAY_OFFICIAL
+        val intent = Intent(appContext, MusicPlaybackService::class.java).apply {
+            action = MusicPlaybackService.ACTION_PLAY_OFFICIAL
         }
         appContext.startService(intent)
     }
 
     fun playCustom(uri: Uri) {
         DecentralizedLogger.d(TAG, "Iniciando pista personalizada para música de fondo")
-        val intent = Intent(appContext, musicPlaybackService::class.java).apply {
-            action = musicPlaybackService.ACTION_PLAY_CUSTOM
+        val intent = Intent(appContext, MusicPlaybackService::class.java).apply {
+            action = MusicPlaybackService.ACTION_PLAY_CUSTOM
             data = uri
         }
         appContext.startService(intent)
@@ -58,8 +58,8 @@ class musicPlaybackController(private val appContext: Context) {
 
     fun stop() {
         DecentralizedLogger.i(TAG, "Deteniendo música de fondo")
-        val intent = Intent(appContext, musicPlaybackService::class.java).apply {
-            action = musicPlaybackService.ACTION_STOP
+        val intent = Intent(appContext, MusicPlaybackService::class.java).apply {
+            action = MusicPlaybackService.ACTION_STOP
         }
         appContext.stopService(intent)
     }

@@ -25,8 +25,8 @@
     <string name="help_title">Centro de ayuda</string>
     <string name="help_url">file:///android_asset/help/index.html</string>
     <string name="help_language_es">Español</string>
-    <string name="help_language_en">Inglés</string>
-    <string name="help_language_de">Alemán</string>
+    <string name="help_language_en">English</string>
+    <string name="help_language_de">Deutsch</string>
     <string name="settings_back_to_menu">Volver al menú</string>
     <string name="settings_sound_section">Sonido</string>
     <string name="settings_music_toggle">Música de fondo</string>
@@ -64,8 +64,8 @@
     <string name="history_win">Ganó</string>
     <string name="history_loss">Perdió</string>
     <string name="language_es_label">Español</string>
-    <string name="language_en_label">Inglés</string>
-    <string name="language_de_label">Alemán</string>
+    <string name="language_en_label">English</string>
+    <string name="language_de_label">Deutsch</string>
     <string name="chat_title">Chat de partida</string>
     <string name="chat_placeholder">Escribe un mensaje…</string>
     <string name="chat_send">Enviar</string>
@@ -91,4 +91,8 @@
     <string name="match_finish">Finalizar</string>
     <string name="match_points">Puntos: %1$d</string>
     <string name="match_add_points">+1 punto</string>
+    <string name="no_money_title">Sin monedas</string>
+    <string name="no_money_message">No puedes continuar lanzando porque no tienes más monedas.</string>
+    <string name="no_money_action">Volver al menú</string>
+
 </resources>
