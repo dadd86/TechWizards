@@ -11,6 +11,7 @@
     <string name="music_channel_name">Hintergrundmusik</string>
     <string name="music_notification_title">Musik aktiv</string>
     <string name="music_notification_body">Tech Wizards Soundtrack wird abgespielt</string>
+    <string name="music_playback_active">Hintergrundmusik wird abgespielt</string>
     <string name="menu_title">Hauptmenü</string>
     <string name="menu_play">Spielen</string>
     <string name="menu_history">Verlauf</string>

@@ -111,14 +111,7 @@ class ControladorPartida(
             DecentralizedLogger.i(TAG, "Victoria detectada origen=$origen")
             _eventos.tryEmit(JuegoUiEvent.Victoria(partida))
 
-            val payload = VictoryCelebrationPayload(
-                aliasJugador = partida.aliasJugador,
-                deltaMonedas = partida.deltaMonedas,
-                timestampMillis = System.currentTimeMillis()
-            )
-            victoryService.celebrate(payload)
 
-            // 👇 AÑADIDO (mínimo cambio)
             try {
                 registrarUbicacionVictoriaUseCase(
                     latitude = 41.3853,
@@ -128,6 +121,25 @@ class ControladorPartida(
                 DecentralizedLogger.i(TAG, "Ubicación registrada en SQLite")
             } catch (t: Throwable) {
                 DecentralizedLogger.e(TAG, "Error al registrar ubicación", t)
+            }
+        }
+    }
+    /**
+     * Programa la celebración de victoria delegando en `WorkManager`.
+     *
+     * @param payload Datos mínimos de victoria incluyendo captura.
+     * @return `Unit` tras encolar el trabajo.
+     * @throws IllegalStateException No se lanza; errores se registran.
+     * @security No se registran datos sensibles.
+     */
+    fun programarCelebracion(payload: VictoryCelebrationPayload) {
+        viewModelScope.launch {
+            runCatching {
+                victoryService.celebrate(payload)
+            }.onSuccess {
+                DecentralizedLogger.i(TAG, "Celebración encolada desde UI")
+            }.onFailure { error ->
+                DecentralizedLogger.e(TAG, "Fallo al encolar celebración", error)
             }
         }
     }

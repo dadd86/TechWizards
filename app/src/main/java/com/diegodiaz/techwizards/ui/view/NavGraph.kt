@@ -10,26 +10,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.diegodiaz.techwizards.core.ServiceLocator
-import com.diegodiaz.techwizards.core.usecases.ActualizarPreferenciasUseCase
-import com.diegodiaz.techwizards.core.usecases.ObtenerPreferenciasUseCase
-import com.diegodiaz.techwizards.core.usecases.ObservarPreferenciasUseCase
+import androidx.core.os.LocaleListCompat
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
 import com.diegodiaz.techwizards.data.local.mapper.toDomain
 import com.diegodiaz.techwizards.data.repository.impl.JuegoRepositoryRoom
 import com.diegodiaz.techwizards.domain.model.Usuario
+import com.diegodiaz.techwizards.core.ServiceLocator
+import com.diegodiaz.techwizards.core.usecases.ActualizarPreferenciasUseCase
+import com.diegodiaz.techwizards.core.usecases.ObtenerPreferenciasUseCase
+import com.diegodiaz.techwizards.core.usecases.ObservarPreferenciasUseCase
 import com.diegodiaz.techwizards.ui.controller.ControladorAjustes
 import com.diegodiaz.techwizards.ui.controller.ControladorAjustesFactory
 import com.diegodiaz.techwizards.ui.controller.ControladorPartida
 import com.diegodiaz.techwizards.ui.controller.ControladorPartidaFactory
 import com.diegodiaz.techwizards.ui.responsive.UiDims
 import kotlinx.coroutines.launch
-import android.app.Activity
 
 @Composable
 fun NavGraph(
@@ -45,9 +44,9 @@ fun NavGraph(
     val monederoDao = db.monederoDao()
     val partidaDao = db.partidaDao()
     val repo = remember { JuegoRepositoryRoom(usuarioDao, monederoDao, partidaDao) }
+
     val scope = rememberCoroutineScope()
 
-    // ---- Settings / preferencias ----
     val settingsRepository = remember { ServiceLocator.settingsRepository }
     val obtenerPreferencias = remember { ObtenerPreferenciasUseCase(settingsRepository) }
     val actualizarPreferencias = remember { ActualizarPreferenciasUseCase(settingsRepository) }
@@ -63,21 +62,6 @@ fun NavGraph(
         )
     }
 
-    // ViewModel de ajustes a nivel de NavGraph
-    val ajustesVmGlobal: ControladorAjustes = viewModel(factory = ajustesFactory)
-    val ajustesStateGlobal by ajustesVmGlobal.ui.collectAsState()
-
-    // Cada vez que cambie el idioma guardado => aplica locales de la app
-    LaunchedEffect(ajustesStateGlobal.settings.selectedLanguageTag) {
-        val tag = ajustesStateGlobal.settings.selectedLanguageTag
-        if (tag.isNotBlank()) {
-            AppCompatDelegate.setApplicationLocales(
-                LocaleListCompat.forLanguageTags(tag)
-            )
-        }
-    }
-
-    // ---- Usuario actual ----
     val usuarioActual = remember { mutableStateOf<Usuario?>(null) }
 
     LaunchedEffect(Unit) {
@@ -108,8 +92,9 @@ fun NavGraph(
                             firebaseUid = existente?.firebaseUid
                         )
                         repo.inicializarMonedas(usuario, usuario.monedas)
-                        val actualizado =
-                            usuarioDao.obtenerUsuarioPrincipal()?.toDomain() ?: usuario
+                        val actualizado = usuarioDao
+                            .obtenerUsuarioPrincipal()
+                            ?.toDomain() ?: usuario
                         usuarioActual.value = actualizado
                         navController.navigate("menu") {
                             popUpTo("bienvenida") { inclusive = true }
@@ -127,10 +112,10 @@ fun NavGraph(
                 onHistorial = { navController.navigate("historial") },
                 onAjustes = { navController.navigate("ajustes") },
                 onAyuda = { navController.navigate("ayuda") },
-                onLobby = { navController.navigate("lobby") },
-                onChat = { navController.navigate("chat") },
-                onEventos = { navController.navigate("eventos") },
-                onMatch = { navController.navigate("match") },
+                //onLobby = { navController.navigate("lobby") },
+                //onChat = { navController.navigate("chat") },
+                //onEventos = { navController.navigate("eventos") },
+                //onMatch = { navController.navigate("match") },
                 dims = dims
             )
         }
@@ -152,6 +137,9 @@ fun NavGraph(
                 eventos = controladorPartida.eventos,
                 onVolverAlMenu = { navController.navigate("menu") },
                 onElegirNumero = { num -> controladorPartida.elegirNumero(num) },
+                onProgramarCelebracion = { payload ->
+                    controladorPartida.programarCelebracion(payload)
+                },
                 dims = dims
             )
         }
@@ -179,7 +167,6 @@ fun NavGraph(
         composable("ajustes") {
             val ajustesVm: ControladorAjustes = viewModel(factory = ajustesFactory)
             val ajustesState by ajustesVm.ui.collectAsState()
-            val activity = LocalContext.current as? Activity
 
             PantallaAjustes(
                 isDarkTheme = isDarkTheme,
@@ -194,36 +181,36 @@ fun NavGraph(
                 onToggleNotifications = ajustesVm::actualizarNotificaciones,
                 onElegirPista = ajustesVm::seleccionarPista,
                 onSeleccionIdioma = { tag ->
-                    // 1) guardar preferencia
+                    // 1) Guardamos la preferencia interna
                     ajustesVm.actualizarIdioma(tag)
-                    // 2) aplicar locales
+                    // 2) Aplicamos el locale real de la app
                     AppCompatDelegate.setApplicationLocales(
                         LocaleListCompat.forLanguageTags(tag)
                     )
-                    // 3) recrear activity para que cambien todos los stringResource
-                    activity?.recreate()
                 },
                 onVolverAlMenu = { navController.navigate("menu") },
                 dims = dims
             )
         }
 
+        composable("ayuda") {
+            PantallaAyuda(dims = dims)
+        }
 
-                composable("ayuda") {
-                    PantallaAyuda(dims = dims)
-                }
-                /*
-                composable("chat") {
-                  PantallaChat(dims = dims)
-                }
-                composable("eventos") {
-                  PantallaEventos(dims = dims)
-                }
-                composable("lobby") {
-                  PantallaLobby(dims = dims)
-                }
-                composable("match") {
-                  PantallaMatch(dims = dims)
-                }*/
-}
+        composable("chat") {
+            PantallaChat(dims = dims)
+        }
+
+        composable("eventos") {
+            PantallaEventos(dims = dims)
+        }
+
+        composable("lobby") {
+            PantallaLobby(dims = dims)
+        }
+
+        composable("match") {
+            PantallaMatch(dims = dims)
+        }
+    }
 }

@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diegodiaz.techwizards.R
@@ -59,28 +60,41 @@ fun PantallaAjustes(
     val context = LocalContext.current
     val musicController = remember { musicPlaybackController(context.applicationContext) }
 
+    // Mantengo tu lógica de sincronización con preferencias
     LaunchedEffect(ajustesState.settings.musicEnabled) {
-        musicController.setEnabled(ajustesState.settings.musicEnabled)
+        musicController.applySettings(
+            enabled = ajustesState.settings.musicEnabled,
+            selectedUri = null
+        )
     }
 
     val abrirPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
         onElegirPista(uri)
+        if (uri != null && ajustesState.settings.musicEnabled) {
+            musicController.applySettings(
+                enabled = true,
+                selectedUri = uri.toString()
+            )
+        }
     }
 
     val fondo = if (!isDarkTheme) Color(0xFFB5E2F8) else MaterialTheme.colorScheme.background
 
     val compact = dims.minSide < 360.dp
-    val verticalBetweenSections = if (compact) 4.dp else 8.dp
+
+    // 🔧 Afinamos espaciados para que todo quede más compacto
+    val sectionSpacing = if (compact) dims.spaceXs else dims.spaceSm
     val horizontalPadding = if (compact) dims.spaceSm else dims.spaceMd
     val bottomPaddingExtra =
-        if (compact) dims.buttonHeightSm + dims.spaceSm else dims.buttonHeightSm + dims.spaceMd
+        if (compact) dims.buttonHeightSm + dims.spaceSm
+        else dims.buttonHeightSm + dims.spaceSm
 
-    // botón “Back to menu” más pequeño
-    val backButtonHeight = if (compact) dims.buttonHeightSm * 0.8f else dims.buttonHeightSm * 0.9f
-    var backTextSize = dims.bodySp
-    if (backTextSize > 16.sp) backTextSize = 16.sp
+    // Botón "Back to menu" más pequeño y proporcionado
+    val backButtonHeight = dims.buttonHeightSm * (if (compact) 0.7f else 0.8f)
+    val backButtonWidthFraction = if (compact) 0.75f else 0.6f
+    val backButtonFont = (dims.bodySp.value * if (compact) 0.9f else 0.95f).sp
 
     Scaffold(
         containerColor = fondo,
@@ -88,22 +102,25 @@ fun PantallaAjustes(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = if (compact) 4.dp else dims.spaceSm),
+                    .padding(vertical = if (compact) dims.spaceXs else dims.spaceSm / 1.5f),
                 contentAlignment = Alignment.Center
             ) {
                 Button(
                     onClick = onVolverAlMenu,
                     modifier = Modifier
-                        .fillMaxWidth(if (compact) 0.85f else 0.7f)
+                        .fillMaxWidth(backButtonWidthFraction)
                         .height(backButtonHeight)
-                        .clip(RoundedCornerShape(18.dp)),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                        .clip(RoundedCornerShape(20.dp)),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = stringResource(id = R.string.settings_back_to_menu),
                         color = Color(0xFF3B71B8),
                         fontWeight = FontWeight.Bold,
-                        fontSize = backTextSize
+                        fontSize = backButtonFont,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -117,7 +134,7 @@ fun PantallaAjustes(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = horizontalPadding)
                 .padding(bottom = bottomPaddingExtra),
-            verticalArrangement = Arrangement.spacedBy(verticalBetweenSections)
+            verticalArrangement = Arrangement.spacedBy(sectionSpacing)
         ) {
             if (ajustesState.cargando) {
                 CircularProgressIndicator(
@@ -135,7 +152,7 @@ fun PantallaAjustes(
 
             val settings = ajustesState.settings
 
-            // ---- Sound ----
+            // ---------- SOUND ----------
             AjustesSeccion(
                 titulo = stringResource(id = R.string.settings_sound_section),
                 dims = dims,
@@ -145,8 +162,8 @@ fun PantallaAjustes(
                     label = stringResource(id = R.string.settings_music_toggle),
                     checked = settings.musicEnabled,
                     onCheckedChange = { checked ->
-                        musicController.setEnabled(checked)
                         onToggleMusic(checked)
+                        // El LaunchedEffect sincroniza con el servicio
                     },
                     dims = dims,
                     compact = compact
@@ -162,22 +179,26 @@ fun PantallaAjustes(
 
                 Button(
                     onClick = { abrirPicker.launch(arrayOf("audio/*")) },
-                    modifier = Modifier.fillMaxWidth(if (compact) 1f else 0.7f),
+                    modifier = Modifier.fillMaxWidth(if (compact) 1f else 0.85f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    contentPadding = PaddingValues(
+                        horizontal = if (compact) 12.dp else 16.dp,
+                        vertical = if (compact) 6.dp else 8.dp
                     )
                 ) {
-                    var pickTextSize = dims.bodySp
-                    if (pickTextSize > 15.sp) pickTextSize = 15.sp
                     Text(
                         text = stringResource(id = R.string.settings_pick_track),
-                        fontSize = pickTextSize
+                        fontSize = (dims.bodySp.value * if (compact) 0.9f else 1f).sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
 
-            // ---- Display ----
+            // ---------- DISPLAY ----------
             AjustesSeccion(
                 titulo = stringResource(id = R.string.settings_visual_section),
                 dims = dims,
@@ -200,7 +221,7 @@ fun PantallaAjustes(
                 )
             }
 
-            // ---- Notifications ----
+            // ---------- NOTIFICATIONS ----------
             AjustesSeccion(
                 titulo = stringResource(id = R.string.settings_notifications_section),
                 dims = dims,
@@ -215,7 +236,7 @@ fun PantallaAjustes(
                 )
             }
 
-            // ---- Language ----
+            // ---------- LANGUAGE ----------
             AjustesSeccion(
                 titulo = stringResource(id = R.string.settings_language_section),
                 dims = dims,
@@ -229,22 +250,21 @@ fun PantallaAjustes(
                 )
             }
 
-            Spacer(Modifier.height(if (compact) dims.spaceSm else dims.spaceMd))
+            Spacer(Modifier.height(if (compact) dims.spaceSm else dims.spaceSm))
         }
     }
 }
 
-// ------------------ Secciones / componentes reutilizables ------------------
+/* ==================== VISUAL COMPONENTS ==================== */
 
 @Composable
-fun AjustesSeccion(
+private fun AjustesSeccion(
     titulo: String,
     dims: UiDims,
     compact: Boolean,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    var titleSize = if (compact) (dims.titleSp.value * 0.85f).sp else dims.titleSp
-    if (titleSize > 22.sp) titleSize = 22.sp
+    val titleSize = (dims.titleSp.value * if (compact) 0.9f else 0.95f).sp
 
     Text(
         text = titulo,
@@ -253,23 +273,22 @@ fun AjustesSeccion(
         color = MaterialTheme.colorScheme.onBackground
     )
     Column(
-        verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp),
+        verticalArrangement = Arrangement.spacedBy(
+            if (compact) dims.spaceXs / 2 else dims.spaceXs
+        ),
         content = content
     )
 }
 
 @Composable
-fun AjusteSwitch(
+private fun AjusteSwitch(
     label: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     dims: UiDims,
     compact: Boolean
 ) {
-    val maxLabelSize = if (compact) 14.sp else 16.sp
-    var labelSize = dims.bodySp
-    if (labelSize > maxLabelSize) labelSize = maxLabelSize
-
+    val labelSize = (dims.bodySp.value * if (compact) 0.9f else 0.95f).sp
     val switchScale = if (compact) 0.7f else 0.8f
 
     Row(
@@ -277,7 +296,7 @@ fun AjusteSwitch(
             .fillMaxWidth()
             .padding(
                 horizontal = if (compact) dims.spaceXs else dims.spaceSm,
-                vertical = if (compact) 2.dp else 4.dp
+                vertical = if (compact) dims.spaceXs / 2 else dims.spaceXs
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -285,7 +304,9 @@ fun AjusteSwitch(
             text = label,
             modifier = Modifier.weight(1f),
             fontSize = labelSize,
-            color = MaterialTheme.colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
         )
         Switch(
             checked = checked,
@@ -296,17 +317,19 @@ fun AjusteSwitch(
 }
 
 @Composable
-fun IdiomaSelector(
+private fun IdiomaSelector(
     seleccionado: String,
     onSeleccion: (String) -> Unit,
     dims: UiDims,
     compact: Boolean
 ) {
+    val chipSpacing = if (compact) dims.spaceXs else dims.spaceSm
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = if (compact) dims.spaceXs else dims.spaceSm),
-        horizontalArrangement = Arrangement.spacedBy(if (compact) dims.spaceXs else dims.spaceSm)
+        horizontalArrangement = Arrangement.spacedBy(chipSpacing)
     ) {
         LanguageChip(
             text = stringResource(id = R.string.language_es_label),
@@ -335,7 +358,7 @@ fun IdiomaSelector(
 }
 
 @Composable
-fun LanguageChip(
+private fun LanguageChip(
     text: String,
     seleccionado: Boolean,
     dims: UiDims,
@@ -343,36 +366,35 @@ fun LanguageChip(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val maxSize = if (compact) 13.sp else 14.sp
-    var chipFontSize = dims.bodySp
-    if (chipFontSize > maxSize) chipFontSize = maxSize
-
-    val chipHeight = if (compact) dims.buttonHeightSm * 0.7f else dims.buttonHeightSm * 0.8f
+    // Control estricto del tamaño para que el texto SIEMPRE quepa
+    val base = if (dims.bodySp > 16.sp) 16.sp else dims.bodySp
+    val chipFontSize = (base.value * if (compact) 0.8f else 0.85f).sp
+    val chipHeight = dims.buttonHeightSm * (if (compact) 0.65f else 0.7f)
+    val radius = dims.cardCorner * 0.5f
 
     Button(
         onClick = onClick,
+        modifier = modifier
+            .height(chipHeight)
+            .clip(RoundedCornerShape(radius)),
         colors = ButtonDefaults.buttonColors(
             containerColor = if (seleccionado)
                 MaterialTheme.colorScheme.primary
             else
-                Color(0xFFD6D6D6),
+                Color(0xFFD8D8D8),
             contentColor = if (seleccionado)
                 MaterialTheme.colorScheme.onPrimary
             else
                 Color.Black
         ),
-        modifier = modifier
-            .height(chipHeight)
-            .clip(RoundedCornerShape(dims.cardCorner / 2)),
-        contentPadding = PaddingValues(
-            horizontal = if (compact) 4.dp else 6.dp,
-            vertical = 0.dp
-        )
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
     ) {
         Text(
             text = text,
             fontSize = chipFontSize,
-            maxLines = 1
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            softWrap = false
         )
     }
 }

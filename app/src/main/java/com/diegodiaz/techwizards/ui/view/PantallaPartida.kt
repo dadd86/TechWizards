@@ -1,6 +1,8 @@
 package com.diegodiaz.techwizards.ui.view
 
 import android.Manifest
+import android.content.Context
+import android.graphics.Bitmap
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
@@ -45,9 +47,28 @@ import com.diegodiaz.techwizards.integration.victory.WorkManagerVictoryCelebrati
 import com.diegodiaz.techwizards.ui.controller.JuegoUiEvent
 import com.diegodiaz.techwizards.ui.controller.JuegoUiState
 import com.diegodiaz.techwizards.ui.responsive.UiDims
+import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
+import java.io.File
+import java.io.FileOutputStream
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
+/**
+ * Pantalla principal de partida con gestión de animaciones, audio y celebraciones.
+ *
+ * @param isDarkTheme Indica si el tema oscuro está activo.
+ * @param uiState Estado inmutable de la pantalla.
+ * @param eventos Flujo de eventos de dominio.
+ * @param onVolverAlMenu Acción para regresar al menú.
+ * @param onElegirNumero Callback al seleccionar número.
+ * @param onProgramarCelebracion Callback para encolar celebración con captura.
+ * @param dims Dimensiones responsivas para layout.
+ * @return `Unit` tras componer la UI.
+ * @throws IllegalStateException No se lanza; efectos manejados por Compose.
+ * @security No muestra datos sensibles en logs.
+ */
 @Composable
 fun PantallaPartida(
     isDarkTheme: Boolean,
@@ -55,6 +76,7 @@ fun PantallaPartida(
     eventos: SharedFlow<JuegoUiEvent>,
     onVolverAlMenu: () -> Unit,
     onElegirNumero: (Int) -> Unit,
+    onProgramarCelebracion: (VictoryCelebrationPayload) -> Unit,
     dims: UiDims
 ) {
     var showDialog by remember { mutableStateOf(false) }
@@ -90,16 +112,14 @@ fun PantallaPartida(
         eventos.collectLatest { evento ->
             if (evento is JuegoUiEvent.Victoria && evento.partida.resultado == Resultado.GANADO) {
                 val bitmap = view.drawToBitmap()
-                val stream = java.io.ByteArrayOutputStream()
-                bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
+                val screenshotPath = guardarCapturaTemporal(context, bitmap)
+                bitmap.recycle()
 
-                val payload = VictoryCelebrationPayload(
-                    aliasJugador = evento.partida.aliasJugador,
-                    deltaMonedas = evento.partida.deltaMonedas,
-                    timestampMillis = System.currentTimeMillis()
+                val payload = VictoryCelebrationPayload.fromPartida(
+                    partida = evento.partida,
+                    screenshotPath = screenshotPath
                 )
-                val service = WorkManagerVictoryCelebrationService(context.applicationContext)
-                service.celebrate(payload)
+                onProgramarCelebracion(payload)
 
                 if (uiState.sfxEnabled) {
                     toneGenerator.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP, 250)
@@ -344,3 +364,26 @@ fun PantallaPartida(
         }
     }
 }
+/**
+ * Guarda la captura de victoria en caché para que el worker la publique en la galería.
+ *
+ * @param context Contexto de la aplicación.
+ * @param bitmap Imagen de la pantalla en el momento de la victoria.
+ * @return Ruta absoluta del archivo temporal o `null` si falla.
+ * @throws IllegalStateException No se lanza; errores se registran.
+ * @security No persiste PII, solo la imagen generada por la UI.
+ */
+private suspend fun guardarCapturaTemporal(context: Context, bitmap: Bitmap): String? =
+    withContext(Dispatchers.IO) {
+        runCatching {
+            val file = File(context.cacheDir, "victory_capture_${System.currentTimeMillis()}.png")
+            FileOutputStream(file).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+            file.absolutePath
+        }.onFailure { error ->
+            DecentralizedLogger.e(TAG, "No se pudo guardar la captura temporal", error)
+        }.getOrNull()
+    }
+
+private const val TAG = "PantallaPartida"

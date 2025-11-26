@@ -11,6 +11,7 @@
     <string name="music_channel_name">Background music</string>
     <string name="music_notification_title">Music playing</string>
     <string name="music_notification_body">Playing Tech Wizards soundtrack</string>
+    <string name="music_playback_active">Playing background music</string>
     <string name="menu_title">Main menu</string>
     <string name="menu_play">Play</string>
     <string name="menu_history">History</string>
