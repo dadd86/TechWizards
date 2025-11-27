@@ -147,15 +147,13 @@ fun PantallaPartida(
         }
     }
 
-    val rotation = remember { Animatable(0f) }
-    var lastResultado by remember { mutableStateOf("") }
-
     val fichaOffsetY = remember { Animatable(60f) }
     val fichaScale = remember { Animatable(0f) }
 
-    LaunchedEffect(uiState.ultimoResultado, uiState.animationsEnabled, uiState.sfxEnabled) {
-        if (uiState.ultimoResultado.isNotBlank() && uiState.ultimoResultado != lastResultado) {
-            lastResultado = uiState.ultimoResultado
+    val rotation = remember { Animatable(0f) }
+
+    LaunchedEffect(uiState.rollId, uiState.animationsEnabled, uiState.sfxEnabled) {
+        if (uiState.rollId > 0) {
             if (uiState.animationsEnabled) {
                 rotation.snapTo(0f)
                 rotation.animateTo(

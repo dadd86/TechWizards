@@ -45,11 +45,13 @@
         </activity>
 
         <service
-            android:name="com.diegodiaz.techwizards.integration.media.MusicPlaybackService"
+            android:name=".integration.media.MusicPlaybackService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 
 
     </application>
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
 </manifest>

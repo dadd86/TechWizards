@@ -36,7 +36,8 @@ fun NavGraph(
     isDarkTheme: Boolean,
     onToggleTheme: (Boolean) -> Unit,
     dims: UiDims,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    ajustesVm: ControladorAjustes
 ) {
     val context = LocalContext.current
     val db = remember { BaseDeDatos.get(context) }
@@ -48,19 +49,9 @@ fun NavGraph(
     val scope = rememberCoroutineScope()
 
     val settingsRepository = remember { ServiceLocator.settingsRepository }
-    val obtenerPreferencias = remember { ObtenerPreferenciasUseCase(settingsRepository) }
-    val actualizarPreferencias = remember { ActualizarPreferenciasUseCase(settingsRepository) }
     val observarPreferencias = remember { ObservarPreferenciasUseCase(settingsRepository) }
 
     val victoryService = remember { ServiceLocator.victoryCelebrationService }
-
-    val ajustesFactory = remember {
-        ControladorAjustesFactory(
-            obtenerPreferencias = obtenerPreferencias,
-            actualizarPreferencias = actualizarPreferencias,
-            observarPreferencias = observarPreferencias
-        )
-    }
 
     val usuarioActual = remember { mutableStateOf<Usuario?>(null) }
 
@@ -175,7 +166,6 @@ fun NavGraph(
         }
 
         composable("ajustes") {
-            val ajustesVm: ControladorAjustes = viewModel(factory = ajustesFactory)
             val ajustesState by ajustesVm.ui.collectAsState()
 
             PantallaAjustes(
@@ -191,9 +181,7 @@ fun NavGraph(
                 onToggleNotifications = ajustesVm::actualizarNotificaciones,
                 onElegirPista = ajustesVm::seleccionarPista,
                 onSeleccionIdioma = { tag ->
-                    // 1) Guardamos la preferencia interna
                     ajustesVm.actualizarIdioma(tag)
-                    // 2) Aplicamos el locale real de la app
                     AppCompatDelegate.setApplicationLocales(
                         LocaleListCompat.forLanguageTags(tag)
                     )
@@ -204,7 +192,10 @@ fun NavGraph(
         }
 
         composable("ayuda") {
-            PantallaAyuda(dims = dims)
+            PantallaAyuda(
+                dims = dims,
+                onVolverAlMenu = { navController.navigate("menu") }
+            )
         }
 
         composable("chat") {

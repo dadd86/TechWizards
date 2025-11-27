@@ -57,26 +57,10 @@ fun PantallaAjustes(
     onVolverAlMenu: () -> Unit,
     dims: UiDims
 ) {
-    val context = LocalContext.current
-    val musicController = remember { MusicPlaybackController(context.applicationContext) }
-
-    LaunchedEffect(ajustesState.settings.musicEnabled, ajustesState.settings.selectedMusicUri) {
-        musicController.applySettings(
-            enabled = ajustesState.settings.musicEnabled,
-            selectedUri = ajustesState.settings.selectedMusicUri
-        )
-    }
-
     val abrirPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
         onElegirPista(uri)
-        if (uri != null && ajustesState.settings.musicEnabled) {
-            musicController.applySettings(
-                enabled = true,
-                selectedUri = uri.toString()
-            )
-        }
     }
 
     val fondo = if (!isDarkTheme) Color(0xFFB5E2F8) else MaterialTheme.colorScheme.background

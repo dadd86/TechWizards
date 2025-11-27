@@ -67,8 +67,9 @@ fun AppRoot(
                 navController = navController,
                 isDarkTheme = isDarkTheme,
                 onToggleTheme = onToggleTheme,
-                dims = dims, // ← se lo pasamos a todo el grafo
-                modifier = Modifier.padding(innerPadding)
+                dims = dims, // Se lo pasamos al grafo
+                modifier = Modifier.padding(innerPadding),
+                ajustesVm = ajustesVm
             )
         }
     }

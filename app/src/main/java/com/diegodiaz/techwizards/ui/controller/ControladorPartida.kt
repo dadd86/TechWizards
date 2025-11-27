@@ -22,6 +22,7 @@ data class JuegoUiState(
     val monedas: Int = 100,
     val numeroElegido: Int? = null,
     val ultimoResultado: String = "",
+    val rollId: Long = 0L,
     val cargando: Boolean = false,
     val error: String? = null,
     val animationsEnabled: Boolean = true,
@@ -70,14 +71,18 @@ class ControladorPartida(
                 100 // valor por defecto inicial
             )
 
+    private val rollCounter = MutableStateFlow(0L)
+
     val ui: StateFlow<JuegoUiState> = combine(
         repo.observarMonedero(usuarioId),
         repo.observarHistorial(usuarioId),
-        preferencias
-    ) { monedero: Monedero, historial: List<Partida>, settings: GameSettings ->
+        preferencias,
+        rollCounter
+    ) { monedero: Monedero, historial: List<Partida>, settings: GameSettings, rollId: Long ->
         JuegoUiState(
             monedas = monedero.saldo,
             ultimoResultado = historial.firstOrNull()?.formatoResumen() ?: "",
+            rollId = rollId,
             cargando = false,
             error = null,
             animationsEnabled = settings.animationsEnabled,
@@ -99,6 +104,7 @@ class ControladorPartida(
         viewModelScope.launch {
             try {
                 val partida = repo.lanzarDado(usuarioId)
+                rollCounter.update { it + 1 }
                 handleVictoriaSiNecesario(partida, origen = "lanzar")
             } catch (t: Throwable) {
                 DecentralizedLogger.e(TAG, "Error al lanzar", t)
@@ -110,6 +116,7 @@ class ControladorPartida(
         viewModelScope.launch {
             if (num in 1..6) {
                 val partida = repo.lanzarDado(usuarioId)
+                rollCounter.update { it + 1 }
                 handleVictoriaSiNecesario(partida, origen = "elegirNumero($num)")
             }
         }
