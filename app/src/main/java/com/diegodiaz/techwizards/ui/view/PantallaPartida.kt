@@ -57,17 +57,6 @@ import kotlinx.coroutines.withContext
 
 /**
  * Pantalla principal de partida con gestión de animaciones, audio y celebraciones.
- *
- * @param isDarkTheme Indica si el tema oscuro está activo.
- * @param uiState Estado inmutable de la pantalla.
- * @param eventos Flujo de eventos de dominio.
- * @param onVolverAlMenu Acción para regresar al menú.
- * @param onElegirNumero Callback al seleccionar número.
- * @param onProgramarCelebracion Callback para encolar celebración con captura.
- * @param dims Dimensiones responsivas para layout.
- * @return `Unit` tras componer la UI.
- * @throws IllegalStateException No se lanza; efectos manejados por Compose.
- * @security No muestra datos sensibles en logs.
  */
 @Composable
 fun PantallaPartida(
@@ -127,21 +116,74 @@ fun PantallaPartida(
         permissionLauncher.launch(permissions.toTypedArray())
     }
 
-    LaunchedEffect(eventos, uiState.sfxEnabled) {
+    // 🔸 Animación + sonido para eventos de ganar / perder
+    //    - Victoria: "bounce" del texto + tono alegre
+    //    - Derrota: "shake" lateral del texto + tono distinto
+    val resultadoScale = remember { Animatable(1f) }
+    val resultadoShakeX = remember { Animatable(0f) }
+
+    LaunchedEffect(eventos, uiState.animationsEnabled, uiState.sfxEnabled) {
         eventos.collectLatest { evento ->
-            if (evento is JuegoUiEvent.Victoria && evento.partida.resultado == Resultado.GANADO) {
-                val bitmap = view.drawToBitmap()
-                val screenshotPath = guardarCapturaTemporal(context, bitmap)
-                bitmap.recycle()
+            when (evento) {
+                is JuegoUiEvent.Victoria -> {
+                    // Captura + celebración (lo que ya hacías al ganar)
+                    val bitmap = view.drawToBitmap()
+                    val screenshotPath = guardarCapturaTemporal(context, bitmap)
+                    bitmap.recycle()
 
-                val payload = VictoryCelebrationPayload.fromPartida(
-                    partida = evento.partida,
-                    screenshotPath = screenshotPath
-                )
-                onProgramarCelebracion(payload)
+                    val payload = VictoryCelebrationPayload.fromPartida(
+                        partida = evento.partida,
+                        screenshotPath = screenshotPath
+                    )
+                    onProgramarCelebracion(payload)
 
-                if (uiState.sfxEnabled) {
-                    toneGenerator.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP, 250)
+                    // Animación "bounce" del texto de resultado
+                    if (uiState.animationsEnabled) {
+                        resultadoScale.snapTo(1f)
+                        resultadoScale.animateTo(
+                            targetValue = 1.15f,
+                            animationSpec = tween(durationMillis = 160)
+                        )
+                        resultadoScale.animateTo(
+                            targetValue = 1f,
+                            animationSpec = tween(durationMillis = 160)
+                        )
+                    }
+
+                    // Sonido de victoria
+                    if (uiState.sfxEnabled) {
+                        toneGenerator.startTone(
+                            ToneGenerator.TONE_CDMA_ONE_MIN_BEEP,
+                            250
+                        )
+                    }
+                }
+
+                is JuegoUiEvent.Derrota -> {
+                    // Animación "shake" lateral del texto de resultado
+                    if (uiState.animationsEnabled) {
+                        resultadoShakeX.snapTo(0f)
+                        resultadoShakeX.animateTo(
+                            targetValue = 12f,
+                            animationSpec = tween(durationMillis = 60)
+                        )
+                        resultadoShakeX.animateTo(
+                            targetValue = -12f,
+                            animationSpec = tween(durationMillis = 60)
+                        )
+                        resultadoShakeX.animateTo(
+                            targetValue = 0f,
+                            animationSpec = tween(durationMillis = 60)
+                        )
+                    }
+
+                    // Sonido de derrota (distinto al de victoria)
+                    if (uiState.sfxEnabled) {
+                        toneGenerator.startTone(
+                            ToneGenerator.TONE_PROP_NACK,
+                            200
+                        )
+                    }
                 }
             }
         }
@@ -299,7 +341,14 @@ fun PantallaPartida(
                     },
                     fontWeight = FontWeight.Medium,
                     fontSize = dims.bodySp,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.graphicsLayer {
+                        // Escala para victoria
+                        scaleX = resultadoScale.value
+                        scaleY = resultadoScale.value
+                        // Shake lateral para derrota
+                        translationX = resultadoShakeX.value
+                    }
                 )
             }
 
@@ -384,14 +433,9 @@ fun PantallaPartida(
         }
     }
 }
+
 /**
  * Guarda la captura de victoria en caché para que el worker la publique en la galería.
- *
- * @param context Contexto de la aplicación.
- * @param bitmap Imagen de la pantalla en el momento de la victoria.
- * @return Ruta absoluta del archivo temporal o `null` si falla.
- * @throws IllegalStateException No se lanza; errores se registran.
- * @security No persiste PII, solo la imagen generada por la UI.
  */
 private suspend fun guardarCapturaTemporal(context: Context, bitmap: Bitmap): String? =
     withContext(Dispatchers.IO) {

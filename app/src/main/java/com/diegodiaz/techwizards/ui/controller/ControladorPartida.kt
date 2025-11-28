@@ -31,6 +31,7 @@ data class JuegoUiState(
 
 sealed interface JuegoUiEvent {
     data class Victoria(val partida: Partida) : JuegoUiEvent
+    data class Derrota(val partida: Partida) : JuegoUiEvent
 }
 
 private fun Partida.formatoResumen(): String = when (resultado) {
@@ -123,24 +124,31 @@ class ControladorPartida(
     }
 
     private suspend fun handleVictoriaSiNecesario(partida: Partida, origen: String) {
-        if (partida.resultado == Resultado.GANADO) {
+        when (partida.resultado) {
+            Resultado.GANADO -> {
+                DecentralizedLogger.i(TAG, "Victoria detectada origen=$origen")
+                _eventos.tryEmit(JuegoUiEvent.Victoria(partida))
 
-            DecentralizedLogger.i(TAG, "Victoria detectada origen=$origen")
-            _eventos.tryEmit(JuegoUiEvent.Victoria(partida))
+                try {
+                    registrarUbicacionVictoriaUseCase(
+                        latitude = 41.3853,
+                        longitude = 2.1734,
+                        accuracyMetres = null
+                    )
+                    DecentralizedLogger.i(TAG, "Ubicación registrada en SQLite")
+                } catch (t: Throwable) {
+                    DecentralizedLogger.e(TAG, "Error al registrar ubicación", t)
+                }
+            }
 
-
-            try {
-                registrarUbicacionVictoriaUseCase(
-                    latitude = 41.3853,
-                    longitude = 2.1734,
-                    accuracyMetres = null
-                )
-                DecentralizedLogger.i(TAG, "Ubicación registrada en SQLite")
-            } catch (t: Throwable) {
-                DecentralizedLogger.e(TAG, "Error al registrar ubicación", t)
+            Resultado.PERDIDO -> {
+                DecentralizedLogger.i(TAG, "Derrota detectada origen=$origen")
+                _eventos.tryEmit(JuegoUiEvent.Derrota(partida))
+                // 👆 aquí no llamamos a celebration ni ubicación, solo evento para la UI
             }
         }
     }
+
     /**
      * Programa la celebración de victoria delegando en `WorkManager`.
      *
