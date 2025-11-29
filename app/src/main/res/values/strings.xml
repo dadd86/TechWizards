@@ -55,6 +55,7 @@
     <string name="game_last_roll_placeholder">Último lanzamiento: ...</string>
     <string name="game_back_to_menu">Volver al menú</string>
     <string name="game_pick_number_prompt">Elige un número del 1 al 6</string>
+    <string name="game_victory_confetti_label">¡Victoria!</string>
     <string name="history_title">Historial de partidas</string>
     <string name="history_player">Jugador</string>
     <string name="history_date">Fecha</string>

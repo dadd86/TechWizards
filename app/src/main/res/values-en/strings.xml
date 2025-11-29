@@ -55,6 +55,7 @@
     <string name="game_last_roll_placeholder">Last roll: ...</string>
     <string name="game_back_to_menu">Back to menu</string>
     <string name="game_pick_number_prompt">Choose a number from 1 to 6</string>
+    <string name="game_victory_confetti_label">Victory!</string>
     <string name="history_title">Match history</string>
     <string name="history_player">Player</string>
     <string name="history_date">Date</string>

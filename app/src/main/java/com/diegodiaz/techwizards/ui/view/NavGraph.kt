@@ -62,6 +62,19 @@ fun NavGraph(
 
     val usuarioId = (usuarioActual.value?.numero ?: 1L).toString()
 
+    // --------- Instancia de ControladorPartida compartida ---------
+    val partidaFactory = remember {
+        ControladorPartidaFactory(
+            repo = repo,
+            usuarioId = usuarioId,
+            observarPreferencias = observarPreferencias,
+            victoryService = victoryService,
+            registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase
+        )
+    }
+    val controladorPartida: ControladorPartida = viewModel(factory = partidaFactory)
+    // ------------------------------------------------------------------------
+
     NavHost(
         navController = navController,
         startDestination = "bienvenida",
@@ -97,16 +110,17 @@ fun NavGraph(
         }
 
         composable("menu") {
+            val usuario = usuarioActual.value
+
             // Crea el ViewModel de partida aquí para acceder desde el menú
-            val factory = ControladorPartidaFactory(
+            /*val factory = ControladorPartidaFactory(
                 repo = repo,
                 usuarioId = usuarioId,
                 observarPreferencias = observarPreferencias,
                 victoryService = victoryService,
                 registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase
             )
-            val controladorPartida: ControladorPartida = viewModel(factory = factory)
-            val usuario = usuarioActual.value
+            val controladorPartida: ControladorPartida = viewModel(factory = factory)*/
 
             PantallaMenu(
                 isDarkTheme = isDarkTheme,
@@ -122,14 +136,14 @@ fun NavGraph(
 
 
         composable("partida") {
-            val factory = ControladorPartidaFactory(
+            /*val factory = ControladorPartidaFactory(
                 repo = repo,
                 usuarioId = usuarioId,
                 observarPreferencias = observarPreferencias,
                 victoryService = victoryService,
                 registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase
             )
-            val controladorPartida: ControladorPartida = viewModel(factory = factory)
+            val controladorPartida: ControladorPartida = viewModel(factory = factory)*/
             val uiState = controladorPartida.ui.collectAsState().value
 
             PantallaPartida(
@@ -146,7 +160,7 @@ fun NavGraph(
         }
 
         composable("historial") {
-            val viewModel: ControladorPartida = viewModel(
+            /*val viewModel: ControladorPartida = viewModel(
                 factory = ControladorPartidaFactory(
                     repo = repo,
                     usuarioId = usuarioId,
@@ -154,8 +168,8 @@ fun NavGraph(
                     victoryService = victoryService,
                     registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase
                 )
-            )
-            val historial by viewModel.historial.collectAsState()
+            )*/
+            val historial by controladorPartida.historial.collectAsState()
 
             PantallaHistorial(
                 isDarkTheme = isDarkTheme,

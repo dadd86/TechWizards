@@ -9,7 +9,13 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -107,6 +113,7 @@ fun PantallaPartida(
         onDispose { toneGenerator.release() }
     }
 
+    // ------------------ permisos ------------------
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { }
@@ -127,31 +134,14 @@ fun PantallaPartida(
         permissionLauncher.launch(permissions.toTypedArray())
     }
 
-    LaunchedEffect(eventos, uiState.sfxEnabled) {
-        eventos.collectLatest { evento ->
-            if (evento is JuegoUiEvent.Victoria && evento.partida.resultado == Resultado.GANADO) {
-                val bitmap = view.drawToBitmap()
-                val screenshotPath = guardarCapturaTemporal(context, bitmap)
-                bitmap.recycle()
-
-                val payload = VictoryCelebrationPayload.fromPartida(
-                    partida = evento.partida,
-                    screenshotPath = screenshotPath
-                )
-                onProgramarCelebracion(payload)
-
-                if (uiState.sfxEnabled) {
-                    toneGenerator.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP, 250)
-                }
-            }
-        }
-    }
-
+    // ------------------ estados de animación ------------------
     val fichaOffsetY = remember { Animatable(60f) }
     val fichaScale = remember { Animatable(0f) }
 
     val rotation = remember { Animatable(0f) }
+    var showConfetti by remember { mutableStateOf(false) }
 
+    // 1) Animación de lanzamiento (SIEMPRE que hay tirada), con su beep.
     LaunchedEffect(uiState.rollId, uiState.animationsEnabled, uiState.sfxEnabled) {
         if (uiState.rollId > 0) {
             if (uiState.animationsEnabled) {
@@ -167,6 +157,7 @@ fun PantallaPartida(
         }
     }
 
+    // 2) Movimiento de la ficha con el número elegido
     LaunchedEffect(uiState.numeroElegido, uiState.animationsEnabled) {
         val numero = uiState.numeroElegido ?: return@LaunchedEffect
         if (uiState.animationsEnabled) {
@@ -183,6 +174,44 @@ fun PantallaPartida(
         } else {
             fichaOffsetY.snapTo(0f)
             fichaScale.snapTo(1f)
+        }
+    }
+
+    // 3) Efecto de VICTORIA: confeti + sonido extra, solo en victoria.
+    LaunchedEffect(eventos, uiState.sfxEnabled, uiState.animationsEnabled) {
+        eventos.collectLatest { evento ->
+
+            DecentralizedLogger.i("Partida", "Evento recibido: $evento")
+
+            if (evento is JuegoUiEvent.Victoria && evento.partida.resultado == Resultado.GANADO) {
+
+                DecentralizedLogger.i("Partida", "Victoria detectada en PantallaPartida")
+
+                val bitmap = view.drawToBitmap()
+                val screenshotPath = guardarCapturaTemporal(context, bitmap)
+                bitmap.recycle()
+
+                val payload = VictoryCelebrationPayload.fromPartida(
+                    partida = evento.partida,
+                    screenshotPath = screenshotPath
+                )
+                onProgramarCelebracion(payload)
+
+                // Confeti solo si las animaciones están activadas
+                if (uiState.animationsEnabled) {
+                    showConfetti = true
+                    kotlinx.coroutines.delay(2500)
+                    showConfetti = false
+                }
+
+                // Sonido extra de victoria, respetando el switch de SFX
+                if (uiState.sfxEnabled) {
+                    toneGenerator.startTone(
+                        ToneGenerator.TONE_CDMA_HIGH_PBX_SLS,
+                        300
+                    )
+                }
+            }
         }
     }
 
@@ -382,8 +411,26 @@ fun PantallaPartida(
                 }
             )
         }
+
+        if (showConfetti && uiState.animationsEnabled) {
+            // Capa de confeti + texto de victoria
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        top = dims.spaceMd * 16,
+                        bottom = dims.spaceMd * 3
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                VictoryText(dims = dims)
+            }
+            ConfettiOverlay(dims = dims, compact = dims.minSide < 360.dp)
+        }
     }
 }
+
+
 /**
  * Guarda la captura de victoria en caché para que el worker la publique en la galería.
  *
@@ -407,3 +454,89 @@ private suspend fun guardarCapturaTemporal(context: Context, bitmap: Bitmap): St
     }
 
 private const val TAG = "PantallaPartida"
+
+@Composable
+private fun ConfettiOverlay(
+    dims: UiDims,
+    compact: Boolean
+) {
+    val confettiCount = if (compact) 70 else 110
+    val colors = listOf(
+        Color(0xFFFFC107),
+        Color(0xFFFF4081),
+        Color(0xFF69F0AE),
+        Color(0xFF40C4FF),
+        Color(0xFFFF5722)
+    )
+
+    val randomSeeds = remember {
+        List(confettiCount) { i ->
+            val base = (i * 37) % 1000
+            base / 1000f
+        }
+    }
+
+    val progress = remember { Animatable(0f) }
+
+    LaunchedEffect(Unit) {
+        progress.snapTo(0f)
+        progress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 1800, easing = LinearEasing)
+        )
+    }
+
+    Canvas(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        val width = size.width
+        val height = size.height
+        val p = progress.value
+
+        repeat(confettiCount) { i ->
+            val seed = randomSeeds[i]
+            val baseX = width * seed
+            val fallSpeed = 1.0f + seed * 0.5f
+            val wave = kotlin.math.sin((p * 6f + seed * 10f)) * 30f
+
+            val y = height * (-0.2f + p * fallSpeed)
+            val x = (baseX + wave).coerceIn(0f, width)
+
+            val color = colors[i % colors.size]
+            val sizePx = (dims.minSide.toPx() * 0.016f).coerceIn(6f, 16f)
+
+            drawRoundRect(
+                color = color,
+                topLeft = androidx.compose.ui.geometry.Offset(x, y),
+                size = androidx.compose.ui.geometry.Size(sizePx, sizePx * 1.8f),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(sizePx / 3f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun VictoryText(dims: UiDims) {
+    val scale = remember { Animatable(0.5f) }
+    val alpha = remember { Animatable(0f) }
+
+    LaunchedEffect(Unit) {
+        alpha.snapTo(0f)
+        scale.snapTo(0.5f)
+        alpha.animateTo(1f, tween(durationMillis = 200))
+        scale.animateTo(1.1f, tween(durationMillis = 200))
+        scale.animateTo(1f, tween(durationMillis = 150))
+    }
+
+    Text(
+        text = stringResource(id = R.string.game_victory_confetti_label),
+        color = Color(0xFF1B5E20),
+        fontSize = (dims.titleSp.value * 1.4f).sp,
+        fontWeight = FontWeight.ExtraBold,
+        modifier = Modifier.graphicsLayer {
+            this.alpha = alpha.value
+            scaleX = scale.value
+            scaleY = scale.value
+        }
+    )
+}
