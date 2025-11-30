@@ -8,8 +8,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import com.diegodiaz.techwizards.ui.theme.TechWizardsTheme
 import com.diegodiaz.techwizards.ui.view.AppRoot
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

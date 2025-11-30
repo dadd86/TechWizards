@@ -316,27 +316,27 @@ private fun IdiomaSelector(
     ) {
         LanguageChip(
             text = stringResource(id = R.string.language_es_label),
-            seleccionado = seleccionado == "es-ES",
+            seleccionado = seleccionado == "es",
             dims = dims,
             compact = compact,
             modifier = Modifier.weight(1f)
-        ) { onSeleccion("es-ES") }
+        ) { onSeleccion("es") }
 
         LanguageChip(
             text = stringResource(id = R.string.language_en_label),
-            seleccionado = seleccionado == "en-US",
+            seleccionado = seleccionado == "en",
             dims = dims,
             compact = compact,
             modifier = Modifier.weight(1f)
-        ) { onSeleccion("en-US") }
+        ) { onSeleccion("en") }
 
         LanguageChip(
             text = stringResource(id = R.string.language_de_label),
-            seleccionado = seleccionado == "de-DE",
+            seleccionado = seleccionado == "de",
             dims = dims,
             compact = compact,
             modifier = Modifier.weight(1f)
-        ) { onSeleccion("de-DE") }
+        ) { onSeleccion("de") }
     }
 }
 

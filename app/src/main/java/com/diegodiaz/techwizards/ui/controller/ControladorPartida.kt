@@ -45,7 +45,7 @@ private val defaultSettings = GameSettings(
     animationsEnabled = true,
     notificationsEnabled = true,
     selectedMusicUri = null,
-    selectedLanguageTag = "es-ES"
+    selectedLanguageTag = "es"
 )
 
 class ControladorPartida(

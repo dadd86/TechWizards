@@ -243,9 +243,9 @@ private fun getHelpAsset(language: String): String =
 private fun actualizarIdiomaAyuda(language: String, onSelected: (String) -> Unit) {
     onSelected(language)
     val tag = when (language.lowercase(Locale.ROOT)) {
-        "de" -> "de-DE"
-        "en" -> "en-US"
-        else -> "es-ES"
+        "de" -> "de"
+        "en" -> "en"
+        else -> "es"
     }
     AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
     DecentralizedLogger.i("Help", "Idioma de ayuda seleccionado=$language")

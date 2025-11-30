@@ -181,6 +181,11 @@ fun NavGraph(
 
         composable("ajustes") {
             val ajustesState by ajustesVm.ui.collectAsState()
+            LaunchedEffect(ajustesState.settings.selectedLanguageTag) {
+                val localeList = LocaleListCompat.forLanguageTags(ajustesState.settings.selectedLanguageTag)
+                AppCompatDelegate.setApplicationLocales(localeList)
+            }
+
 
             PantallaAjustes(
                 isDarkTheme = isDarkTheme,
