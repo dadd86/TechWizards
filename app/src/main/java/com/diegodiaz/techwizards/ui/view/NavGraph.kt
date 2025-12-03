@@ -23,13 +23,17 @@ import com.diegodiaz.techwizards.core.ServiceLocator
 import com.diegodiaz.techwizards.core.usecases.ActualizarPreferenciasUseCase
 import com.diegodiaz.techwizards.core.usecases.ObtenerPreferenciasUseCase
 import com.diegodiaz.techwizards.core.usecases.ObservarPreferenciasUseCase
+import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.ui.controller.ControladorAjustes
 import com.diegodiaz.techwizards.ui.controller.ControladorAjustesFactory
 import com.diegodiaz.techwizards.ui.controller.ControladorAuth
 import com.diegodiaz.techwizards.ui.controller.ControladorPartida
 import com.diegodiaz.techwizards.ui.controller.ControladorPartidaFactory
+import com.diegodiaz.techwizards.ui.controller.ControladorRanking
+import com.diegodiaz.techwizards.ui.controller.SimpleVmFactory
 import com.diegodiaz.techwizards.ui.responsive.UiDims
 import kotlinx.coroutines.launch
+import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 
 @Composable
 fun NavGraph(
@@ -51,6 +55,8 @@ fun NavGraph(
     val scope = rememberCoroutineScope()
 
     val settingsRepository = remember { ServiceLocator.settingsRepository }
+    val scoreRepository = remember { ServiceLocator.scoreRepository }
+    val sessionManager = remember { ServiceLocator.sessionManager }
     val observarPreferencias = remember { ObservarPreferenciasUseCase(settingsRepository) }
 
     val victoryService = remember { ServiceLocator.victoryCelebrationService }
@@ -70,8 +76,10 @@ fun NavGraph(
         ControladorPartidaFactory(
             repo = repo,
             usuarioId = usuarioId,
+            scoreRepository = scoreRepository,
             observarPreferencias = observarPreferencias,
             victoryService = victoryService,
+            sessionManager = sessionManager,
             registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase
         )
     }
@@ -89,6 +97,14 @@ fun NavGraph(
                 nombrePredeterminado = usuarioActual.value?.alias ?: authState.usuario?.displayName,
                 onJugar = { nombre ->
                     scope.launch {
+                        val session = runCatching {
+                            scoreRepository.iniciarSesion(nombre)
+                        }.getOrElse { error ->
+                            DecentralizedLogger.e("NavGraph", "Fallo en login remoto", error)
+                            UserSession(token = "local-$nombre", alias = nombre)
+                        }
+                        sessionManager.setSession(session)
+
                         val existente = usuarioActual.value
                         val usuario = Usuario(
                             numero = existente?.numero ?: 1L,
@@ -132,6 +148,7 @@ fun NavGraph(
                 isDarkTheme = isDarkTheme,
                 onJugar = { navController.navigate("partida") },
                 onHistorial = { navController.navigate("historial") },
+                onRanking = { navController.navigate("ranking") },
                 onAjustes = { navController.navigate("ajustes") },
                 onAyuda = { navController.navigate("ayuda") },
                 dims = dims,
@@ -182,6 +199,21 @@ fun NavGraph(
                 historial = historial,
                 onVolverAlMenu = { navController.navigate("menu") },
                 dims = dims
+            )
+        }
+        composable("ranking") {
+            val rankingVm: ControladorRanking = viewModel(
+                factory = SimpleVmFactory {
+                    ControladorRanking(
+                        scoreRepository = scoreRepository,
+                        sessionManager = sessionManager
+                    )
+                }
+            )
+            PantallaRanking(
+                dims = dims,
+                controlador = rankingVm,
+                onVolver = { navController.navigate("menu") }
             )
         }
 

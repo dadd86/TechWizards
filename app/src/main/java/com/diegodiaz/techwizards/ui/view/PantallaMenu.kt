@@ -27,6 +27,7 @@ fun PantallaMenu(
     isDarkTheme: Boolean,
     onJugar: () -> Unit,
     onHistorial: () -> Unit,
+    onRanking: () -> Unit,
     onAjustes: () -> Unit,
     onAyuda: () -> Unit,
     //onLobby: () -> Unit,
@@ -78,6 +79,7 @@ fun PantallaMenu(
 
             MenuBoton(stringResource(id = R.string.menu_play), dims, onJugar)
             MenuBoton(stringResource(id = R.string.menu_history), dims, onHistorial)
+            MenuBoton(texto = "Top Ten", dims = dims, onClick = onRanking)
             MenuBoton(stringResource(id = R.string.menu_settings), dims, onAjustes)
             MenuBoton(stringResource(id = R.string.menu_help), dims, onAyuda)
             //MenuBoton(stringResource(id = R.string.lobby_title), dims, onLobby)

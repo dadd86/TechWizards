@@ -11,6 +11,8 @@ import com.diegodiaz.techwizards.domain.model.Monedero
 import com.diegodiaz.techwizards.domain.model.Partida
 import com.diegodiaz.techwizards.domain.model.Usuario
 import com.diegodiaz.techwizards.domain.repository.JuegoRepository
+import com.diegodiaz.techwizards.domain.repository.ScoreRepository
+import com.diegodiaz.techwizards.core.SessionManager
 import com.diegodiaz.techwizards.integration.victory.VictoryCelebrationPayload
 import com.diegodiaz.techwizards.integration.victory.VictoryCelebrationService
 import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
@@ -51,8 +53,10 @@ private val defaultSettings = GameSettings(
 class ControladorPartida(
     private val repo: JuegoRepository,
     private val usuarioId: String,
+    private val scoreRepository: ScoreRepository,
     private val observarPreferencias: ObservarPreferenciasUseCase,
     private val victoryService: VictoryCelebrationService,
+    private val sessionManager: SessionManager,
 
     // 👇 AÑADIDO (mínimo cambio)
     private val registrarUbicacionVictoriaUseCase: RegistrarUbicacionVictoriaUseCase
@@ -105,6 +109,7 @@ class ControladorPartida(
             try {
                 val partida = repo.lanzarDado(usuarioId)
                 rollCounter.update { it + 1 }
+                publicarPuntuacionRemota(partida)
                 handleVictoriaSiNecesario(partida, origen = "lanzar")
             } catch (t: Throwable) {
                 DecentralizedLogger.e(TAG, "Error al lanzar", t)
@@ -117,10 +122,21 @@ class ControladorPartida(
             if (num in 1..6) {
                 val partida = repo.lanzarDado(usuarioId)
                 rollCounter.update { it + 1 }
+                publicarPuntuacionRemota(partida)
                 handleVictoriaSiNecesario(partida, origen = "elegirNumero($num)")
             }
         }
     }
+    private suspend fun publicarPuntuacionRemota(partida: Partida) {
+        val currentSession = sessionManager.session.value ?: return
+        val score = partida.deltaMonedas.coerceAtLeast(0) + if (partida.resultado == Resultado.GANADO) 50 else 10
+        runCatching {
+            scoreRepository.publicarPuntuacion(currentSession, score)
+        }.onFailure { error ->
+            DecentralizedLogger.e(TAG, "No se pudo publicar la puntuación", error)
+        }
+    }
+
 
     private suspend fun handleVictoriaSiNecesario(partida: Partida, origen: String) {
         if (partida.resultado == Resultado.GANADO) {
@@ -175,8 +191,10 @@ class ControladorPartida(
 class ControladorPartidaFactory(
     private val repo: JuegoRepository,
     private val usuarioId: String,
+    private val scoreRepository: ScoreRepository,
     private val observarPreferencias: ObservarPreferenciasUseCase,
     private val victoryService: VictoryCelebrationService,
+    private val sessionManager: SessionManager,
 
     private val registrarUbicacionVictoriaUseCase: RegistrarUbicacionVictoriaUseCase
 
@@ -187,8 +205,10 @@ class ControladorPartidaFactory(
             return ControladorPartida(
                 repo = repo,
                 usuarioId = usuarioId,
+                scoreRepository = scoreRepository,
                 observarPreferencias = observarPreferencias,
                 victoryService = victoryService,
+                sessionManager = sessionManager,
                 registrarUbicacionVictoriaUseCase = registrarUbicacionVictoriaUseCase
             ) as T
         }
