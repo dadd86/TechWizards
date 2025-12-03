@@ -17,6 +17,8 @@ import com.diegodiaz.techwizards.ui.responsive.UiDims
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.diegodiaz.techwizards.ui.controller.ControladorAjustes
 import com.diegodiaz.techwizards.ui.controller.ControladorAjustesFactory
+import com.diegodiaz.techwizards.ui.controller.ControladorAuth
+import com.diegodiaz.techwizards.ui.controller.ControladorAuthFactory
 
 import com.diegodiaz.techwizards.core.ServiceLocator
 import com.diegodiaz.techwizards.core.usecases.ObtenerPreferenciasUseCase
@@ -47,6 +49,16 @@ fun AppRoot(
     val ajustesVm: ControladorAjustes = viewModel(factory = ajustesFactory)
     val ajustesState by ajustesVm.ui.collectAsState()
 
+    val authFactory = remember {
+        ControladorAuthFactory(
+            iniciarSesion = ServiceLocator.iniciarSesionConGoogleUseCase,
+            cerrarSesion = ServiceLocator.cerrarSesionUseCase,
+            observarUsuario = ServiceLocator.observarUsuarioAutenticadoUseCase
+        )
+    }
+    val authVm: ControladorAuth = viewModel(factory = authFactory)
+
+
     LaunchedEffect(ajustesState.settings.musicEnabled, ajustesState.settings.selectedMusicUri) {
         musicController.applySettings(
             enabled = ajustesState.settings.musicEnabled,
@@ -69,7 +81,8 @@ fun AppRoot(
                 onToggleTheme = onToggleTheme,
                 dims = dims, // Se lo pasamos al grafo
                 modifier = Modifier.padding(innerPadding),
-                ajustesVm = ajustesVm
+                ajustesVm = ajustesVm,
+                authVm = authVm
             )
         }
     }

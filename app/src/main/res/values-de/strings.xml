@@ -95,4 +95,11 @@
     <string name="no_money_title">Münzlos</string>
     <string name="no_money_message">Du kannst nicht weiter werfen, weil du keine münzen mehr hast.</string>
     <string name="no_money_action">Zurück zum menü</string>
+    <string name="auth_title">Google-Authentifizierung</string>
+    <string name="auth_with_google">Mit Google anmelden</string>
+    <string name="auth_signed_in_as">Angemeldet als: %1$s</string>
+    <string name="auth_unknown_user">Spieler</string>
+    <string name="auth_missing_token">Google hat kein Token geliefert. Bitte erneut versuchen.</string>
+    <string name="auth_google_failed">Authentifizierung fehlgeschlagen (Code %1$d).</string>
+    <string name="auth_photo_placeholder">Profilfoto: %1$s</string>
 </resources>

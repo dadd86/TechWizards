@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.compose)
     id("org.jetbrains.kotlin.plugin.parcelize")
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -18,6 +19,17 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+
+        val apiBaseUrl = providers.environmentVariable("API_BASE_URL")
+            .orElse("https://httpbin.org/anything/")
+            .get()
+        val apiSerializer = providers.environmentVariable("API_SERIALIZER")
+            .orElse("moshi")
+            .get()
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        buildConfigField("String", "API_SERIALIZER", "\"$apiSerializer\"")
+
+        buildConfigField("String", "API_BASE_URL", "\"https://api.techwizards.dev/\"")
     }
 
     buildTypes {
@@ -59,6 +71,7 @@ ksp {
 dependencies {
     // Compose BOM
     implementation(platform(libs.compose.bom))
+    implementation(platform(libs.firebase.bom))
     implementation(libs.androidx.ui.graphics)
     androidTestImplementation(platform(libs.compose.bom))
 
@@ -90,6 +103,10 @@ dependencies {
     implementation(libs.serialization.json)
     implementation(libs.datastore.preferences)
     implementation(libs.play.services.location)
+    implementation(libs.play.services.auth)
+    implementation(libs.firebase.auth)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
 
     // Tus dependencias previas (si las necesitas)
     implementation(libs.androidx.core.ktx)
@@ -101,6 +118,16 @@ dependencies {
     implementation(libs.rxjava3)
     implementation(libs.rxandroid)
     implementation(libs.coroutines.rx3)
+
+    // --- Networking (Retrofit + Moshi/Gson + OkHttp) ---
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.moshi)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.moshi.kotlin)
+    implementation(libs.gson)
+    implementation(libs.okhttp.logging)
+    testImplementation(libs.okhttp.mockwebserver)
+
 
     // Test
     testImplementation(libs.junit)

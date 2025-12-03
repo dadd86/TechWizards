@@ -2,9 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- ======== PERMISOS BÁSICOS ======== -->
+    <!-- Necesarios para Firebase, Retrofit, WebView, etc. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!-- Permisos multimedia -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Permisos ubicación (si los usáis) -->
@@ -14,6 +18,9 @@
     <!-- Permisos calendario (tus tareas) -->
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
+
+    <!-- Servicio de música en primer plano -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <!-- Galería para Android <= 12 -->
     <uses-permission
@@ -37,6 +44,7 @@
             android:name="com.diegodiaz.techwizards.app.MainActivity"
             android:exported="true"
             android:label="@string/title_activity_main"
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.TechWizards">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -52,6 +60,6 @@
 
     </application>
 
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
 
 </manifest>

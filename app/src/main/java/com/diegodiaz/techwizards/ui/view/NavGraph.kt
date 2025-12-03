@@ -25,6 +25,7 @@ import com.diegodiaz.techwizards.core.usecases.ObtenerPreferenciasUseCase
 import com.diegodiaz.techwizards.core.usecases.ObservarPreferenciasUseCase
 import com.diegodiaz.techwizards.ui.controller.ControladorAjustes
 import com.diegodiaz.techwizards.ui.controller.ControladorAjustesFactory
+import com.diegodiaz.techwizards.ui.controller.ControladorAuth
 import com.diegodiaz.techwizards.ui.controller.ControladorPartida
 import com.diegodiaz.techwizards.ui.controller.ControladorPartidaFactory
 import com.diegodiaz.techwizards.ui.responsive.UiDims
@@ -37,7 +38,8 @@ fun NavGraph(
     onToggleTheme: (Boolean) -> Unit,
     dims: UiDims,
     modifier: Modifier = Modifier,
-    ajustesVm: ControladorAjustes
+    ajustesVm: ControladorAjustes,
+    authVm: ControladorAuth
 ) {
     val context = LocalContext.current
     val db = remember { BaseDeDatos.get(context) }
@@ -54,6 +56,7 @@ fun NavGraph(
     val victoryService = remember { ServiceLocator.victoryCelebrationService }
 
     val usuarioActual = remember { mutableStateOf<Usuario?>(null) }
+    val authState by authVm.ui.collectAsState()
 
     LaunchedEffect(Unit) {
         val existente = usuarioDao.obtenerUsuarioPrincipal()
@@ -83,7 +86,7 @@ fun NavGraph(
         composable("bienvenida") {
             PantallaBienvenida(
                 isDarkTheme = isDarkTheme,
-                nombrePredeterminado = usuarioActual.value?.alias,
+                nombrePredeterminado = usuarioActual.value?.alias ?: authState.usuario?.displayName,
                 onJugar = { nombre ->
                     scope.launch {
                         val existente = usuarioActual.value
@@ -93,7 +96,7 @@ fun NavGraph(
                             fechaAltaMs = existente?.fechaAltaMs ?: System.currentTimeMillis(),
                             monedas = existente?.monedas ?: 100,
                             ganoUltimaPartida = existente?.ganoUltimaPartida ?: false,
-                            firebaseUid = existente?.firebaseUid
+                            firebaseUid = authState.usuario?.uid ?: existente?.firebaseUid
                         )
                         repo.inicializarMonedas(usuario, usuario.monedas)
                         val actualizado = usuarioDao
@@ -105,6 +108,9 @@ fun NavGraph(
                         }
                     }
                 },
+                onGoogleSignIn = authVm::iniciarSesion,
+                onLogout = authVm::cerrarSesion,
+                authState = authState,
                 dims = dims
             )
         }

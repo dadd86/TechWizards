@@ -95,5 +95,12 @@
     <string name="no_money_title">Sin monedas</string>
     <string name="no_money_message">No puedes continuar lanzando porque no tienes más monedas.</string>
     <string name="no_money_action">Volver al menú</string>
+    <string name="auth_title">Autenticación con Google</string>
+    <string name="auth_with_google">Entrar con Google</string>
+    <string name="auth_signed_in_as">Sesión activa: %1$s</string>
+    <string name="auth_unknown_user">Jugador</string>
+    <string name="auth_missing_token">No se recibió el token de Google. Inténtalo nuevamente.</string>
+    <string name="auth_google_failed">No se pudo autenticar (código %1$d).</string>
+    <string name="auth_photo_placeholder">Foto de perfil: %1$s</string>
 
 </resources>

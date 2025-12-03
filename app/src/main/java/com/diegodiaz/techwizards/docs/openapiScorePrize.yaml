@@ -1,0 +1,211 @@
+openapi: 3.1.0
+info:
+  title: TechWizards Score & Prize API
+  version: 1.0.0
+  description: |
+    API REST para registrar puntuaciones y administrar el premio activo.
+    Soporta autenticación mediante token de Firebase o API key.
+servers:
+  - url: http://localhost:8080
+    description: Servidor local/mock
+  - url: https://api.techwizards.example.com
+    description: Producción (placeholder)
+security:
+  - FirebaseTokenAuth: []
+  - ApiKeyAuth: []
+tags:
+  - name: Scores
+    description: Registro y consulta de puntuaciones
+  - name: Prize
+    description: Consulta y actualización del premio vigente
+paths:
+  /scores:
+    post:
+      tags: [Scores]
+      summary: Registrar una nueva puntuación
+      description: Crea un registro de puntuación asociado a un usuario y la marca de tiempo del evento.
+      operationId: createScore
+      security:
+        - FirebaseTokenAuth: []
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScoreRequest'
+            examples:
+              crearScore:
+                summary: Ejemplo de creación
+                value:
+                  userId: "u-123"
+                  userName: "MageMaster"
+                  points: 1200
+                  timestamp: "2024-05-30T18:22:10Z"
+      responses:
+        '201':
+          description: Puntaje creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Score'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /scores/top10:
+    get:
+      tags: [Scores]
+      summary: Obtener top 10 de puntuaciones
+      operationId: getTopScores
+      security:
+        - FirebaseTokenAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - in: query
+          name: since
+          required: false
+          description: ISO-8601 para filtrar puntajes desde una fecha/hora específica.
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Lista ordenada de puntajes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Score'
+                required: [items]
+              examples:
+                ejemploTop:
+                  value:
+                    items:
+                      - userId: "u-123"
+                        userName: "MageMaster"
+                        points: 1200
+                        timestamp: "2024-05-30T18:22:10Z"
+                      - userId: "u-456"
+                        userName: "ArcaneRunner"
+                        points: 1100
+                        timestamp: "2024-05-30T18:20:01Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /prize:
+    get:
+      tags: [Prize]
+      summary: Consultar premio vigente
+      operationId: getPrize
+      security:
+        - FirebaseTokenAuth: []
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Premio actual
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prize'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      tags: [Prize]
+      summary: Actualizar premio vigente
+      description: Requiere credenciales de administrador o API key con alcance `prize:write`.
+      operationId: updatePrize
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrizeRequest'
+            examples:
+              updatePrize:
+                value:
+                  description: "Cofre legendario +500 orbes"
+                  value: 500
+      responses:
+        '200':
+          description: Premio actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prize'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Prohibido — falta el alcance `prize:write`
+components:
+  securitySchemes:
+    FirebaseTokenAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token de Firebase emitido para el usuario autenticado.
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key para integraciones de servicio a servicio.
+  schemas:
+    Score:
+      type: object
+      properties:
+        userId:
+          type: string
+          minLength: 1
+        userName:
+          type: string
+          minLength: 1
+        points:
+          type: integer
+          format: int32
+          minimum: 0
+        timestamp:
+          type: string
+          format: date-time
+      required: [userId, userName, points, timestamp]
+      description: Puntaje registrado con metadatos del usuario y momento del evento.
+    ScoreRequest:
+      allOf:
+        - $ref: '#/components/schemas/Score'
+    Prize:
+      type: object
+      properties:
+        description:
+          type: string
+          minLength: 1
+        value:
+          type: integer
+          minimum: 0
+        updatedAt:
+          type: string
+          format: date-time
+          description: Última actualización en ISO-8601.
+      required: [description, value, updatedAt]
+      description: Premio publicado para la temporada actual.
+    PrizeRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          minLength: 1
+        value:
+          type: integer
+          minimum: 0
+      required: [description, value]
+      description: Payload permitido para actualizar el premio vigente.
+  responses:
+    BadRequest:
+      description: Datos inválidos o malformados
+    Unauthorized:
+      description: Token o API key ausente o inválida

@@ -95,4 +95,12 @@
     <string name="no_money_title">No coins left</string>
     <string name="no_money_message">You can´t continua playing, you have no coins.</string>
     <string name="no_money_action">Go back to menu</string>
+    <string name="auth_title">Google authentication</string>
+    <string name="auth_with_google">Sign in with Google</string>
+    <string name="auth_signed_in_as">Signed in as: %1$s</string>
+    <string name="auth_unknown_user">Player</string>
+    <string name="auth_missing_token">Google did not return a token. Please try again.</string>
+    <string name="auth_google_failed">We couldn\'t authenticate (code %1$d).</string>
+    <string name="auth_photo_placeholder">Profile photo: %1$s</string>
+
 </resources>
