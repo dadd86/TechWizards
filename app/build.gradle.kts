@@ -133,6 +133,14 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // Google Sign-In
+    implementation(libs.play.services.auth)
+
+    // Firebase Auth
+    implementation(libs.firebase.auth)
+
+
 }
 
 
