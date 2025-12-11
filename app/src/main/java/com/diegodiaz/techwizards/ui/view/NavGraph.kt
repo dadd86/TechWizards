@@ -24,6 +24,7 @@ import com.diegodiaz.techwizards.core.usecases.ActualizarPreferenciasUseCase
 import com.diegodiaz.techwizards.core.usecases.ObtenerPreferenciasUseCase
 import com.diegodiaz.techwizards.core.usecases.ObservarPreferenciasUseCase
 import com.diegodiaz.techwizards.domain.model.UserSession
+import com.diegodiaz.techwizards.ui.controller.AuthState
 import com.diegodiaz.techwizards.ui.controller.ControladorAjustes
 import com.diegodiaz.techwizards.ui.controller.ControladorAjustesFactory
 import com.diegodiaz.techwizards.ui.controller.ControladorAuth
@@ -124,25 +125,23 @@ fun NavGraph(
                         }
                     }
                 },
-                onGoogleSignIn = authVm::iniciarSesion,
-                onLogout = authVm::cerrarSesion,
-                authState = authState,
+                onGoogleSignIn = { idToken ->
+                    authVm.iniciarSesionConGoogle(idToken)
+                },
+                onLogout = {
+                    authVm.cerrarSesion()
+                },
+                authState = AuthState(
+                    usuario = authState.usuario,
+                    cargando = authState.cargando,
+                    error = authState.error
+                ),
                 dims = dims
             )
         }
 
         composable("menu") {
             val usuario = usuarioActual.value
-
-            // Crea el ViewModel de partida aquí para acceder desde el menú
-            /*val factory = ControladorPartidaFactory(
-                repo = repo,
-                usuarioId = usuarioId,
-                observarPreferencias = observarPreferencias,
-                victoryService = victoryService,
-                registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase
-            )
-            val controladorPartida: ControladorPartida = viewModel(factory = factory)*/
 
             PantallaMenu(
                 isDarkTheme = isDarkTheme,
@@ -159,14 +158,6 @@ fun NavGraph(
 
 
         composable("partida") {
-            /*val factory = ControladorPartidaFactory(
-                repo = repo,
-                usuarioId = usuarioId,
-                observarPreferencias = observarPreferencias,
-                victoryService = victoryService,
-                registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase
-            )
-            val controladorPartida: ControladorPartida = viewModel(factory = factory)*/
             val uiState = controladorPartida.ui.collectAsState().value
 
             PantallaPartida(
@@ -183,15 +174,6 @@ fun NavGraph(
         }
 
         composable("historial") {
-            /*val viewModel: ControladorPartida = viewModel(
-                factory = ControladorPartidaFactory(
-                    repo = repo,
-                    usuarioId = usuarioId,
-                    observarPreferencias = observarPreferencias,
-                    victoryService = victoryService,
-                    registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase
-                )
-            )*/
             val historial by controladorPartida.historial.collectAsState()
 
             PantallaHistorial(
