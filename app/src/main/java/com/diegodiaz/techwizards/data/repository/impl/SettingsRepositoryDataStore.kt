@@ -1,6 +1,7 @@
 package com.diegodiaz.techwizards.data.repository.impl
 
 import android.content.Context
+import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -23,6 +24,9 @@ private val Context.settingsDataStore by preferencesDataStore(name = "game_setti
 class SettingsRepositoryDataStore(
     private val context: Context
 ) : SettingsRepository {
+
+    val dataStore: androidx.datastore.core.DataStore<Preferences>
+        get() = context.settingsDataStore
 
     private companion object {
         val musicEnabledKey = booleanPreferencesKey("music_enabled")

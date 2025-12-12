@@ -1,4 +1,9 @@
 package com.diegodiaz.techwizards.domain.model
 
-class leaderboardScore {
-}
+
+data class LeaderboardScore(
+    val id: String? = null,
+    val playerAlias: String,
+    val score: Int,
+    val prizeName: String? = null
+)
