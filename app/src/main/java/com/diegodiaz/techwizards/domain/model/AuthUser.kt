@@ -11,3 +11,4 @@ data class AuthUser(
     val email: String?,
     val photoUrl: String?
 )
+

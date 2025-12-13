@@ -10,3 +10,4 @@ data class AuthState(
     val cargando: Boolean = false,
     val error: String? = null
 )
+

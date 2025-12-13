@@ -102,4 +102,6 @@
     <string name="auth_missing_token">Google hat kein Token geliefert. Bitte erneut versuchen.</string>
     <string name="auth_google_failed">Authentifizierung fehlgeschlagen (Code %1$d).</string>
     <string name="auth_photo_placeholder">Profilfoto: %1$s</string>
+    <string name="auth_logout">Cerrar sesión</string>
+
 </resources>

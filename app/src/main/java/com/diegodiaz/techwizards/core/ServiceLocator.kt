@@ -7,6 +7,8 @@ import com.diegodiaz.techwizards.BuildConfig
 import com.diegodiaz.techwizards.core.usecases.CerrarSesionUseCase
 import com.diegodiaz.techwizards.core.usecases.IniciarSesionConGoogleUseCase
 import com.diegodiaz.techwizards.core.usecases.ObtenerUsuarioAutenticadoUseCase
+import com.diegodiaz.techwizards.data.repository.impl.AuthRepositoryFirebase
+
 import com.diegodiaz.techwizards.core.usecases.ObservarUsuarioAutenticadoUseCase
 import com.diegodiaz.techwizards.core.usecases.RegistrarUbicacionVictoriaUseCase
 import com.diegodiaz.techwizards.data.infra.network.RetrofitProvider
@@ -16,8 +18,6 @@ import com.diegodiaz.techwizards.data.local.mapper.VictoryLocationLocalMapper
 import com.diegodiaz.techwizards.data.remote.api.ScoresApi
 import com.diegodiaz.techwizards.data.remote.mapper.ScoreRemoteMapper
 import com.diegodiaz.techwizards.data.remote.score.ScoreApi
-import com.diegodiaz.techwizards.data.repository.impl.AuthRepositoryFirebase
-import com.diegodiaz.techwizards.domain.repository.impl.AuthRepositoryFirebase
 import com.diegodiaz.techwizards.data.repository.impl.JuegoRepositoryRoom
 import com.diegodiaz.techwizards.data.repository.impl.MatchRepositoryRoom
 import com.diegodiaz.techwizards.data.repository.impl.ScoreRepositoryRetrofit

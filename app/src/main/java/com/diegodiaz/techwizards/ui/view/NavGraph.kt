@@ -126,7 +126,7 @@ fun NavGraph(
                     }
                 },
                 onGoogleSignIn = { idToken ->
-                    authVm.iniciarSesionConGoogle(idToken)
+                    authVm.iniciarSesion(idToken)
                 },
                 onLogout = {
                     authVm.cerrarSesion()
@@ -184,7 +184,7 @@ fun NavGraph(
             )
         }
         composable("ranking") {
-            val rankingVm: ControladorRanking = viewModel(
+             val rankingVm: ControladorRanking = viewModel(
                 factory = SimpleVmFactory {
                     ControladorRanking(
                         scoreRepository = scoreRepository,
@@ -192,10 +192,10 @@ fun NavGraph(
                     )
                 }
             )
-            PantallaRanking(
-                dims = dims,
-                controlador = rankingVm,
-                onVolver = { navController.navigate("menu") }
+             PantallaRanking(
+                 dims = dims,
+                 controlador = rankingVm,
+                 onVolver = { navController.navigate("menu") }
             )
         }
 

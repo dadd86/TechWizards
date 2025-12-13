@@ -102,20 +102,23 @@ fun PantallaBienvenida(
             try {
                 val credential = oneTapClient.getSignInCredentialFromIntent(result.data)
                 val idToken = credential.googleIdToken
+
                 if (idToken.isNullOrEmpty()) {
-                    authError = stringResource(id = R.string.auth_missing_token)
+                    // Usamos getString del contexto, NO stringResource
+                    authError = context.getString(R.string.auth_missing_token)
                 } else {
                     onGoogleSignIn(idToken)
                 }
             } catch (e: Exception) {
                 // No hay statusCode como en ApiException, usamos un valor genérico
-                authError = stringResource(id = R.string.auth_google_failed, -1)
+                authError = context.getString(R.string.auth_google_failed, -1)
             }
         } else {
             // El usuario canceló o el intent falló
-            authError = stringResource(id = R.string.auth_google_failed, -1)
+            authError = context.getString(R.string.auth_google_failed, -1)
         }
     }
+
     // --------------------------------------------------------
 
     Box(
@@ -168,30 +171,99 @@ fun PantallaBienvenida(
                 )
             }
 
-            GoogleAuthSection(
-                dims = dims,
-                authState = authState,
-                authError = authError ?: authState.error,
-                onLoginClick = {
-                    authError = null
-                    // Lanzamos One Tap
-                    oneTapClient.beginSignIn(signInRequest)
-                        .addOnSuccessListener { result ->
-                            val request = IntentSenderRequest.Builder(
-                                result.pendingIntent.intentSender
-                            ).build()
-                            oneTapLauncher.launch(request)
+            @Composable
+            fun GoogleAuthSection(
+                dims: UiDims,
+                authState: AuthState,
+                authError: String?,
+                onLoginClick: () -> Unit,
+                onLogout: () -> Unit
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(dims.spaceSm),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .clip(RoundedCornerShape(dims.cardCorner))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(dims.spaceMd)
+                ) {
+                    // Cabecera + loader
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(dims.spaceSm)
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.auth_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (authState.cargando) {
+                            CircularProgressIndicator(modifier = Modifier.size(dims.spaceMd))
                         }
-                        .addOnFailureListener {
-                            // No hay cuentas válidas, o fallo genérico
-                            authError = stringResource(id = R.string.auth_google_failed, -1)
+                    }
+
+                    // Contenido según haya usuario o no
+                    if (authState.usuario != null) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(dims.spaceXs)
+                        ) {
+                            Text(
+                                text = stringResource(
+                                    id = R.string.auth_signed_in_as,
+                                    authState.usuario.displayName
+                                        ?: stringResource(id = R.string.auth_unknown_user)
+                                ),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+
+                            authState.usuario.email?.let { email ->
+                                Text(
+                                    text = email,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
-                },
-                onLogout = {
-                    authError = null
-                    onLogout()
+
+                        Button(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = onLogout,
+                            enabled = !authState.cargando,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Text(text = stringResource(id = R.string.auth_logout))
+                        }
+                    } else {
+                        Button(
+                            onClick = onLoginClick,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !authState.cargando
+                        ) {
+                            Text(stringResource(id = R.string.auth_with_google))
+                        }
+                    }
+
+                    if (!authError.isNullOrEmpty()) {
+                        Text(
+                            text = authError,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
-            )
+            }
+
+
         }
     }
 
