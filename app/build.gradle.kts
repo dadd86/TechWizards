@@ -128,7 +128,8 @@ dependencies {
     implementation(libs.okhttp.logging)
     testImplementation(libs.okhttp.mockwebserver)
 
-
+    // Test utils
+    testImplementation("io.mockk:mockk:1.13.12")
     // Test
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

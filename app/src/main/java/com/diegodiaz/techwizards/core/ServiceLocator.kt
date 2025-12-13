@@ -108,14 +108,13 @@ object ServiceLocator {
         )
     }
 
-    // --- DataStore para auth: reutilizamos el de settings ---
-    private val authDataStore: DataStore<Preferences> by lazy {
-        settingsRepository.dataStore
-    }
 
     // --- Auth + casos de uso ---
     val authRepository: AuthRepository by lazy {
-        AuthRepositoryFirebase(firebaseAuth, authDataStore)
+        AuthRepositoryFirebase(
+            firebaseAuth = firebaseAuth,
+            context = appContext
+        )
     }
 
     val iniciarSesionConGoogleUseCase by lazy {

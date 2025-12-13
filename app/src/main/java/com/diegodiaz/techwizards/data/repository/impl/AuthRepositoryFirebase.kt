@@ -22,7 +22,10 @@ import kotlinx.coroutines.withContext
 class AuthRepositoryFirebase(
     private val firebaseAuth: FirebaseAuth,
     private val context: Context,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val clearLocalData: suspend (Context) -> Unit = { ctx ->
+        BaseDeDatos.get(ctx).clearAllTables()
+    }
 ) : AuthRepository {
 
     override suspend fun signInWithGoogle(idToken: String): Result<AuthUser, AgentError> =
@@ -49,8 +52,7 @@ class AuthRepositoryFirebase(
                 firebaseAuth.signOut()
 
                 // Limpia datos locales relacionados con el jugador
-                val db = BaseDeDatos.get(context)
-                db.clearAllTables()
+                clearLocalData(context)
 
                 Result.Ok(Unit)
             } catch (e: Exception) {
