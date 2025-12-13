@@ -23,4 +23,19 @@ interface ScoreRepository {
 
     /** Login por alias: el backend devuelve la sesión (token, etc.) */
     suspend fun authenticateAlias(alias: String): UserSession
+
+    // --- Alias en español para integraciones existentes ---
+    suspend fun obtenerTopTen(): List<LeaderboardEntry> = getTopTen()
+
+    suspend fun publicarPuntuacion(session: UserSession, score: Int) {
+        submitScore(session, score)
+    }
+
+    suspend fun obtenerPremioComun(): CommonPrize = getCommonPrize()
+
+    suspend fun actualizarPremioComun(session: UserSession, prize: CommonPrize): CommonPrize {
+        return updateCommonPrize(session, prize)
+    }
+
+    suspend fun autenticarAlias(alias: String): UserSession = authenticateAlias(alias)
 }

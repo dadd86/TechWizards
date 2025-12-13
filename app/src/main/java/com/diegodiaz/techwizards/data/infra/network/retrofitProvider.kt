@@ -1,5 +1,8 @@
 package com.diegodiaz.techwizards.data.infra.network
 
+
+import com.diegodiaz.techwizards.BuildConfig
+import com.diegodiaz.techwizards.credenciales.CredentialsStore
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -23,7 +26,7 @@ object RetrofitProvider {
      * Interceptor que, si hay token, lo añade como Bearer y como query `auth`.
      */
     class FirebaseAuthInterceptor(
-        private val tokenProvider: () -> String?
+        private val tokenProvider: () -> String?,
     ) : Interceptor {
         override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
             val originalRequest: Request = chain.request()
@@ -60,23 +63,49 @@ object RetrofitProvider {
      * @param tokenProvider función que devuelve el token Firebase actual o null.
      */
     fun createOkHttpClient(
-        tokenProvider: () -> String?
+        tokenProvider: () -> String?,
+        enableLogging: Boolean = true,
     ): OkHttpClient {
-        return OkHttpClient.Builder()
-            .addInterceptor(createLoggingInterceptor())
+        val builder = OkHttpClient.Builder()
             .addInterceptor(FirebaseAuthInterceptor(tokenProvider))
-            .build()
+        if (enableLogging) {
+            builder.addInterceptor(createLoggingInterceptor())
+        }
+
+        return builder.build()
     }
 
 
     fun createRetrofit(
         baseUrl: String,
-        tokenProvider: () -> String?
+        tokenProvider: () -> String?,
+        enableLogging: Boolean = true,
     ): Retrofit {
         return Retrofit.Builder()
             .baseUrl(baseUrl)
-            .client(createOkHttpClient(tokenProvider))
+            .client(createOkHttpClient(tokenProvider, enableLogging))
             .addConverterFactory(MoshiConverterFactory.create())
+            .build()
+    }
+    /**
+     * Atajo para construir Retrofit leyendo token desde un [CredentialsStore].
+     */
+    fun retrofit(
+        credentialsStore: CredentialsStore,
+        baseUrl: String = BuildConfig.API_BASE_URL,
+        serializer: String = BuildConfig.API_SERIALIZER,
+        enableLogging: Boolean = true,
+    ): Retrofit {
+        val tokenProvider = { credentialsStore.obtenerFirebaseToken() }
+        val converter = when (serializer.lowercase()) {
+            "gson" -> retrofit2.converter.gson.GsonConverterFactory.create()
+            else -> MoshiConverterFactory.create()
+        }
+
+        return Retrofit.Builder()
+            .baseUrl(baseUrl)
+            .client(createOkHttpClient(tokenProvider, enableLogging))
+            .addConverterFactory(converter)
             .build()
     }
 }

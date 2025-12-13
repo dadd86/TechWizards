@@ -18,19 +18,13 @@ interface ScoreApi {
     suspend fun fetchTopTen(): List<ScoreEntryDto>
 
     @POST("scores")
-    suspend fun publishScore(
-        @Header("Authorization") bearer: String?,
-        @Body payload: ScorePayload
-    )
+    suspend fun publishScore(@Body payload: ScorePayload)
 
     @GET("prize/common")
     suspend fun fetchPrize(): PrizeDto
 
     @PUT("prize/common")
-    suspend fun updatePrize(
-        @Header("Authorization") bearer: String?,
-        @Body prize: PrizeDto
-    ): PrizeDto
+    suspend fun updatePrize(@Body prize: PrizeDto): PrizeDto
 
     @POST("login")
     suspend fun login(@Body request: LoginRequest): SessionResponseDto

@@ -15,10 +15,10 @@ import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
  */
 fun ScoreRemoteDto.toDomain(): LeaderboardEntry =
     LeaderboardEntry(
-        id = id.orEmpty(),
-        playerName = player,
-        points = points,
-        position = position ?: 0,
+        id = id,
+        alias = player,
+        score = points,
+        position = position,
         prizeName = prize?.name,
         prizeDescription = prize?.description
     )

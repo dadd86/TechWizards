@@ -55,18 +55,19 @@ object ServiceLocator {
 
     // --- Network ---
     private val credentialsStore: CredentialsStore by lazy { EncryptedCredentialsStore() }
-    private val retrofitSecure by lazy { RetrofitProvider.retrofit(credentialsStore = credentialsStore) }
+    private val retrofitSecure by lazy {
+        RetrofitProvider.retrofit(credentialsStore = credentialsStore)
+    }
     private val scoresApi by lazy { retrofitSecure.create(ScoresApi::class.java) }
     private val scoreMapper by lazy { ScoreRemoteMapper() }
 
-    private val retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl(BuildConfig.API_BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+    private val scoreApi: ScoreApi by lazy {
+        RetrofitProvider.retrofit(
+            credentialsStore = credentialsStore,
+            baseUrl = BuildConfig.API_BASE_URL,
+            serializer = BuildConfig.API_SERIALIZER
+        )
     }
-    private val scoreApi: ScoreApi by lazy { retrofit.create(ScoreApi::class.java) }
-
 
     // --- Repos locales ---
     val juegoRepository by lazy {
@@ -97,7 +98,10 @@ object ServiceLocator {
     }
 
     val scoreRepository by lazy {
-        ScoreRepositoryRetrofit(scoreApi)
+        ScoreRepositoryRetrofit(
+            scoreApi = scoreApi,
+            credentialsStore = credentialsStore,
+        )
     }
 
     val victoryRepository by lazy {

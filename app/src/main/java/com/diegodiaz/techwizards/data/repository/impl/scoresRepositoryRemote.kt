@@ -35,7 +35,7 @@ class ScoresRepositoryRemote(
      * Publica una nueva puntuación en nombre del usuario autenticado.
      */
     suspend fun publishScore(score: Int) {
-        val token = credentialsStore.getAccessToken()
+        val token = credentialsStore.obtenerFirebaseToken()
 
         scoresApi.publishScore(
             bearer = token?.let { "Bearer $it" },

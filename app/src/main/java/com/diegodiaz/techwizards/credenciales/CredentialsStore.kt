@@ -14,4 +14,14 @@ interface CredentialsStore {
      * @return Token JWT o `null` si no está disponible.
      */
     fun obtenerFirebaseToken(): String?
+
+    /**
+     * Persiste la sesión de alias devuelta por el backend para reutilizar el token.
+     */
+    fun guardarSesionAlias(token: String?, alias: String?)
+
+    /**
+     * Devuelve el alias autenticado si existe.
+     */
+    fun obtenerAliasAutenticado(): String?
 }
