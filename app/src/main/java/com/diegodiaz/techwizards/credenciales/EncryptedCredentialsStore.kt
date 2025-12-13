@@ -17,3 +17,4 @@ class EncryptedCredentialsStore {
 
         override fun obtenerFirebaseToken(): String? = firebaseToken
     }
+}
