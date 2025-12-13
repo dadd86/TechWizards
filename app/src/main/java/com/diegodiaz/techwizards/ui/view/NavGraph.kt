@@ -20,21 +20,18 @@ import com.diegodiaz.techwizards.data.local.mapper.toDomain
 import com.diegodiaz.techwizards.data.repository.impl.JuegoRepositoryRoom
 import com.diegodiaz.techwizards.domain.model.Usuario
 import com.diegodiaz.techwizards.core.ServiceLocator
-import com.diegodiaz.techwizards.core.usecases.ActualizarPreferenciasUseCase
-import com.diegodiaz.techwizards.core.usecases.ObtenerPreferenciasUseCase
 import com.diegodiaz.techwizards.core.usecases.ObservarPreferenciasUseCase
 import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.ui.controller.AuthState
 import com.diegodiaz.techwizards.ui.controller.ControladorAjustes
-import com.diegodiaz.techwizards.ui.controller.ControladorAjustesFactory
 import com.diegodiaz.techwizards.ui.controller.ControladorAuth
 import com.diegodiaz.techwizards.ui.controller.ControladorPartida
 import com.diegodiaz.techwizards.ui.controller.ControladorPartidaFactory
 import com.diegodiaz.techwizards.ui.controller.ControladorRanking
 import com.diegodiaz.techwizards.ui.controller.SimpleVmFactory
 import com.diegodiaz.techwizards.ui.responsive.UiDims
-import kotlinx.coroutines.launch
 import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
+import kotlinx.coroutines.launch
 
 @Composable
 fun NavGraph(
@@ -99,11 +96,13 @@ fun NavGraph(
                 onJugar = { nombre ->
                     scope.launch {
                         val session = runCatching {
-                            scoreRepository.iniciarSesion(nombre)
+                            // ✅ ScoreRepository usa autenticarAlias(alias)
+                            scoreRepository.autenticarAlias(nombre)
                         }.getOrElse { error ->
                             DecentralizedLogger.e("NavGraph", "Fallo en login remoto", error)
                             UserSession(token = "local-$nombre", alias = nombre)
                         }
+
                         sessionManager.setSession(session)
 
                         val existente = usuarioActual.value
@@ -115,18 +114,24 @@ fun NavGraph(
                             ganoUltimaPartida = existente?.ganoUltimaPartida ?: false,
                             firebaseUid = authState.usuario?.uid ?: existente?.firebaseUid
                         )
+
                         repo.inicializarMonedas(usuario, usuario.monedas)
+
                         val actualizado = usuarioDao
                             .obtenerUsuarioPrincipal()
                             ?.toDomain() ?: usuario
+
                         usuarioActual.value = actualizado
+
                         navController.navigate("menu") {
                             popUpTo("bienvenida") { inclusive = true }
                         }
                     }
                 },
                 onGoogleSignIn = { idToken ->
+                    // ✅ Ajusta al nombre real del método en ControladorAuth
                     authVm.iniciarSesion(idToken)
+
                 },
                 onLogout = {
                     authVm.cerrarSesion()
@@ -156,7 +161,6 @@ fun NavGraph(
             )
         }
 
-
         composable("partida") {
             val uiState = controladorPartida.ui.collectAsState().value
 
@@ -183,8 +187,9 @@ fun NavGraph(
                 dims = dims
             )
         }
+
         composable("ranking") {
-             val rankingVm: ControladorRanking = viewModel(
+            val rankingVm: ControladorRanking = viewModel(
                 factory = SimpleVmFactory {
                     ControladorRanking(
                         scoreRepository = scoreRepository,
@@ -192,20 +197,21 @@ fun NavGraph(
                     )
                 }
             )
-             PantallaRanking(
-                 dims = dims,
-                 controlador = rankingVm,
-                 onVolver = { navController.navigate("menu") }
+
+            PantallaRanking(
+                dims = dims,
+                controlador = rankingVm,
+                onVolver = { navController.navigate("menu") }
             )
         }
 
         composable("ajustes") {
             val ajustesState by ajustesVm.ui.collectAsState()
+
             LaunchedEffect(ajustesState.settings.selectedLanguageTag) {
                 val localeList = LocaleListCompat.forLanguageTags(ajustesState.settings.selectedLanguageTag)
                 AppCompatDelegate.setApplicationLocales(localeList)
             }
-
 
             PantallaAjustes(
                 isDarkTheme = isDarkTheme,

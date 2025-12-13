@@ -2,18 +2,15 @@ package com.diegodiaz.techwizards.data.repository.impl
 
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
 import com.diegodiaz.techwizards.data.remote.api.ScoresApi
+import com.diegodiaz.techwizards.data.remote.dto.ScoreRemoteDto
 import com.diegodiaz.techwizards.data.remote.mapper.ScoreRemoteMapper
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 
 /**
- * Implementación remota de acceso a puntuaciones usando ScoresApi.
+ * Implementación remota (plural) para leaderboard usando ScoresApi.
  *
- * Esta clase:
- * - Recupera el top 10 de puntuaciones
- * - Publica nuevas puntuaciones
- * - Usa autenticación basada en token almacenado en CredentialsStore
- *
- * NO gestiona premio común ni login (eso va por ScoreRepository).
+ * - obtenerTopTen(): llama a /scores/top enviando token por header + query auth.
+ * - publicarScore(): publica ScoreRemoteDto y devuelve el registro enriquecido.
  */
 class ScoresRepositoryRemote(
     private val scoresApi: ScoresApi,
@@ -21,25 +18,44 @@ class ScoresRepositoryRemote(
     private val credentialsStore: CredentialsStore
 ) {
 
-    /**
-     * Recupera el top 10 del backend remoto.
-     */
     suspend fun getTopTen(): List<LeaderboardEntry> {
-        val remoteScores = scoresApi.getTopTen()
+        val token = credentialsStore.obtenerFirebaseToken()
+            ?: return emptyList() // sin token -> sin llamada
+
+        val bearer = "Bearer $token"
+
+        val remoteScores = scoresApi.obtenerTopTen(
+            bearerToken = bearer,
+            authToken = token
+        )
+
         return remoteScores.mapIndexed { index, dto ->
             mapper.toDomain(dto, position = index + 1)
         }
     }
 
-    /**
-     * Publica una nueva puntuación en nombre del usuario autenticado.
-     */
-    suspend fun publishScore(score: Int) {
-        val token = credentialsStore.obtenerFirebaseToken()
+    suspend fun publishScore(score: Int): LeaderboardEntry? {
+        val token = credentialsStore.obtenerFirebaseToken() ?: return null
+        val bearer = "Bearer $token"
 
-        scoresApi.publishScore(
-            bearer = token?.let { "Bearer $it" },
-            score = score
+        // El endpoint espera ScoreRemoteDto como body.
+        // Como mínimo player/points; el resto puede ir null.
+        val payload = ScoreRemoteDto(
+            id = null,
+            player = credentialsStore.obtenerAliasAutenticado() ?: "anon",
+            points = score,
+            position = null,
+            prize = null
         )
+
+        val saved: ScoreRemoteDto = scoresApi.publicarScore(
+            bearerToken = bearer,
+            authToken = token,
+            score = payload
+        )
+
+        // Si backend devuelve posición, la usamos; si no, null
+        val pos = saved.position
+        return mapper.toDomain(saved, position = pos ?: 0)
     }
 }

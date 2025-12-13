@@ -92,7 +92,7 @@ class ControladorRanking(
             runCatching {
                 scoreRepository.actualizarPremioComun(
                     session = session,
-                    prize = CommonPrize(descripcion = descripcion, valor = valor)
+                    nuevoPremio = CommonPrize(descripcion = descripcion, valor = valor)
                 )
             }.onSuccess { premio ->
                 val top = (_uiState.value as? RankingUiState.Exito)?.topTen.orEmpty()
