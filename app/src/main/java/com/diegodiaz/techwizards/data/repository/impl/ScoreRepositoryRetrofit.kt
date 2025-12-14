@@ -1,9 +1,7 @@
 package com.diegodiaz.techwizards.data.repository.impl
 
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
-import com.diegodiaz.techwizards.data.remote.score.LoginRequest
 import com.diegodiaz.techwizards.data.remote.score.ScoreApi
-import com.diegodiaz.techwizards.data.remote.score.ScorePayload
 import com.diegodiaz.techwizards.data.remote.score.toDomain
 import com.diegodiaz.techwizards.data.remote.score.toDto
 import com.diegodiaz.techwizards.domain.model.CommonPrize

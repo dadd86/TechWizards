@@ -1,19 +1,26 @@
 package com.diegodiaz.techwizards.ui.view
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.CommonStatusCodes
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -23,11 +30,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,20 +42,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import com.diegodiaz.techwizards.R
-import com.diegodiaz.techwizards.ui.responsive.UiDims
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.diegodiaz.techwizards.R
 import com.diegodiaz.techwizards.ui.controller.AuthState
+import com.diegodiaz.techwizards.ui.responsive.UiDims
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
-import androidx.activity.result.IntentSenderRequest
-import android.app.Activity
-
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 
 /**
  * Pantalla de bienvenida que solicita el alias del jugador antes de iniciar.
@@ -72,11 +74,14 @@ fun PantallaBienvenida(
 ) {
     val invalidNameMessage = stringResource(id = R.string.welcome_invalid_name)
     var mostrarDialogo by remember { mutableStateOf(false) }
+
     var nombreJugador by rememberSaveable(nombrePredeterminado, authState.usuario?.displayName) {
         mutableStateOf(nombrePredeterminado ?: authState.usuario?.displayName.orEmpty())
     }
+
     var errorNombre by remember { mutableStateOf<String?>(null) }
     var authError by remember { mutableStateOf<String?>(null) }
+
     val context = LocalContext.current
 
     // ---------- Google Identity Services (One Tap) ----------
@@ -104,21 +109,18 @@ fun PantallaBienvenida(
                 val idToken = credential.googleIdToken
 
                 if (idToken.isNullOrEmpty()) {
-                    // Usamos getString del contexto, NO stringResource
                     authError = context.getString(R.string.auth_missing_token)
                 } else {
                     onGoogleSignIn(idToken)
                 }
             } catch (e: Exception) {
-                // No hay statusCode como en ApiException, usamos un valor genérico
-                authError = context.getString(R.string.auth_google_failed, -1)
+                val code = (e as? ApiException)?.statusCode
+                authError = "getCredential failed: ${code ?: "null"} - ${e.message}"
             }
         } else {
-            // El usuario canceló o el intent falló
             authError = context.getString(R.string.auth_google_failed, -1)
         }
     }
-
     // --------------------------------------------------------
 
     Box(
@@ -130,7 +132,10 @@ fun PantallaBienvenida(
             ),
         contentAlignment = Alignment.Center
     ) {
+        val scrollState = rememberScrollState()
+
         Column(
+            modifier = Modifier.verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(dims.spaceLg)
         ) {
@@ -171,99 +176,31 @@ fun PantallaBienvenida(
                 )
             }
 
-            @Composable
-            fun GoogleAuthSection(
-                dims: UiDims,
-                authState: AuthState,
-                authError: String?,
-                onLoginClick: () -> Unit,
-                onLogout: () -> Unit
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(dims.spaceSm),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .clip(RoundedCornerShape(dims.cardCorner))
-                        .background(MaterialTheme.colorScheme.surface)
-                        .padding(dims.spaceMd)
-                ) {
-                    // Cabecera + loader
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(dims.spaceSm)
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.auth_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.weight(1f)
-                        )
-                        if (authState.cargando) {
-                            CircularProgressIndicator(modifier = Modifier.size(dims.spaceMd))
+            // ✅ SECCIÓN LOGIN GOOGLE (AQUÍ SE MUESTRA EL BOTÓN)
+            GoogleAuthSection(
+                dims = dims,
+                authState = authState,
+                authError = authError ?: authState.error,
+                onLoginClick = {
+                    authError = null
+                    oneTapClient.beginSignIn(signInRequest)
+                        .addOnSuccessListener { result ->
+                            val request = IntentSenderRequest.Builder(
+                                result.pendingIntent.intentSender
+                            ).build()
+                            oneTapLauncher.launch(request)
                         }
-                    }
-
-                    // Contenido según haya usuario o no
-                    if (authState.usuario != null) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(dims.spaceXs)
-                        ) {
-                            Text(
-                                text = stringResource(
-                                    id = R.string.auth_signed_in_as,
-                                    authState.usuario.displayName
-                                        ?: stringResource(id = R.string.auth_unknown_user)
-                                ),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-
-                            authState.usuario.email?.let { email ->
-                                Text(
-                                    text = email,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
+                        .addOnFailureListener { e ->
+                            val code = (e as? ApiException)?.statusCode
+                            val codeText = code?.let { "${it} (${CommonStatusCodes.getStatusCodeString(it)})" } ?: "null"
+                            authError = "beginSignIn failed: $codeText - ${e.message}"
                         }
-
-                        Button(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = onLogout,
-                            enabled = !authState.cargando,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.error
-                            )
-                        ) {
-                            Text(text = stringResource(id = R.string.auth_logout))
-                        }
-                    } else {
-                        Button(
-                            onClick = onLoginClick,
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = !authState.cargando
-                        ) {
-                            Text(stringResource(id = R.string.auth_with_google))
-                        }
-                    }
-
-                    if (!authError.isNullOrEmpty()) {
-                        Text(
-                            text = authError,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                },
+                onLogout = {
+                    authError = null
+                    onLogout()
                 }
-            }
-
-
+            )
         }
     }
 
@@ -379,9 +316,10 @@ private fun GoogleAuthSection(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                authState.usuario.photoUrl?.let { photoUrl ->
+
+                authState.usuario.email?.let { email ->
                     Text(
-                        text = stringResource(id = R.string.auth_photo_placeholder, photoUrl),
+                        text = email,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -389,6 +327,7 @@ private fun GoogleAuthSection(
                     )
                 }
             }
+
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onLogout,
