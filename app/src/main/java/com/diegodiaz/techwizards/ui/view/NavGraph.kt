@@ -324,6 +324,5 @@ fun NavGraph(
                 }
             )
         }
-        }
     }
 }
