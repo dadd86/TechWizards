@@ -10,6 +10,7 @@
     <!-- Permisos multimedia -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <!-- Permisos ubicación (si los usáis) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />

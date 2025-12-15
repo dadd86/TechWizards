@@ -2,17 +2,19 @@
     <string name="app_name">Tech Wizards</string>
     <string name="title_activity_main">TechWizards</string>
 
-    <string name="victory_calendar_title">Victory of %1$s</string>
-    <string name="victory_calendar_description">Reward obtained: %1$d coins.</string>
+    <string name="victory_calendar_title">%1$s’s Victory</string>
+    <string name="victory_calendar_description">Reward earned: %1$d coins.</string>
+
     <string name="victory_notification_title">You won!</string>
     <string name="victory_notification_body">%1$s achieved a new victory.</string>
     <string name="victory_notification_saved_media">Screenshot saved in the TechWizards gallery.</string>
     <string name="victory_notification_calendar_link">Event #%1$d in calendar</string>
+
     <string name="victory_channel_name">Victories</string>
 
     <string name="music_channel_name">Background music</string>
-    <string name="music_notification_title">Music active</string>
-    <string name="music_notification_body">Playing Tech Wizards soundtrack</string>
+    <string name="music_notification_title">Music on</string>
+    <string name="music_notification_body">Playing the Tech Wizards soundtrack</string>
     <string name="music_playback_active">Playing background music</string>
 
     <string name="menu_title">Main menu</string>
@@ -21,6 +23,7 @@
     <string name="menu_settings">Settings</string>
     <string name="menu_help">Help</string>
     <string name="menu_exit">Exit</string>
+
     <string name="menu_exit_confirm_title">Confirm exit</string>
     <string name="menu_exit_confirm_message">Do you want to exit the application?</string>
     <string name="menu_exit_confirm_accept">Confirm</string>
@@ -37,11 +40,14 @@
     <string name="settings_music_toggle">Background music</string>
     <string name="settings_sfx_toggle">Sound effects</string>
     <string name="settings_pick_track">Select custom track</string>
+
     <string name="settings_visual_section">Display</string>
     <string name="settings_dark_mode_toggle">Dark theme</string>
     <string name="settings_animations_toggle">Game animations</string>
+
     <string name="settings_notifications_section">Notifications</string>
     <string name="settings_notifications_toggle">Victory alerts</string>
+
     <string name="settings_language_section">Language</string>
     <string name="settings_load_error">Error loading preferences.</string>
     <string name="settings_save_error">Changes were not saved. Please try again.</string>
@@ -53,7 +59,7 @@
     <string name="welcome_play">Play</string>
     <string name="welcome_enter_name">Enter your name</string>
     <string name="welcome_player_name_label">Player name</string>
-    <string name="welcome_alias_hint">The alias will appear in the match history.</string>
+    <string name="welcome_alias_hint">Your alias will appear in the match history.</string>
     <string name="welcome_invalid_name">Enter a valid name</string>
     <string name="welcome_dice_content_description">Dice</string>
 
@@ -81,10 +87,10 @@
     <string name="chat_title">Match chat</string>
     <string name="chat_placeholder">Type a message…</string>
     <string name="chat_send">Send</string>
-    <string name="chat_system_welcome">Channel ready: share moves with your team.</string>
+    <string name="chat_system_welcome">Channel ready: share plays with your team.</string>
     <string name="chat_hint_controls">Use the Send button to share strategies.</string>
 
-    <string name="lobby_title">Game lobby</string>
+    <string name="lobby_title">Match lobby</string>
     <string name="lobby_description">Choose an active lobby or create a new one to invite your team.</string>
     <string name="lobby_status_open">Open</string>
     <string name="lobby_status_waiting">Waiting for players</string>
@@ -97,11 +103,11 @@
     <string name="events_title">Ongoing events</string>
     <string name="events_daily_challenge">Daily challenge</string>
     <string name="events_weekend_tournament">Weekend tournament</string>
-    <string name="events_special_drop">Special reward drop</string>
+    <string name="events_special_drop">Special rewards drop</string>
     <string name="events_progress_label">Progress</string>
 
     <string name="match_title">Match in progress</string>
-    <string name="match_subtitle">Manage the score and quick actions of each player.</string>
+    <string name="match_subtitle">Track the score and quick actions for each player.</string>
     <string name="match_subtitle_online">Match %1$s in real time.</string>
     <string name="match_start">Start</string>
     <string name="match_finish">Finish</string>
@@ -112,22 +118,25 @@
     <string name="match_choose_face">Choose the face of your bet</string>
     <string name="match_remote_ready">Opponent connected</string>
     <string name="match_remote_waiting">Waiting for opponent…</string>
-    <string name="match_no_roll">No roll has been registered yet.</string>
+    <string name="match_no_roll">No roll has been recorded yet.</string>
     <string name="match_roll_result">Dice result: %1$d</string>
     <string name="match_wait_remote_roll">Wait for the remote roll to sync the score.</string>
 
     <string name="common_back">Back</string>
 
     <string name="no_money_title">No coins</string>
-    <string name="no_money_message">You cannot continue rolling because you have no more coins.</string>
+    <string name="no_money_message">You can’t keep rolling because you don’t have any coins left.</string>
     <string name="no_money_action">Back to menu</string>
 
     <string name="auth_title">Google authentication</string>
     <string name="auth_with_google">Sign in with Google</string>
-    <string name="auth_signed_in_as">Signed in as: %1$s</string>
+    <string name="auth_signed_in_as">Signed in: %1$s</string>
     <string name="auth_unknown_user">Player</string>
-    <string name="auth_missing_token">Google token was not received. Please try again.</string>
-    <string name="auth_google_failed">Authentication failed (code %1$d).</string>
+    <string name="auth_missing_token">No Google token was received. Please try again.</string>
+    <string name="auth_google_failed">Couldn’t authenticate (code %1$d).</string>
+    <string name="auth_missing_google_client_id">Set the Google client ID (google-services.json or GOOGLE_WEB_CLIENT_ID variable) before signing in.</string>
+    <string name="auth_google_no_credential">No valid credentials for this app (code %1$s). Check SHA-1 and the client ID in Google Cloud.</string>
+    <string name="auth_google_generic_error">Google sign-in error: %1$s (%2$s)</string>
     <string name="auth_photo_placeholder">Profile photo: %1$s</string>
     <string name="auth_logout">Sign out</string>
 </resources>
