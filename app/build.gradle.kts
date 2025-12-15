@@ -29,6 +29,11 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("String", "API_SERIALIZER", "\"$apiSerializer\"")
 
+        val googleWebClientId = providers.environmentVariable("GOOGLE_WEB_CLIENT_ID")
+            .orElse("CHANGE_ME")
+            .get()
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
+
         buildConfigField("String", "API_BASE_URL", "\"https://api.techwizards.dev/\"")
     }
 

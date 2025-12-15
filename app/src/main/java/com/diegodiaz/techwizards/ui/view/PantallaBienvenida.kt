@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import com.diegodiaz.techwizards.BuildConfig
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
 import androidx.compose.foundation.rememberScrollState
@@ -84,21 +85,28 @@ fun PantallaBienvenida(
 
     val context = LocalContext.current
 
+    val googleWebClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID
+    val hasValidGoogleClientId = googleWebClientId.isNotBlank() && googleWebClientId != "CHANGE_ME"
+
     // ---------- Google Identity Services (One Tap) ----------
     val oneTapClient: SignInClient = remember { Identity.getSignInClient(context) }
 
     @Suppress("DEPRECATION")
-    val signInRequest = remember {
-        BeginSignInRequest.Builder()
-            .setGoogleIdTokenRequestOptions(
-                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
-                    .setSupported(true)
-                    .setServerClientId(context.getString(R.string.default_web_client_id))
-                    .setFilterByAuthorizedAccounts(false) // permitir cuentas nuevas
-                    .build()
-            )
-            .setAutoSelectEnabled(false)
-            .build()
+    val signInRequest = remember(hasValidGoogleClientId, googleWebClientId) {
+        if (!hasValidGoogleClientId) {
+            null
+        } else {
+            BeginSignInRequest.Builder()
+                .setGoogleIdTokenRequestOptions(
+                    BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                        .setSupported(true)
+                        .setServerClientId(googleWebClientId)
+                        .setFilterByAuthorizedAccounts(false) // permitir cuentas nuevas
+                        .build()
+                )
+                .setAutoSelectEnabled(false)
+                .build()
+        }
     }
 
     val oneTapLauncher = rememberLauncherForActivityResult(
@@ -183,6 +191,12 @@ fun PantallaBienvenida(
                 authState = authState,
                 authError = authError ?: authState.error,
                 onLoginClick = {
+                    if (!hasValidGoogleClientId || signInRequest == null) {
+                        authError = context.getString(R.string.auth_missing_google_client_id)
+                        return@GoogleAuthSection
+                        }
+
+
                     authError = null
                     oneTapClient.beginSignIn(signInRequest)
                         .addOnSuccessListener { result ->
@@ -194,7 +208,17 @@ fun PantallaBienvenida(
                         .addOnFailureListener { e ->
                             val code = (e as? ApiException)?.statusCode
                             val codeText = code?.let { "${it} (${CommonStatusCodes.getStatusCodeString(it)})" } ?: "null"
-                            authError = "beginSignIn failed: $codeText - ${e.message}"
+                            authError = when (code) {
+                                CommonStatusCodes.CANCELED -> context.getString(
+                                    R.string.auth_google_no_credential,
+                                    codeText
+                                )
+                                else -> context.getString(
+                                    R.string.auth_google_generic_error,
+                                    codeText,
+                                    e.message ?: ""
+                                )
+                            }
                         }
                 },
                 onLogout = {

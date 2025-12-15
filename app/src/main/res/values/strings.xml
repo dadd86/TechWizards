@@ -111,6 +111,9 @@
     <string name="auth_unknown_user">Jugador</string>
     <string name="auth_missing_token">No se recibió el token de Google. Inténtalo nuevamente.</string>
     <string name="auth_google_failed">No se pudo autenticar (código %1$d).</string>
+    <string name="auth_missing_google_client_id">Configura el client ID de Google (google-services.json o variable GOOGLE_WEB_CLIENT_ID) antes de iniciar sesión.</string>
+    <string name="auth_google_no_credential">No hay credenciales válidas para esta app (código %1$s). Verifica SHA-1 y el client ID en Google Cloud.</string>
+    <string name="auth_google_generic_error">Error al iniciar sesión con Google: %1$s (%2$s)</string>
     <string name="auth_photo_placeholder">Foto de perfil: %1$s</string>
     <string name="auth_logout">Cerrar sesión</string>
 </resources>
