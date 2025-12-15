@@ -85,8 +85,17 @@ fun PantallaBienvenida(
 
     val context = LocalContext.current
 
-    val googleWebClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID
-    val hasValidGoogleClientId = googleWebClientId.isNotBlank() && googleWebClientId != "CHANGE_ME"
+    val googleWebClientId = remember {
+        val buildConfigValue = BuildConfig.GOOGLE_WEB_CLIENT_ID
+        val fromResources = runCatching { context.getString(R.string.default_web_client_id) }
+            .getOrNull()
+
+        listOf(buildConfigValue, fromResources)
+            .firstOrNull { !it.isNullOrBlank() && it != "CHANGE_ME" }
+            .orEmpty()
+    }
+
+    val hasValidGoogleClientId = googleWebClientId.isNotBlank()
 
     // ---------- Google Identity Services (One Tap) ----------
     val oneTapClient: SignInClient = remember { Identity.getSignInClient(context) }
