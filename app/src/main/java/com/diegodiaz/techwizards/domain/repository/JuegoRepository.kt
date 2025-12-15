@@ -1,5 +1,6 @@
 package com.diegodiaz.techwizards.domain.repository
 
+import com.diegodiaz.techwizards.data.local.entity.Resultado
 import com.diegodiaz.techwizards.domain.model.Monedero
 import com.diegodiaz.techwizards.domain.model.Usuario
 import com.diegodiaz.techwizards.domain.model.Partida
@@ -30,4 +31,20 @@ interface JuegoRepository {
     fun observarHistorial(usuarioId: String, limit: Int = 50): Flow<List<Partida>> //devuelve el historial de partidas
     fun observarMonedero(usuarioId: String): Flow<Monedero> //observa el monedero del usuario en tiempo real
     suspend fun lanzarDado(usuarioId: String): Partida //simular el lanzamiento de dado, modificar el saldo y guardar resultado
+
+    /**
+     * Registra un resultado proporcionado por un backend remoto.
+     *
+     * @param usuarioId Identificador del jugador local.
+     * @param resultado Resultado declarado para la tirada.
+     * @param cambioMonedas Delta aplicado sobre el monedero.
+     * @param fechaMs Marca temporal opcional para auditoría.
+     * @return Partida persistida en el historial local.
+     */
+    suspend fun registrarResultadoRemoto(
+        usuarioId: String,
+        resultado: Resultado,
+        cambioMonedas: Int,
+        fechaMs: Long = System.currentTimeMillis(),
+    ): Partida
 }

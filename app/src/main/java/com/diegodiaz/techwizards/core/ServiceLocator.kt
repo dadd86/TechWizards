@@ -8,6 +8,7 @@ import com.diegodiaz.techwizards.core.usecases.CerrarSesionUseCase
 import com.diegodiaz.techwizards.core.usecases.IniciarSesionConGoogleUseCase
 import com.diegodiaz.techwizards.core.usecases.ObservarUsuarioAutenticadoUseCase
 import com.diegodiaz.techwizards.core.usecases.ObtenerUsuarioAutenticadoUseCase
+import com.diegodiaz.techwizards.core.usecases.ResolverTiradaUseCase
 import com.diegodiaz.techwizards.core.usecases.RegistrarUbicacionVictoriaUseCase
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
 import com.diegodiaz.techwizards.credenciales.EncryptedCredentialsStore
@@ -15,6 +16,9 @@ import com.diegodiaz.techwizards.data.infra.network.RetrofitProvider
 import com.diegodiaz.techwizards.data.local.dao.IPartidaDao
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
 import com.diegodiaz.techwizards.data.local.mapper.VictoryLocationLocalMapper
+import com.diegodiaz.techwizards.data.remote.match.InMemoryMatchRealtimeDataSource
+import com.diegodiaz.techwizards.data.remote.match.MatchApi
+import com.diegodiaz.techwizards.data.remote.match.MatchRemoteMapper
 import com.diegodiaz.techwizards.data.remote.api.ScoresApi
 import com.diegodiaz.techwizards.data.remote.mapper.ScoreRemoteMapper
 import com.diegodiaz.techwizards.data.remote.score.ScoreApi
@@ -88,6 +92,18 @@ object ServiceLocator {
         retrofitScore.create(ScoreApi::class.java)
     }
 
+    private val matchApi by lazy {
+        retrofitScore.create(MatchApi::class.java)
+    }
+
+    private val matchRealtimeDataSource by lazy {
+        InMemoryMatchRealtimeDataSource()
+    }
+
+    private val matchRemoteMapper by lazy {
+        MatchRemoteMapper()
+    }
+
     // --------------------------------------------------
     // Repositories
     // --------------------------------------------------
@@ -100,9 +116,10 @@ object ServiceLocator {
     }
 
     val matchRepository by lazy {
-        MatchRepositoryRoom(
-            partidaDao = partidaDao,
-            monederoDao = monederoDao
+        MatchRepositoryRemote(
+            api = matchApi,
+            realtime = matchRealtimeDataSource,
+            mapper = matchRemoteMapper
         )
     }
 
@@ -121,7 +138,8 @@ object ServiceLocator {
     val scoreRepository by lazy {
         ScoreRepositoryRetrofit(
             scoreApi = scoreApi,
-            credentialsStore = credentialsStore
+            credentialsStore = credentialsStore,
+            sessionManager = sessionManager
         )
     }
 
@@ -168,6 +186,10 @@ object ServiceLocator {
     // --------------------------------------------------
     val registrarUbicacionVictoriaUseCase by lazy {
         RegistrarUbicacionVictoriaUseCase(victoryRepository)
+    }
+
+    val resolverTiradaUseCase by lazy {
+        ResolverTiradaUseCase(juegoRepository)
     }
 
     val victoryCelebrationService by lazy {

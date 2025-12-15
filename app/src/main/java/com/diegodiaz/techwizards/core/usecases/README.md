@@ -9,6 +9,7 @@ Expone casos de uso que orquestan uno o más repositorios del dominio. Cada clas
 | `ObtenerResumenJugadorUseCase` | — | `Result<Usuario, AgentError>` | Consulta al `UsuarioRepository` para recuperar el jugador activo y mostrarlo en el menú principal. |
 | `ObtenerHistorialPartidasUseCase` | `usuarioId: String`, `limite: Int` | `Result<List<Partida>, AgentError>` | Delegado en `JuegoRepository.observarHistorial` para poblar listados recientes. |
 | `RegistrarLanzamientoUseCase` | `usuarioId: String` | `Result<Partida, AgentError>` | Ejecuta `JuegoRepository.lanzarDado`, actualiza el saldo y devuelve la partida creada para efectos UI. |
+| `ResolverTiradaUseCase` | `usuarioId: String`, `ResolucionTiradaRemota` | `Result<ResolucionTiradaResultado, AgentError>` | Aplica la tirada resuelta por backend, ajusta monedero e historial y devuelve flags para UI. |
 | `ObservarPreferenciasUseCase` | — | `Flow<GameSettings>` | Envuelve `SettingsRepository.observar()` exponiendo preferencias reactivas para toggles de UI. |
 | `ObtenerPreferenciasUseCase` | — | `Result<GameSettings, AgentError>` | Lectura puntual de ajustes almacenados en DataStore. |
 | `ActualizarPreferenciasUseCase` | `GameSettings` | `Result<Unit, AgentError>` | Persiste la configuración recibida en DataStore asegurando coherencia de flags. |

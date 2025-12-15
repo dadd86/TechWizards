@@ -12,8 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import androidx.core.os.LocaleListCompat
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
 import com.diegodiaz.techwizards.data.local.mapper.toDomain
@@ -25,6 +27,8 @@ import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.ui.controller.AuthState
 import com.diegodiaz.techwizards.ui.controller.ControladorAjustes
 import com.diegodiaz.techwizards.ui.controller.ControladorAuth
+import com.diegodiaz.techwizards.ui.controller.ControladorMatch
+import com.diegodiaz.techwizards.ui.controller.ControladorMatchOnline
 import com.diegodiaz.techwizards.ui.controller.ControladorPartida
 import com.diegodiaz.techwizards.ui.controller.ControladorPartidaFactory
 import com.diegodiaz.techwizards.ui.controller.ControladorRanking
@@ -78,7 +82,8 @@ fun NavGraph(
             observarPreferencias = observarPreferencias,
             victoryService = victoryService,
             sessionManager = sessionManager,
-            registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase
+            registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase,
+            resolverTiradaUseCase = ServiceLocator.resolverTiradaUseCase
         )
     }
     val controladorPartida: ControladorPartida = viewModel(factory = partidaFactory)
@@ -155,6 +160,14 @@ fun NavGraph(
                 onRanking = { navController.navigate("ranking") },
                 onAjustes = { navController.navigate("ajustes") },
                 onAyuda = { navController.navigate("ayuda") },
+                onLobby = { navController.navigate("lobby") },
+                onChat = { navController.navigate("chat") },
+                onEventos = { navController.navigate("eventos") },
+                onMatch = {
+                    val matchId = "match-${System.currentTimeMillis()}"
+                    val lobbyId = "lobby-${usuario?.numero ?: 0}"
+                    navController.navigate("match/$matchId?lobbyId=$lobbyId")
+                },
                 dims = dims,
                 controladorPartida = controladorPartida,
                 usuario = usuario
@@ -255,8 +268,62 @@ fun NavGraph(
             PantallaLobby(dims = dims)
         }
 
-        composable("match") {
-            PantallaMatch(dims = dims)
+        composable(
+            route = "match/{matchId}?lobbyId={lobbyId}",
+            arguments = listOf(
+                navArgument("matchId") { type = NavType.StringType },
+                navArgument("lobbyId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { entry ->
+
+            val matchId = entry.arguments?.getString("matchId")?.trim().orEmpty()
+            val lobbyId = entry.arguments?.getString("lobbyId")?.trim()?.takeIf { it.isNotEmpty() }
+
+            // Si matchId no viene, evita crashear y vuelve al menú
+            if (matchId.isEmpty()) {
+                LaunchedEffect(Unit) {
+                    navController.navigate("menu") {
+                        popUpTo("menu") { inclusive = true }
+                    }
+                }
+                return@composable
+            }
+
+            // ✅ Key por matchId: si cambia el match, instancia nueva limpia
+            val matchVm: ControladorMatchOnline = viewModel(
+                key = "matchOnline-$matchId",
+                factory = SimpleVmFactory {
+                    ControladorMatchOnline(ServiceLocator.matchRepository)
+                }
+            )
+
+            // ✅ Iniciar solo cuando cambie el matchId/lobbyId/usuarioId
+            val usuarioId = usuarioActual.value?.numero
+            LaunchedEffect(matchId, lobbyId, usuarioId) {
+                matchVm.iniciar(matchId = matchId, lobbyId = lobbyId, usuarioId = usuarioId)
+            }
+
+            val matchState by matchVm.ui.collectAsState()
+
+            PantallaMatch(
+                dims = dims,
+                uiState = matchState,
+                onSeleccionCara = matchVm::seleccionarCara,
+                onConfirmarApuesta = { usuarioId?.let(matchVm::confirmarApuesta) },
+                onLanzarDado = { usuarioId?.let(matchVm::lanzarDado) },
+                onVolver = {
+                    navController.navigate("menu") {
+                        launchSingleTop = true
+                        restoreState = true
+                        popUpTo("menu") { inclusive = false }
+                    }
+                }
+            )
+        }
         }
     }
 }

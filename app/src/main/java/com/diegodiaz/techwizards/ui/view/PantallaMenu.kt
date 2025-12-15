@@ -30,13 +30,13 @@ fun PantallaMenu(
     onRanking: () -> Unit,
     onAjustes: () -> Unit,
     onAyuda: () -> Unit,
-    //onLobby: () -> Unit,
-    //onChat: () -> Unit,
-    //onEventos: () -> Unit,
-    //onMatch: () -> Unit,
+    onLobby: () -> Unit,
+    onChat: () -> Unit,
+    onEventos: () -> Unit,
+    onMatch: () -> Unit,
     dims: UiDims,
     controladorPartida: ControladorPartida,
-    usuario: Usuario?
+    usuario: Usuario?,
 ) {
     var showDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -82,10 +82,10 @@ fun PantallaMenu(
             MenuBoton(texto = "Top Ten", dims = dims, onClick = onRanking)
             MenuBoton(stringResource(id = R.string.menu_settings), dims, onAjustes)
             MenuBoton(stringResource(id = R.string.menu_help), dims, onAyuda)
-            //MenuBoton(stringResource(id = R.string.lobby_title), dims, onLobby)
-            //MenuBoton(stringResource(id = R.string.chat_title), dims, onChat)
-            //MenuBoton(stringResource(id = R.string.events_title), dims, onEventos)
-            //MenuBoton(stringResource(id = R.string.match_title), dims, onMatch)
+            MenuBoton(stringResource(id = R.string.lobby_title), dims, onLobby)
+            MenuBoton(stringResource(id = R.string.chat_title), dims, onChat)
+            MenuBoton(stringResource(id = R.string.events_title), dims, onEventos)
+            MenuBoton(stringResource(id = R.string.match_title), dims, onMatch)
 
             // 🚪 Salir
             MenuBoton(texto = stringResource(id = R.string.menu_exit), dims = dims) {
