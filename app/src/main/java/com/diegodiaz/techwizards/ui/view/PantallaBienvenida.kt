@@ -87,6 +87,7 @@ fun PantallaBienvenida(
     // ---------- Google Identity Services (One Tap) ----------
     val oneTapClient: SignInClient = remember { Identity.getSignInClient(context) }
 
+    @Suppress("DEPRECATION")
     val signInRequest = remember {
         BeginSignInRequest.Builder()
             .setGoogleIdTokenRequestOptions(
