@@ -3,6 +3,8 @@ package com.diegodiaz.techwizards.ui.controller
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diegodiaz.techwizards.core.common.Result
+import com.diegodiaz.techwizards.domain.model.CommonPrize
+import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.domain.model.Match
 import com.diegodiaz.techwizards.domain.model.MatchParticipant
 import com.diegodiaz.techwizards.domain.model.MatchScore
@@ -18,12 +20,15 @@ import kotlinx.coroutines.launch
  *
  * @property matchRepository Fuente remota via Retrofit + Firestore/WS.
  */
-data class MatchUiState(
+data class MatchOnlineUiState(
     val matchId: String? = null,
     val lobbyId: String? = null,
     val match: Match? = null,
     val participantes: List<MatchParticipant> = emptyList(),
     val puntuaciones: List<MatchScore> = emptyList(),
+    val topTen: List<LeaderboardEntry> = emptyList(),
+    val premioComun: CommonPrize? = null,
+    val progresoPremio: Float = 0f,
     val seleccionCara: Int = 1,
     val resultadoDado: Int? = null,
     val remotoListo: Boolean = false,
@@ -36,12 +41,12 @@ class ControladorMatchOnline(
     private val matchRepository: MatchRepository
 ) : ViewModel() {
 
-    private val _ui = MutableStateFlow(MatchUiState())
-    val ui: StateFlow<MatchUiState> = _ui.asStateFlow()
+    private val _ui = MutableStateFlow(MatchOnlineUiState())
+    val ui: StateFlow<MatchOnlineUiState> = _ui.asStateFlow()
 
     private var streamJob: Job? = null
 
-    fun iniciar(matchId: String, lobbyId: String?, jugadorNumero: Long?) {
+    fun iniciar(matchId: String, lobbyId: String?, usuarioId: Long?) {
         if (matchId == _ui.value.matchId) return
         _ui.value = _ui.value.copy(matchId = matchId, lobbyId = lobbyId, cargando = true)
 
@@ -59,8 +64,8 @@ class ControladorMatchOnline(
         }
 
         // Pre-carga el jugador local en la UI si viene desde un lobby.
-        if (jugadorNumero != null) {
-            agregarParticipanteLocal(matchId, jugadorNumero)
+        if (usuarioId != null) {
+            agregarParticipanteLocal(matchId, usuarioId)
         }
     }
 
@@ -74,7 +79,7 @@ class ControladorMatchOnline(
         viewModelScope.launch {
             when (val resultado = matchRepository.marcarListo(matchId, jugadorNumero, _ui.value.seleccionCara)) {
                 is Result.Err -> {
-                    _ui.value = _ui.value.copy(error = resultado.error.message)
+                    _ui.value = _ui.value.copy(error = errorToUiMessage(resultado.error))
                 }
                 is Result.Ok -> {
                     _ui.value = _ui.value.copy(localListo = true)
@@ -90,7 +95,7 @@ class ControladorMatchOnline(
         viewModelScope.launch {
             when (val resultadoLanzamiento = matchRepository.registrarLanzamiento(matchId, jugadorNumero, resultado)) {
                 is Result.Err -> {
-                    _ui.value = _ui.value.copy(error = resultadoLanzamiento.error.message)
+                    _ui.value = _ui.value.copy(error = errorToUiMessage(resultadoLanzamiento.error))
                 }
                 else -> Unit
             }
@@ -114,5 +119,12 @@ class ControladorMatchOnline(
             score = 0
         )
         _ui.value = _ui.value.copy(participantes = existente + nuevo)
+    }
+}
+private fun errorToUiMessage(error: Any?): String {
+    return when (error) {
+        null -> "Error desconocido"
+        is Throwable -> error.message ?: error::class.java.simpleName
+        else -> error.toString()
     }
 }

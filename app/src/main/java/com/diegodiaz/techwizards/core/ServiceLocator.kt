@@ -138,8 +138,7 @@ object ServiceLocator {
     val scoreRepository by lazy {
         ScoreRepositoryRetrofit(
             scoreApi = scoreApi,
-            credentialsStore = credentialsStore,
-            sessionManager = sessionManager
+            credentialsStore = credentialsStore
         )
     }
 

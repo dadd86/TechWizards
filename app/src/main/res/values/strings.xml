@@ -101,6 +101,7 @@
     <string name="match_no_roll">Aún no hay lanzamiento registrado.</string>
     <string name="match_roll_result">Resultado del dado: %1$d</string>
     <string name="match_wait_remote_roll">Espera el lanzamiento remoto para sincronizar el marcador.</string>
+    <string name="common_back">Volver</string>
     <string name="no_money_title">Sin monedas</string>
     <string name="no_money_message">No puedes continuar lanzando porque no tienes más monedas.</string>
     <string name="no_money_action">Volver al menú</string>
@@ -112,6 +113,4 @@
     <string name="auth_google_failed">No se pudo autenticar (código %1$d).</string>
     <string name="auth_photo_placeholder">Foto de perfil: %1$s</string>
     <string name="auth_logout">Cerrar sesión</string>
-
-
 </resources>

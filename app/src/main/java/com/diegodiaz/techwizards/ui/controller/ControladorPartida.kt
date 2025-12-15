@@ -136,7 +136,7 @@ class ControladorPartida(
         viewModelScope.launch {
             when (val resultado = resolverTiradaUseCase(usuarioId, resolucion)) {
                 is Result.Err -> {
-                    DecentralizedLogger.e(TAG, "No se pudo resolver tirada remota", resultado.error)
+                    DecentralizedLogger.e(TAG, "No se pudo resolver tirada remota: ${resultado.error}")
                 }
 
                 is Result.Ok -> {

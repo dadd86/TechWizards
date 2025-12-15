@@ -21,6 +21,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,13 +35,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.diegodiaz.techwizards.R
-import com.diegodiaz.techwizards.ui.controller.MatchUiState
+import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
+import com.diegodiaz.techwizards.ui.controller.MatchOnlineUiState
 import com.diegodiaz.techwizards.ui.responsive.UiDims
 
 @Composable
 fun PantallaMatch(
     dims: UiDims,
-    uiState: MatchUiState,
+    uiState: MatchOnlineUiState,
     onSeleccionCara: (Int) -> Unit,
     onConfirmarApuesta: () -> Unit,
     onLanzarDado: () -> Unit,
@@ -220,7 +222,7 @@ private fun SeleccionCara(
 }
 
 @Composable
-private fun ResultadoDado(uiState: MatchUiState, dims: UiDims) {
+private fun ResultadoDado(uiState: MatchOnlineUiState, dims: UiDims) {
     val resultado = uiState.resultadoDado
     if (resultado == null) {
         Text(

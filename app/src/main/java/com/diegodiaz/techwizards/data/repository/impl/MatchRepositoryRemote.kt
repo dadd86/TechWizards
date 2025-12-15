@@ -67,7 +67,7 @@ class MatchRepositoryRemote(
         jugadorNumero: Long,
         caraObtenida: Int
     ): Result<Unit, AgentError> =
-        runSafe { realtime.registrarLanzamiento(matchId, jugadorNumero, caraObtenida) }
+        runSafe { realtime.registrarLanzamiento(matchId, RollResultDto(jugadorNumero, caraObtenida)) }
 
     private inline fun <T> runSafe(block: () -> T): Result<T, AgentError> = try {
         Result.Ok(block())
