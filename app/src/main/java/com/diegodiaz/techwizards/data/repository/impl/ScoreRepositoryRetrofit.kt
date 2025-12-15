@@ -8,6 +8,9 @@ import com.diegodiaz.techwizards.domain.model.CommonPrize
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.domain.repository.ScoreRepository
+import com.diegodiaz.techwizards.data.remote.score.ScorePayload
+import com.diegodiaz.techwizards.data.remote.score.LoginRequest
+
 
 /**
  * Implementación de ScoreRepository basada en Retrofit (ScoreApi).
