@@ -1,8 +1,9 @@
 package com.diegodiaz.techwizards.data.infra.network
 
-
 import com.diegodiaz.techwizards.BuildConfig
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -21,6 +22,11 @@ import retrofit2.converter.moshi.MoshiConverterFactory
  * El token se obtiene mediante una lambda para no acoplarse a Firebase directamente.
  */
 object RetrofitProvider {
+
+    // ✅ Moshi configurado para Kotlin (esto arregla tu crash del ranking)
+    private val moshi: Moshi = Moshi.Builder()
+        .add(KotlinJsonAdapterFactory())
+        .build()
 
     /**
      * Interceptor que, si hay token, lo añade como Bearer y como query `auth`.
@@ -68,13 +74,13 @@ object RetrofitProvider {
     ): OkHttpClient {
         val builder = OkHttpClient.Builder()
             .addInterceptor(FirebaseAuthInterceptor(tokenProvider))
+
         if (enableLogging) {
             builder.addInterceptor(createLoggingInterceptor())
         }
 
         return builder.build()
     }
-
 
     fun createRetrofit(
         baseUrl: String,
@@ -84,9 +90,10 @@ object RetrofitProvider {
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(createOkHttpClient(tokenProvider, enableLogging))
-            .addConverterFactory(MoshiConverterFactory.create())
+            .addConverterFactory(MoshiConverterFactory.create(moshi)) // ✅ aquí
             .build()
     }
+
     /**
      * Atajo para construir Retrofit leyendo token desde un [CredentialsStore].
      */
@@ -97,9 +104,10 @@ object RetrofitProvider {
         enableLogging: Boolean = true,
     ): Retrofit {
         val tokenProvider = { credentialsStore.obtenerFirebaseToken() }
+
         val converter = when (serializer.lowercase()) {
             "gson" -> retrofit2.converter.gson.GsonConverterFactory.create()
-            else -> MoshiConverterFactory.create()
+            else -> MoshiConverterFactory.create(moshi) // ✅ y aquí
         }
 
         return Retrofit.Builder()
