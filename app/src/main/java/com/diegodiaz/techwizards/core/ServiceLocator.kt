@@ -138,7 +138,8 @@ object ServiceLocator {
     val scoreRepository by lazy {
         ScoreRepositoryRetrofit(
             scoreApi = scoreApi,
-            credentialsStore = credentialsStore
+            credentialsStore = credentialsStore,
+            sessionManager = sessionManager
         )
     }
 
@@ -210,16 +211,22 @@ object ServiceLocator {
     }
 
     private fun registrarListenerFirebaseToken() {
-        firebaseAuth.addIdTokenListener { auth ->
-            val user = auth.currentUser
-            if (user == null) {
-                credentialsStore.guardarFirebaseToken(null)
-            } else {
-                user.getIdToken(false)
-                    .addOnSuccessListener { result ->
-                        credentialsStore.guardarFirebaseToken(result.token)
-                    }
+        firebaseAuth.addIdTokenListener(object : FirebaseAuth.IdTokenListener {
+            override fun onIdTokenChanged(auth: FirebaseAuth) {
+                val user = auth.currentUser
+                if (user == null) {
+                    credentialsStore.guardarFirebaseToken(null)
+                } else {
+                    user.getIdToken(false)
+                        .addOnSuccessListener { result ->
+                            credentialsStore.guardarFirebaseToken(result.token)
+                        }
+                        .addOnFailureListener {
+                            credentialsStore.guardarFirebaseToken(null)
+                        }
+                }
             }
-        }
-    }
+
+    })
+}
 }
