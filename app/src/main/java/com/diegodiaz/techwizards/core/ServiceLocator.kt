@@ -14,7 +14,11 @@ import com.diegodiaz.techwizards.credenciales.CredentialsStore
 import com.diegodiaz.techwizards.credenciales.EncryptedCredentialsStore
 import com.diegodiaz.techwizards.data.infra.network.RetrofitProvider
 import com.diegodiaz.techwizards.data.local.dao.IPartidaDao
+import com.diegodiaz.techwizards.data.local.dao.IMatchDao
+import com.diegodiaz.techwizards.data.local.dao.IMatchParticipantDao
+import com.diegodiaz.techwizards.data.local.dao.IMatchScoreDao
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
+import com.diegodiaz.techwizards.data.local.cache.MatchSnapshotLocalDataSource
 import com.diegodiaz.techwizards.data.local.mapper.VictoryLocationLocalMapper
 import com.diegodiaz.techwizards.data.remote.match.MatchRealtimeFirebaseDataSource
 import com.diegodiaz.techwizards.data.remote.match.MatchApi
@@ -24,6 +28,7 @@ import com.diegodiaz.techwizards.data.remote.mapper.ScoreRemoteMapper
 import com.diegodiaz.techwizards.data.remote.score.ScoreApi
 import com.diegodiaz.techwizards.data.repository.impl.*
 import com.diegodiaz.techwizards.data.transaction.RoomTransactionRunner
+import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.domain.repository.AuthRepository
 import com.diegodiaz.techwizards.integration.victory.WorkManagerVictoryCelebrationService
 import com.google.firebase.FirebaseApp
@@ -48,10 +53,21 @@ object ServiceLocator {
     private val usuarioDao by lazy { db.usuarioDao() }
     private val monederoDao by lazy { db.monederoDao() }
     private val partidaDao: IPartidaDao by lazy { db.partidaDao() }
+    private val matchDao: IMatchDao by lazy { db.matchDao() }
+    private val matchParticipantDao: IMatchParticipantDao by lazy { db.matchParticipantDao() }
+    private val matchScoreDao: IMatchScoreDao by lazy { db.matchScoreDao() }
     private val victoryLocationDao by lazy { db.victoryLocationDao() }
 
     private val victoryTransactionRunner by lazy {
         RoomTransactionRunner(db)
+    }
+
+    private val matchTransactionRunner by lazy {
+        RoomTransactionRunner(db)
+    }
+
+    private val matchSnapshotLocalDataSource by lazy {
+        MatchSnapshotLocalDataSource(settingsRepository.dataStore)
     }
 
     private val victoryMapper by lazy {
@@ -69,7 +85,10 @@ object ServiceLocator {
     // Network (Retrofit)
     // --------------------------------------------------
     private val retrofitSecure by lazy {
-        RetrofitProvider.retrofit(credentialsStore = credentialsStore)
+        RetrofitProvider.retrofit(
+            credentialsStore = credentialsStore,
+            sessionManager = sessionManager
+        )
     }
 
     private val scoresApi by lazy {
@@ -84,7 +103,8 @@ object ServiceLocator {
         RetrofitProvider.retrofit(
             credentialsStore = credentialsStore,
             baseUrl = BuildConfig.API_BASE_URL,
-            serializer = BuildConfig.API_SERIALIZER
+            serializer = BuildConfig.API_SERIALIZER,
+            sessionManager = sessionManager
         )
     }
 
@@ -119,7 +139,18 @@ object ServiceLocator {
         MatchRepositoryRemote(
             api = matchApi,
             realtime = matchRealtimeDataSource,
-            mapper = matchRemoteMapper
+            mapper = matchRemoteMapper,
+            mirrorRoom = MatchRepositoryRoom(
+                matchDao = matchDao,
+                matchParticipantDao = matchParticipantDao,
+                matchScoreDao = matchScoreDao,
+                partidaDao = partidaDao,
+                monederoDao = monederoDao,
+                transactionRunner = matchTransactionRunner,
+                snapshotLocalDataSource = matchSnapshotLocalDataSource
+            ),
+            snapshotLocalDataSource = matchSnapshotLocalDataSource,
+            appContext = appContext
         )
     }
 
@@ -166,11 +197,19 @@ object ServiceLocator {
     }
 
     val iniciarSesionConGoogleUseCase by lazy {
-        IniciarSesionConGoogleUseCase(authRepository)
+        IniciarSesionConGoogleUseCase(
+            authRepository = authRepository,
+            sessionManager = sessionManager,
+            credentialsStore = credentialsStore
+        )
     }
 
     val cerrarSesionUseCase by lazy {
-        CerrarSesionUseCase(authRepository)
+        CerrarSesionUseCase(
+            authRepository = authRepository,
+            sessionManager = sessionManager,
+            credentialsStore = credentialsStore
+        )
     }
 
     val observarUsuarioAutenticadoUseCase by lazy {
@@ -216,17 +255,23 @@ object ServiceLocator {
                 val user = auth.currentUser
                 if (user == null) {
                     credentialsStore.guardarFirebaseToken(null)
-                } else {
-                    user.getIdToken(false)
-                        .addOnSuccessListener { result ->
-                            credentialsStore.guardarFirebaseToken(result.token)
-                        }
-                        .addOnFailureListener {
-                            credentialsStore.guardarFirebaseToken(null)
-                        }
+                    sessionManager.clearSession()
+                    return
                 }
+                user.getIdToken(false)
+                    .addOnSuccessListener { result ->
+                        credentialsStore.guardarFirebaseToken(result.token)
+                        val token = result.token
+                        if (!token.isNullOrBlank()) {
+                            val alias = user.displayName ?: user.email ?: "Jugador"
+                            sessionManager.setSession(UserSession(token = token, alias = alias))
+                        }
+                    }
+                    .addOnFailureListener {
+                        credentialsStore.guardarFirebaseToken(null)
+                        sessionManager.clearSession()
+                    }
             }
-
-    })
-}
+        })
+    }
 }

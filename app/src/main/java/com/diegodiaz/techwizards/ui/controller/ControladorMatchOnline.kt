@@ -8,12 +8,14 @@ import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.domain.model.Match
 import com.diegodiaz.techwizards.domain.model.MatchParticipant
 import com.diegodiaz.techwizards.domain.model.MatchScore
+import com.diegodiaz.techwizards.domain.model.MatchSnapshot
 import com.diegodiaz.techwizards.domain.repository.MatchRepository
 import com.diegodiaz.techwizards.domain.repository.ScoreRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 /**
@@ -57,28 +59,16 @@ class ControladorMatchOnline(
         if (matchId == _ui.value.matchId) return
         _ui.value = _ui.value.copy(matchId = matchId, lobbyId = lobbyId, cargando = true)
 
+        viewModelScope.launch {
+            matchRepository.observarEstado(matchId).firstOrNull()?.let { snapshot ->
+                aplicarSnapshot(snapshot)
+            }
+        }
+
         streamJob?.cancel()
         streamJob = viewModelScope.launch {
             matchRepository.observarEstado(matchId).collect { snapshot ->
-                val participantes = (snapshot.participantes + _ui.value.participantes)
-                    .distinctBy { it.usuarioNumero }
-                val marcador = construirMarcador(
-                    snapshotScores = snapshot.scores,
-                    lanzamientos = snapshot.lanzamientos,
-                    ganadorRonda = snapshot.ganadorRonda,
-                    empate = snapshot.empate
-                )
-                _ui.value = _ui.value.copy(
-                    match = snapshot.match,
-                    participantes = participantes,
-                    puntuaciones = marcador,
-                    remotoListo = snapshot.remotoListo,
-                    carasSeleccionadas = snapshot.carasElegidas,
-                    lanzamientos = snapshot.lanzamientos,
-                    ganadorRonda = snapshot.ganadorRonda,
-                    huboEmpate = snapshot.empate,
-                    cargando = false
-                )
+                aplicarSnapshot(snapshot)
             }
         }
 
@@ -181,6 +171,27 @@ class ControladorMatchOnline(
         }
         return actualizadas
     }
+    private fun aplicarSnapshot(snapshot: MatchSnapshot) {
+        val participantes = (snapshot.participantes + _ui.value.participantes)
+            .distinctBy { it.usuarioNumero }
+        val marcador = construirMarcador(
+            snapshotScores = snapshot.scores,
+            lanzamientos = snapshot.lanzamientos,
+            ganadorRonda = snapshot.ganadorRonda,
+            empate = snapshot.empate
+        )
+        _ui.value = _ui.value.copy(
+            match = snapshot.match,
+            participantes = participantes,
+            puntuaciones = marcador,
+            remotoListo = snapshot.remotoListo,
+            carasSeleccionadas = snapshot.carasElegidas,
+            lanzamientos = snapshot.lanzamientos,
+            ganadorRonda = snapshot.ganadorRonda,
+            huboEmpate = snapshot.empate,
+            cargando = false
+        )
+    }
 }
 private fun errorToUiMessage(error: Any?): String {
     return when (error) {
@@ -188,4 +199,5 @@ private fun errorToUiMessage(error: Any?): String {
         is Throwable -> error.message ?: error::class.java.simpleName
         else -> error.toString()
     }
+
 }

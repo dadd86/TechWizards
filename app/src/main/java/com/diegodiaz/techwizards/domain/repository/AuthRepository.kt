@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 interface AuthRepository {
 
     suspend fun signInWithGoogle(idToken: String): Result<AuthUser, AgentError>
+    suspend fun fetchIdToken(forceRefresh: Boolean = false): Result<String, AgentError>
 
     suspend fun signOut(): Result<Unit, AgentError>
 

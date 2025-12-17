@@ -20,4 +20,7 @@ interface IMatchScoreDao {
 
     @Query("SELECT * FROM MatchScore WHERE matchId = :matchId")
     suspend fun listarPorMatch(matchId: String): List<MatchScoreEntity>
+
+    @Query("SELECT * FROM MatchScore WHERE matchId = :matchId")
+    fun observarPorMatch(matchId: String): kotlinx.coroutines.flow.Flow<List<MatchScoreEntity>>
 }

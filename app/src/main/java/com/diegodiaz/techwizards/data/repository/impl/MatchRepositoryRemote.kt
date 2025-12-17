@@ -2,28 +2,46 @@ package com.diegodiaz.techwizards.data.repository.impl
 
 import com.diegodiaz.techwizards.core.common.AgentError
 import com.diegodiaz.techwizards.core.common.Result
+import android.content.Context
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.diegodiaz.techwizards.data.local.cache.MatchSnapshotLocalDataSource
+import com.diegodiaz.techwizards.data.repository.impl.work.MatchActionRetryWorker
 import com.diegodiaz.techwizards.data.remote.match.MatchApi
 import com.diegodiaz.techwizards.data.remote.match.MatchRealtimeDataSource
 import com.diegodiaz.techwizards.data.remote.match.MatchRemoteMapper
 import com.diegodiaz.techwizards.data.remote.match.PlayerReadyDto
 import com.diegodiaz.techwizards.data.remote.match.RollResultDto
+import com.diegodiaz.techwizards.data.repository.impl.MatchRepositoryRoom
 import com.diegodiaz.techwizards.domain.model.Match
 import com.diegodiaz.techwizards.domain.model.MatchEvent
 import com.diegodiaz.techwizards.domain.model.MatchScore
 import com.diegodiaz.techwizards.domain.model.MatchSnapshot
 import com.diegodiaz.techwizards.domain.repository.MatchRepository
+import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.map
-
 /**
  * Implementación remota de MatchRepository usando Retrofit y una fuente realtime (Firestore/SSE).
  */
 class MatchRepositoryRemote(
     private val api: MatchApi,
     private val realtime: MatchRealtimeDataSource,
-    private val mapper: MatchRemoteMapper
+    private val mapper: MatchRemoteMapper,
+    private val mirrorRoom: MatchRepositoryRoom?,
+    private val snapshotLocalDataSource: MatchSnapshotLocalDataSource?,
+    appContext: Context
 ) : MatchRepository {
+    private val workManager = WorkManager.getInstance(appContext)
+
     override suspend fun upsertMatch(match: Match): Result<Unit, AgentError> =
         runSafe { api.guardarMatch(mapper.toDto(match)) }
 
@@ -46,7 +64,7 @@ class MatchRepositoryRemote(
         val readyFlow = realtime.streamReady(matchId)
         val rollFlow = realtime.streamRollResults(matchId)
 
-        return combine(matchFlow, participantesFlow, scoreFlow, readyFlow, rollFlow) { match, participantes, scores, readyList, rollList ->
+        val remoto = combine(matchFlow, participantesFlow, scoreFlow, readyFlow, rollFlow) { match, participantes, scores, readyList, rollList ->
             val carasElegidas = readyList.associate { it.jugadorNumero to it.caraElegida }
             val lanzamientos = rollList.associate { it.jugadorNumero to it.caraObtenida }
             val (ganadorRonda, empate) = resolverGanador(lanzamientos)
@@ -61,7 +79,16 @@ class MatchRepositoryRemote(
                 ganadorRonda = ganadorRonda,
                 empate = empate
             )
+        }.onEach { snapshot ->
+            if (snapshot.match != null) {
+                mirrorRoom?.guardarSnapshot(snapshot)
+                snapshotLocalDataSource?.guardar(matchId, snapshot)
+            }
         }
+        val cacheFlow = mirrorRoom?.observarSnapshot(matchId) ?: snapshotLocalDataSource?.observar(matchId)?.filterNotNull()
+        ?: emptyFlow()
+
+        return merge(cacheFlow, remoto)
     }
 
     override suspend fun marcarListo(
@@ -69,19 +96,53 @@ class MatchRepositoryRemote(
         jugadorNumero: Long,
         caraElegida: Int
     ): Result<Unit, AgentError> =
-        runSafe { realtime.marcarListo(matchId, PlayerReadyDto(jugadorNumero, caraElegida)) }
+        runSafe(
+            block = { realtime.marcarListo(matchId, PlayerReadyDto(jugadorNumero, caraElegida)) },
+            onNetworkError = {
+                enqueueRetry(
+                    MatchActionRetryWorker.workName("ready", matchId, jugadorNumero),
+                    MatchActionRetryWorker.dataReady(matchId, jugadorNumero, caraElegida)
+                )
+            }
+        )
 
     override suspend fun registrarLanzamiento(
         matchId: String,
         jugadorNumero: Long,
         caraObtenida: Int
     ): Result<Unit, AgentError> =
-        runSafe { realtime.registrarLanzamiento(matchId, RollResultDto(jugadorNumero, caraObtenida)) }
+        runSafe(
+            block = { realtime.registrarLanzamiento(matchId, RollResultDto(jugadorNumero, caraObtenida)) },
+            onNetworkError = {
+                enqueueRetry(
+                    MatchActionRetryWorker.workName("roll", matchId, jugadorNumero),
+                    MatchActionRetryWorker.dataRoll(matchId, jugadorNumero, caraObtenida)
+                )
+            }
+        )
 
-    private inline fun <T> runSafe(block: () -> T): Result<T, AgentError> = try {
+    private inline fun <T> runSafe(
+        block: () -> T,
+        onNetworkError: (() -> Unit)? = null
+    ): Result<T, AgentError> = try {
         Result.Ok(block())
     } catch (error: Exception) {
-        Result.Err(AgentError.Unknown(error))
+        val mapped = when (error) {
+            is IOException -> AgentError.Network
+            else -> AgentError.Unknown(error)
+        }
+        if (mapped is AgentError.Network) {
+            onNetworkError?.invoke()
+        }
+        Result.Err(mapped)
+    }
+
+    private fun enqueueRetry(name: String, data: androidx.work.Data) {
+        val request = OneTimeWorkRequestBuilder<MatchActionRetryWorker>()
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .setInputData(data)
+            .build()
+        workManager.enqueueUniqueWork(name, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
     }
 
     private fun resolverGanador(lanzamientos: Map<Long, Int>): Pair<Long?, Boolean> {

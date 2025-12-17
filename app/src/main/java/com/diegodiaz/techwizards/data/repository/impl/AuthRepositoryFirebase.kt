@@ -46,6 +46,23 @@ class AuthRepositoryFirebase(
             }
         }
 
+    override suspend fun fetchIdToken(forceRefresh: Boolean): Result<String, AgentError> =
+        withContext(ioDispatcher) {
+            try {
+                val tokenResult = firebaseAuth.currentUser
+                    ?.getIdToken(forceRefresh)
+                    ?.await()
+                    ?: return@withContext Result.Err(AgentError.Validation("Usuario no autenticado"))
+
+                val token = tokenResult.token
+                    ?: return@withContext Result.Err(AgentError.Unknown(null))
+
+                Result.Ok(token)
+            } catch (e: Exception) {
+                Result.Err(AgentError.Unknown(e))
+            }
+        }
+
     override suspend fun signOut(): Result<Unit, AgentError> =
         withContext(ioDispatcher) {
             try {

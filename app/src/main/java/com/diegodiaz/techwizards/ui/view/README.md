@@ -25,3 +25,10 @@ Pantallas Jetpack Compose y el `NavGraph` principal de Tech Wizards.
 | `PantallaAyuda` | WebView multilingüe (EN/DE) que carga ayuda desde `assets/help`, registra la selección en `DecentralizedLogger` y evita contenido dinámico inseguro. | `onVolver` si aplica. |
 
 Todas las pantallas usan el helper `Responsive` para adaptar tamaños según el espacio disponible y se apoyan en el tema definido en `ui/theme`.
+
+## Pruebas manuales
+
+### `PantallaMatch` (online)
+1. Iniciar sesión con dos jugadores y crear un match nuevo. Confirmar que la UI muestra estado `PENDING` y el botón de lanzar está deshabilitado.
+2. Marcar ambos jugadores como listos desde la pantalla. Verificar que el estado cambie a `ACTIVE` y que el botón de lanzamiento se habilite para ambos.
+3. Lanzar dados hasta que se registre un ganador y se actualicen los puntajes. Al finalizar la ronda, confirmar que la pantalla refleje el estado `FINISHED` y los scores finales.

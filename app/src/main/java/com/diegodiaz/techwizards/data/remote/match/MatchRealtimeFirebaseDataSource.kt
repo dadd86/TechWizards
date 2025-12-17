@@ -19,7 +19,19 @@ class MatchRealtimeFirebaseDataSource(
     private val firestore: FirebaseFirestore = Firebase.firestore
 ) : MatchRealtimeDataSource {
 
-    override fun streamMatch(matchId: String): Flow<MatchDto?> = flowOf(null)
+    override fun streamMatch(matchId: String): Flow<MatchDto?> = callbackFlow {
+        val listener = firestore.collection("matches")
+            .document(matchId)
+            .addSnapshotListener { snapshot, error ->
+                error?.let { close(it) }
+                if (snapshot != null) {
+                    val match = snapshot.toObject(MatchDto::class.java)?.copy(id = matchId)
+                    trySend(match)
+                }
+            }
+
+        awaitClose { listener.remove() }
+    }
 
     override fun streamParticipantes(matchId: String): Flow<List<MatchParticipantDto>> =
         streamReady(matchId).map { readyList ->

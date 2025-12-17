@@ -11,13 +11,13 @@ import com.diegodiaz.techwizards.domain.model.MatchScore
 class MatchRemoteMapper {
     fun toDomain(dto: MatchDto): Match =
         Match(
-            id = dto.id,
+            id = dto.id.ifBlank { dto.lobbyId.orEmpty() },
             lobbyId = dto.lobbyId,
-            modo = dto.modo,
-            estado = runCatching { MatchEstado.valueOf(dto.estado) }
+            modo = dto.modo.ifBlank { "online" },
+            estado = runCatching { MatchEstado.valueOf(dto.estado.ifBlank { MatchEstado.PENDING.name }) }
                 .getOrDefault(MatchEstado.PENDING),
             createdByNumero = dto.createdByNumero,
-            createdAtMs = dto.createdAtMs,
+            createdAtMs = dto.createdAtMs.takeIf { it > 0 } ?: System.currentTimeMillis(),
             startedAtMs = dto.startedAtMs,
             finishedAtMs = dto.finishedAtMs
         )

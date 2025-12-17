@@ -2,6 +2,7 @@ package com.diegodiaz.techwizards.data.infra.network
 
 import com.diegodiaz.techwizards.BuildConfig
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
+import com.diegodiaz.techwizards.core.SessionManager
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.HttpUrl
@@ -56,6 +57,31 @@ object RetrofitProvider {
             return chain.proceed(newRequest)
         }
     }
+    /**
+     * Interceptor que añade la cabecera Authorization leyendo desde [SessionManager].
+     *
+     * @param sessionManager Fuente in-memory de la sesión autenticada.
+     * @security No expone el token en logs y opera únicamente en memoria.
+     */
+    class SessionAuthInterceptor(
+        private val sessionManager: SessionManager,
+    ) : Interceptor {
+        override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
+            val session = sessionManager.session.value
+            val token = session?.token
+
+            if (token.isNullOrBlank()) {
+                return chain.proceed(chain.request())
+            }
+
+            val newRequest = chain.request()
+                .newBuilder()
+                .header("Authorization", "Bearer $token")
+                .build()
+
+            return chain.proceed(newRequest)
+        }
+    }
 
     private fun createLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {
@@ -70,10 +96,15 @@ object RetrofitProvider {
      */
     fun createOkHttpClient(
         tokenProvider: () -> String?,
+        sessionManager: SessionManager? = null,
         enableLogging: Boolean = true,
     ): OkHttpClient {
         val builder = OkHttpClient.Builder()
             .addInterceptor(FirebaseAuthInterceptor(tokenProvider))
+
+        sessionManager?.let { manager ->
+            builder.addInterceptor(SessionAuthInterceptor(manager))
+        }
 
         if (enableLogging) {
             builder.addInterceptor(createLoggingInterceptor())
@@ -85,11 +116,12 @@ object RetrofitProvider {
     fun createRetrofit(
         baseUrl: String,
         tokenProvider: () -> String?,
+        sessionManager: SessionManager? = null,
         enableLogging: Boolean = true,
     ): Retrofit {
         return Retrofit.Builder()
             .baseUrl(baseUrl)
-            .client(createOkHttpClient(tokenProvider, enableLogging))
+            .client(createOkHttpClient(tokenProvider, sessionManager, enableLogging))
             .addConverterFactory(MoshiConverterFactory.create(moshi)) // ✅ aquí
             .build()
     }
@@ -99,6 +131,7 @@ object RetrofitProvider {
      */
     fun retrofit(
         credentialsStore: CredentialsStore,
+        sessionManager: SessionManager? = null,
         baseUrl: String = BuildConfig.API_BASE_URL,
         serializer: String = BuildConfig.API_SERIALIZER,
         enableLogging: Boolean = true,
@@ -112,7 +145,7 @@ object RetrofitProvider {
 
         return Retrofit.Builder()
             .baseUrl(baseUrl)
-            .client(createOkHttpClient(tokenProvider, enableLogging))
+            .client(createOkHttpClient(tokenProvider, sessionManager, enableLogging))
             .addConverterFactory(converter)
             .build()
     }
