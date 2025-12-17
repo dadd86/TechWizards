@@ -50,6 +50,7 @@ fun PantallaMatch(
     modifier: Modifier = Modifier
 ) {
     val progreso = uiState.progresoPremio
+    val ambosListos = uiState.localListo && uiState.remotoListo && uiState.carasSeleccionadas.size >= 2
 
     Column(
         modifier = modifier
@@ -122,7 +123,7 @@ fun PantallaMatch(
                 modifier = Modifier
                     .weight(1f)
                     .height(dims.buttonHeightSm),
-                enabled = uiState.localListo,
+                enabled = ambosListos,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondary
                 )
@@ -140,7 +141,13 @@ fun PantallaMatch(
 
         uiState.participantes.forEach { participante ->
             val score = uiState.puntuaciones.firstOrNull { it.usuarioNumero == participante.usuarioNumero }?.score ?: 0
-            MatchCard(nombre = participante.rol ?: "Player ${participante.usuarioNumero}", puntos = score, dims = dims)
+            MatchCard(
+                nombre = participante.rol ?: "Player ${participante.usuarioNumero}",
+                puntos = score,
+                caraElegida = uiState.carasSeleccionadas[participante.usuarioNumero],
+                lanzamiento = uiState.lanzamientos[participante.usuarioNumero],
+                dims = dims
+            )
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -224,13 +231,14 @@ private fun SeleccionCara(
 @Composable
 private fun ResultadoDado(uiState: MatchOnlineUiState, dims: UiDims) {
     val resultado = uiState.resultadoDado
-    if (resultado == null) {
+    if (resultado == null && uiState.lanzamientos.isEmpty()) {
         Text(
             text = stringResource(id = R.string.match_no_roll),
             fontSize = dims.bodySp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     } else {
+        val valorMostrar = resultado ?: uiState.lanzamientos.values.maxOrNull().orEmptyValue()
         Card(
             colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant),
             modifier = Modifier.fillMaxWidth()
@@ -240,16 +248,39 @@ private fun ResultadoDado(uiState: MatchOnlineUiState, dims: UiDims) {
                 verticalArrangement = Arrangement.spacedBy(dims.spaceXs)
             ) {
                 Text(
-                    text = stringResource(id = R.string.match_roll_result, resultado),
+                    text = stringResource(id = R.string.match_roll_result, valorMostrar),
                     fontSize = dims.bodySp,
                     fontWeight = FontWeight.Bold
                 )
-                if (uiState.localListo && uiState.remotoListo) {
+                uiState.lanzamientos.forEach { (jugador, valor) ->
                     Text(
-                        text = stringResource(id = R.string.match_wait_remote_roll),
-                        fontSize = dims.bodySp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = stringResource(id = R.string.match_roll_player_result, jugador, valor),
+                        fontSize = dims.bodySp
                     )
+                }
+                when {
+                    uiState.huboEmpate -> {
+                        Text(
+                            text = stringResource(id = R.string.match_round_draw),
+                            fontSize = dims.bodySp,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
+                    uiState.ganadorRonda != null -> {
+                        Text(
+                            text = stringResource(id = R.string.match_round_winner, uiState.ganadorRonda),
+                            fontSize = dims.bodySp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    uiState.localListo && uiState.remotoListo -> {
+                        Text(
+                            text = stringResource(id = R.string.match_wait_remote_roll),
+                            fontSize = dims.bodySp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
@@ -260,6 +291,8 @@ private fun ResultadoDado(uiState: MatchOnlineUiState, dims: UiDims) {
 private fun MatchCard(
     nombre: String,
     puntos: Int,
+    caraElegida: Int? = null,
+    lanzamiento: Int? = null,
     dims: UiDims
 ) {
     Card(
@@ -286,11 +319,24 @@ private fun MatchCard(
                     text = stringResource(id = R.string.match_points, puntos),
                     fontSize = dims.bodySp
                 )
+                caraElegida?.let {
+                    Text(
+                        text = stringResource(id = R.string.match_selected_face, it),
+                        fontSize = dims.bodySp
+                    )
+                }
+                lanzamiento?.let {
+                    Text(
+                        text = stringResource(id = R.string.match_last_roll, it),
+                        fontSize = dims.bodySp
+                    )
+                }
             }
         }
     }
 }
 
+private fun Int?.orEmptyValue(): Int = this ?: 0
 @Composable
 private fun PrizeProgressCard(
     progreso: Float,

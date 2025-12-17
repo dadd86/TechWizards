@@ -43,14 +43,23 @@ class MatchRepositoryRemote(
         val matchFlow = realtime.streamMatch(matchId).map { dto -> dto?.let(mapper::toDomain) }
         val participantesFlow = realtime.streamParticipantes(matchId).map { list -> list.map(mapper::toDomain) }
         val scoreFlow = realtime.streamScores(matchId).map { list -> list.map(mapper::toDomain) }
-        val readyFlow = realtime.streamRemotoListo(matchId)
+        val readyFlow = realtime.streamReady(matchId)
+        val rollFlow = realtime.streamRollResults(matchId)
 
-        return combine(matchFlow, participantesFlow, scoreFlow, readyFlow) { match, participantes, scores, remotoListo ->
+        return combine(matchFlow, participantesFlow, scoreFlow, readyFlow, rollFlow) { match, participantes, scores, readyList, rollList ->
+            val carasElegidas = readyList.associate { it.jugadorNumero to it.caraElegida }
+            val lanzamientos = rollList.associate { it.jugadorNumero to it.caraObtenida }
+            val (ganadorRonda, empate) = resolverGanador(lanzamientos)
+
             MatchSnapshot(
                 match = match,
                 participantes = participantes,
                 scores = scores,
-                remotoListo = remotoListo
+                remotoListo = carasElegidas.size >= 2,
+                carasElegidas = carasElegidas,
+                lanzamientos = lanzamientos,
+                ganadorRonda = ganadorRonda,
+                empate = empate
             )
         }
     }
@@ -73,5 +82,14 @@ class MatchRepositoryRemote(
         Result.Ok(block())
     } catch (error: Exception) {
         Result.Err(AgentError.Unknown(error))
+    }
+
+    private fun resolverGanador(lanzamientos: Map<Long, Int>): Pair<Long?, Boolean> {
+        if (lanzamientos.isEmpty()) return null to false
+        val max = lanzamientos.maxByOrNull { it.value } ?: return null to false
+        val jugadoresConMax = lanzamientos.filterValues { it == max.value }.keys
+        val empate = jugadoresConMax.size > 1
+        val ganador = if (empate) null else max.key
+        return ganador to empate
     }
 }

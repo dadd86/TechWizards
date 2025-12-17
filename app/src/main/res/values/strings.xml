@@ -101,6 +101,11 @@
     <string name="match_no_roll">Aún no hay lanzamiento registrado.</string>
     <string name="match_roll_result">Resultado del dado: %1$d</string>
     <string name="match_wait_remote_roll">Espera el lanzamiento remoto para sincronizar el marcador.</string>
+    <string name="match_selected_face">Cara elegida: %1$d</string>
+    <string name="match_last_roll">Último lanzamiento: %1$d</string>
+    <string name="match_roll_player_result">Jugador %1$d lanzó %2$d</string>
+    <string name="match_round_winner">Ganador de la ronda: Jugador %1$d</string>
+    <string name="match_round_draw">Ronda empatada</string>
     <string name="common_back">Volver</string>
     <string name="no_money_title">Sin monedas</string>
     <string name="no_money_message">No puedes continuar lanzando porque no tienes más monedas.</string>

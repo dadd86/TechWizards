@@ -9,6 +9,7 @@ import com.diegodiaz.techwizards.domain.model.Match
 import com.diegodiaz.techwizards.domain.model.MatchParticipant
 import com.diegodiaz.techwizards.domain.model.MatchScore
 import com.diegodiaz.techwizards.domain.repository.MatchRepository
+import com.diegodiaz.techwizards.domain.repository.ScoreRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,18 +34,24 @@ data class MatchOnlineUiState(
     val resultadoDado: Int? = null,
     val remotoListo: Boolean = false,
     val localListo: Boolean = false,
+    val carasSeleccionadas: Map<Long, Int> = emptyMap(),
+    val lanzamientos: Map<Long, Int> = emptyMap(),
+    val ganadorRonda: Long? = null,
+    val huboEmpate: Boolean = false,
     val cargando: Boolean = false,
     val error: String? = null
 )
 
 class ControladorMatchOnline(
-    private val matchRepository: MatchRepository
+    private val matchRepository: MatchRepository,
+    private val scoreRepository: ScoreRepository
 ) : ViewModel() {
 
     private val _ui = MutableStateFlow(MatchOnlineUiState())
     val ui: StateFlow<MatchOnlineUiState> = _ui.asStateFlow()
 
     private var streamJob: Job? = null
+    private var ultimoLanzamientoProcesado: Map<Long, Int> = emptyMap()
 
     fun iniciar(matchId: String, lobbyId: String?, usuarioId: Long?) {
         if (matchId == _ui.value.matchId) return
@@ -53,15 +60,29 @@ class ControladorMatchOnline(
         streamJob?.cancel()
         streamJob = viewModelScope.launch {
             matchRepository.observarEstado(matchId).collect { snapshot ->
+                val participantes = (snapshot.participantes + _ui.value.participantes)
+                    .distinctBy { it.usuarioNumero }
+                val marcador = construirMarcador(
+                    snapshotScores = snapshot.scores,
+                    lanzamientos = snapshot.lanzamientos,
+                    ganadorRonda = snapshot.ganadorRonda,
+                    empate = snapshot.empate
+                )
                 _ui.value = _ui.value.copy(
                     match = snapshot.match,
-                    participantes = snapshot.participantes,
-                    puntuaciones = snapshot.scores,
+                    participantes = participantes,
+                    puntuaciones = marcador,
                     remotoListo = snapshot.remotoListo,
+                    carasSeleccionadas = snapshot.carasElegidas,
+                    lanzamientos = snapshot.lanzamientos,
+                    ganadorRonda = snapshot.ganadorRonda,
+                    huboEmpate = snapshot.empate,
                     cargando = false
                 )
             }
         }
+
+        viewModelScope.launch { cargarTopYpremio() }
 
         // Pre-carga el jugador local en la UI si viene desde un lobby.
         if (usuarioId != null) {
@@ -119,6 +140,46 @@ class ControladorMatchOnline(
             score = 0
         )
         _ui.value = _ui.value.copy(participantes = existente + nuevo)
+    }
+
+    private suspend fun cargarTopYpremio() {
+        try {
+            val top = scoreRepository.obtenerTopTen()
+            val premio = scoreRepository.obtenerPremioComun()
+            _ui.value = _ui.value.copy(topTen = top, premioComun = premio)
+        } catch (error: Exception) {
+            _ui.value = _ui.value.copy(error = errorToUiMessage(error))
+        }
+    }
+
+    private fun construirMarcador(
+        snapshotScores: List<MatchScore>,
+        lanzamientos: Map<Long, Int>,
+        ganadorRonda: Long?,
+        empate: Boolean
+    ): List<MatchScore> {
+        val matchId = _ui.value.matchId
+        if (lanzamientos.isEmpty() || matchId == null) return snapshotScores.ifEmpty { _ui.value.puntuaciones }
+        if (lanzamientos == ultimoLanzamientoProcesado) return _ui.value.puntuaciones
+        ultimoLanzamientoProcesado = lanzamientos
+
+        if (ganadorRonda == null || empate) return snapshotScores.ifEmpty { _ui.value.puntuaciones }
+
+        val base = snapshotScores.ifEmpty { _ui.value.puntuaciones }
+        val actualizadas = base.toMutableList()
+        val indice = actualizadas.indexOfFirst { it.usuarioNumero == ganadorRonda }
+        if (indice >= 0) {
+            actualizadas[indice] = actualizadas[indice].copy(score = actualizadas[indice].score + 1)
+        } else {
+            actualizadas.add(
+                MatchScore(
+                    matchId = matchId,
+                    usuarioNumero = ganadorRonda,
+                    score = 1
+                )
+            )
+        }
+        return actualizadas
     }
 }
 private fun errorToUiMessage(error: Any?): String {

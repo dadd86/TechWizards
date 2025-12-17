@@ -143,6 +143,8 @@ dependencies {
 
     // Firebase Auth (solo una vez)
     implementation(libs.firebase.auth)
+    // Firebase Firestore para sincronización en tiempo real
+    implementation(libs.firebase.firestore)
 
     // Test utils
     testImplementation("io.mockk:mockk:1.13.12")

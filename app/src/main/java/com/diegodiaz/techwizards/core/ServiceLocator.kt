@@ -16,7 +16,7 @@ import com.diegodiaz.techwizards.data.infra.network.RetrofitProvider
 import com.diegodiaz.techwizards.data.local.dao.IPartidaDao
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
 import com.diegodiaz.techwizards.data.local.mapper.VictoryLocationLocalMapper
-import com.diegodiaz.techwizards.data.remote.match.InMemoryMatchRealtimeDataSource
+import com.diegodiaz.techwizards.data.remote.match.MatchRealtimeFirebaseDataSource
 import com.diegodiaz.techwizards.data.remote.match.MatchApi
 import com.diegodiaz.techwizards.data.remote.match.MatchRemoteMapper
 import com.diegodiaz.techwizards.data.remote.api.ScoresApi
@@ -97,7 +97,7 @@ object ServiceLocator {
     }
 
     private val matchRealtimeDataSource by lazy {
-        InMemoryMatchRealtimeDataSource()
+        MatchRealtimeFirebaseDataSource()
     }
 
     private val matchRemoteMapper by lazy {
@@ -206,5 +206,20 @@ object ServiceLocator {
     fun init(context: Context) {
         appContext = context.applicationContext
         FirebaseApp.initializeApp(appContext)
+        registrarListenerFirebaseToken()
+    }
+
+    private fun registrarListenerFirebaseToken() {
+        firebaseAuth.addIdTokenListener { auth ->
+            val user = auth.currentUser
+            if (user == null) {
+                credentialsStore.guardarFirebaseToken(null)
+            } else {
+                user.getIdToken(false)
+                    .addOnSuccessListener { result ->
+                        credentialsStore.guardarFirebaseToken(result.token)
+                    }
+            }
+        }
     }
 }

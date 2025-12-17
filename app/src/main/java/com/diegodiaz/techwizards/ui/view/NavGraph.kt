@@ -297,7 +297,7 @@ fun NavGraph(
             val matchVm: ControladorMatchOnline = viewModel(
                 key = "matchOnline-$matchId",
                 factory = SimpleVmFactory {
-                    ControladorMatchOnline(ServiceLocator.matchRepository)
+                    ControladorMatchOnline(ServiceLocator.matchRepository, ServiceLocator.scoreRepository)
                 }
             )
 

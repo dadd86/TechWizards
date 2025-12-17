@@ -1,5 +1,6 @@
 package com.diegodiaz.techwizards.data.repository.impl
 
+import com.diegodiaz.techwizards.core.SessionManager
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
 import com.diegodiaz.techwizards.data.remote.score.ScoreApi
 import com.diegodiaz.techwizards.data.remote.score.toDomain
@@ -15,17 +16,19 @@ import com.diegodiaz.techwizards.data.remote.score.LoginRequest
 /**
  * Implementación de ScoreRepository basada en Retrofit (ScoreApi).
  *
- * IMPORTANTE:
- * - ScoreApi.publishScore(...) y updatePrize(...) NO aceptan @Header bearer.
- * - La autorización debe ir por Interceptor (OkHttp) o por configuración del backend.
+ * @security
+ * Reutiliza el token actual del [SessionManager] para firmar cada petición
+ * mediante cabecera `Authorization: Bearer <token>`.
  */
 class ScoreRepositoryRetrofit(
     private val scoreApi: ScoreApi,
-    private val credentialsStore: CredentialsStore
+    private val credentialsStore: CredentialsStore,
+    private val sessionManager: SessionManager
 ) : ScoreRepository {
 
     override suspend fun obtenerTopTen(): List<LeaderboardEntry> {
-        val dtos = scoreApi.fetchTopTen()
+        val bearer = sessionManager.session.value?.token?.let { "Bearer $it" }
+        val dtos = scoreApi.fetchLeaderboard(bearerToken = bearer)
 
         // DTO ya trae position opcional; forzamos una si viene null
         return dtos.mapIndexed { index, dto ->
@@ -41,6 +44,7 @@ class ScoreRepositoryRetrofit(
 
         // ScoreApi SOLO acepta el body
         scoreApi.publishScore(
+            bearerToken = "Bearer ${session.token}",
             ScorePayload(
                 alias = session.alias,
                 score = score
@@ -49,7 +53,8 @@ class ScoreRepositoryRetrofit(
     }
 
     override suspend fun obtenerPremioComun(): CommonPrize {
-        return scoreApi.fetchPrize().toDomain()
+        val bearer = sessionManager.session.value?.token?.let { "Bearer $it" }
+        return scoreApi.fetchCommonPrize(bearerToken = bearer).toDomain()
     }
 
     override suspend fun actualizarPremioComun(
@@ -61,6 +66,7 @@ class ScoreRepositoryRetrofit(
 
         // ScoreApi SOLO acepta el body
         return scoreApi.updatePrize(
+            bearerToken = "Bearer ${session.token}",
             nuevoPremio.toDto()
         ).toDomain()
     }
