@@ -49,19 +49,19 @@ class MatchRepositoryRemote(
     private val workManager = WorkManager.getInstance(appContext)
 
     override suspend fun upsertMatch(match: Match): Result<Unit, AgentError> =
-        runSafe { api.guardarMatch(mapper.toDto(match)) }
+        runSafeCall { api.guardarMatch(mapper.toDto(match)) }
 
     override suspend fun registrarEvento(evento: MatchEvent): Result<Unit, AgentError> =
         Result.Err(AgentError.Validation("Eventos remotos no implementados"))
 
     override suspend fun obtenerHistorial(limite: Int): Result<List<Match>, AgentError> =
-        runSafe {
+        runSafeCall {
             api.obtenerMatch("recent") // En un backend real habría endpoint paginado
             emptyList()
         }
 
     override suspend fun guardarScore(score: MatchScore): Result<Unit, AgentError> =
-        runSafe { api.registrarLanzamiento(score.matchId, RollResultDto(score.usuarioNumero, score.score)) }
+        runSafeCall { api.registrarLanzamiento(score.matchId, RollResultDto(score.usuarioNumero, score.score)) }
 
     override fun observarEstado(matchId: String): Flow<MatchSnapshot> {
         val matchFlow = realtime.streamMatch(matchId).map { dto -> dto?.let(mapper::toDomain) }
@@ -105,7 +105,7 @@ class MatchRepositoryRemote(
         jugadorNumero: Long,
         caraElegida: Int
     ): Result<Unit, AgentError> =
-        runSafe(
+        runSafeCall(
             block = { realtime.marcarListo(matchId, PlayerReadyDto(jugadorNumero, caraElegida)) },
             onNetworkError = {
                 enqueueRetry(
@@ -120,7 +120,7 @@ class MatchRepositoryRemote(
         jugadorNumero: Long,
         caraObtenida: Int
     ): Result<Unit, AgentError> =
-        runSafe(
+        runSafeCall(
             block = { realtime.registrarLanzamiento(matchId, RollResultDto(jugadorNumero, caraObtenida)) },
             onNetworkError = {
                 enqueueRetry(
@@ -130,7 +130,7 @@ class MatchRepositoryRemote(
             }
         )
 
-    private suspend fun <T> runSafe(
+    private suspend fun <T> runSafeCall(
         block: suspend () -> T,
         onNetworkError: (() -> Unit)? = null
     ): Result<T, AgentError> = try {

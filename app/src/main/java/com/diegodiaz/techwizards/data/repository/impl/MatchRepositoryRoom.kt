@@ -11,11 +11,12 @@ import com.diegodiaz.techwizards.data.local.mapper.toEntity
 import com.diegodiaz.techwizards.data.transaction.TransactionRunner
 import com.diegodiaz.techwizards.domain.model.MatchSnapshot
 import com.diegodiaz.techwizards.domain.model.Partida
+import io.reactivex.rxjava3.core.Flowable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.rx3.asFlow
 import kotlinx.coroutines.rx3.await
-import io.reactivex.rxjava3.core.Flowable
+
 
 class MatchRepositoryRoom(
     private val matchDao: IMatchDao,
@@ -28,12 +29,13 @@ class MatchRepositoryRoom(
 ) {
     // -------- Rx nativo --------
     fun historialRx(usuarioId: Long): Flowable<List<Partida>> =
-        partidaDao.historial(usuarioId).map { list -> list.map { it.toDomain() } }
+        partidaDao.historial(usuarioId).map { list -> list.map { entity -> entity.toDomain() } }
 
 
     // -------- Wrappers coroutines (opcional) --------
     fun historial(usuarioId: Long): Flow<List<Partida>> {
-        return historialRx(usuarioId).asFlow()
+        val history: Flowable<List<Partida>> = historialRx(usuarioId)
+        return history.asFlow()
     }
 
     suspend fun registrarResultado(partida: Partida, saldoNuevo: Int) {
