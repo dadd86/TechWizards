@@ -39,7 +39,7 @@ android {
             buildConfigField(
                 "String",
                 "API_BASE_URL",
-                "\"http://10.0.2.2:5002/techwizards-dado/eur3/api/\""
+                "\"http://10.0.2.2:5002/techwizards-dado/us-central1/api/\""
             )
         }
         release {

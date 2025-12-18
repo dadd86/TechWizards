@@ -103,7 +103,6 @@ class ControladorAuthTest {
 
         override fun observeUser(): Flow<AuthUser?> = _user.asStateFlow()
 
-        override fun cachedUser(): AuthUser? = cached
 
         override suspend fun signInWithGoogle(idToken: String): Result<AuthUser, AgentError> {
             return if (idToken == "ok") {
@@ -120,12 +119,20 @@ class ControladorAuthTest {
                 Result.Err(AgentError.Validation("token inválido"))
             }
         }
+        override suspend fun fetchIdToken(forceRefresh: Boolean): Result<String, AgentError> {
+            return if (cached != null) {
+                Result.Ok("token_${cached!!.uid}")
+            } else {
+                Result.Err(AgentError.Validation("no user"))
+            }
+        }
 
         override suspend fun signOut(): Result<Unit, AgentError> {
             cached = null
             _user.value = null
             return Result.Ok(Unit)
         }
+        override suspend fun getCachedUser(): Result<AuthUser?, AgentError> = Result.Ok(cached)
     }
 }
 

@@ -28,7 +28,7 @@ class ScoreRepositoryRetrofit(
 
     override suspend fun obtenerTopTen(): List<LeaderboardEntry> {
         val bearer = sessionManager.session.value?.token?.let { "Bearer $it" }
-        val dtos = scoreApi.fetchLeaderboard(bearerToken = bearer)
+        val dtos = scoreApi.fetchTopTen(bearerToken = bearer)
 
         // DTO ya trae position opcional; forzamos una si viene null
         return dtos.mapIndexed { index, dto ->
@@ -54,7 +54,7 @@ class ScoreRepositoryRetrofit(
 
     override suspend fun obtenerPremioComun(): CommonPrize {
         val bearer = sessionManager.session.value?.token?.let { "Bearer $it" }
-        return scoreApi.fetchCommonPrize(bearerToken = bearer).toDomain()
+        return scoreApi.fetchPrize(bearerToken = bearer).toDomain()
     }
 
     override suspend fun actualizarPremioComun(

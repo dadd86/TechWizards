@@ -4,6 +4,7 @@ import com.diegodiaz.techwizards.core.SessionManager
 import com.diegodiaz.techwizards.core.common.AgentError
 import com.diegodiaz.techwizards.core.common.Result
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
+import com.diegodiaz.techwizards.credenciales.EncryptedCredentialsStore
 import com.diegodiaz.techwizards.domain.model.AuthUser
 import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.domain.repository.AuthRepository
@@ -20,6 +21,15 @@ class IniciarSesionConGoogleUseCase(
     private val credentialsStore: CredentialsStore,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
+    constructor(
+        authRepository: AuthRepository,
+        ioDispatcher: CoroutineDispatcher
+    ) : this(
+        authRepository = authRepository,
+        sessionManager = SessionManager(),
+        credentialsStore = EncryptedCredentialsStore(),
+        ioDispatcher = ioDispatcher
+    )
 
     suspend operator fun invoke(idToken: String): Result<AuthUser, AgentError> =
         withContext(ioDispatcher) {

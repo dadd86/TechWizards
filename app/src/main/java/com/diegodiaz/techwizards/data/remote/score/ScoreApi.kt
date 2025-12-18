@@ -37,11 +37,6 @@ interface ScoreApi {
         @Header("Authorization") bearerToken: String?
     ): PrizeDto
 
-    @GET("commonPrize")
-    suspend fun fetchCommonPrize(
-        @Header("Authorization") bearerToken: String?
-    ): PrizeDto
-
     @PUT("prize/common")
     suspend fun updatePrize(
         @Header("Authorization") bearerToken: String?,

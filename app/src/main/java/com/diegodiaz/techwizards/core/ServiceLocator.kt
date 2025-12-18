@@ -256,9 +256,9 @@ object ServiceLocator {
     fun init(context: Context) {
         appContext = context.applicationContext
         FirebaseApp.initializeApp(appContext)
-        DecentralizedLogger.i("ServiceLocator", "API_BASE_URL=" + BuildConfig.API_BASE_URL)
         registrarListenerFirebaseToken()
     }
+
 
     private fun registrarListenerFirebaseToken() {
         firebaseAuth.addIdTokenListener(object : FirebaseAuth.IdTokenListener {
