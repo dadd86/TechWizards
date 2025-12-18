@@ -20,16 +20,12 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
 
-        // ✅ BASE URL: ENV con fallback a tu API real (sin duplicados)
-        val apiBaseUrl = providers.environmentVariable("API_BASE_URL")
-            .orElse("https://api.techwizards.dev/")
-            .get()
+
 
         val apiSerializer = providers.environmentVariable("API_SERIALIZER")
             .orElse("moshi")
             .get()
 
-        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("String", "API_SERIALIZER", "\"$apiSerializer\"")
 
         val googleWebClientId = providers.environmentVariable("GOOGLE_WEB_CLIENT_ID")
@@ -39,7 +35,19 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField(
+                "String",
+                "API_BASE_URL",
+                "\"http://10.0.2.2:5002/techwizards-dado/eur3/api/\""
+            )
+        }
         release {
+            buildConfigField(
+                "String",
+                "API_BASE_URL",
+                "\"https://eur3-techwizards-dado.cloudfunctions.net/api/\""
+            )
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

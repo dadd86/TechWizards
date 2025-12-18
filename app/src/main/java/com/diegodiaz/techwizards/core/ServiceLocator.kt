@@ -32,6 +32,7 @@ import com.diegodiaz.techwizards.data.transaction.RoomTransactionRunner
 import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.domain.repository.AuthRepository
 import com.diegodiaz.techwizards.integration.victory.WorkManagerVictoryCelebrationService
+import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
@@ -125,6 +126,8 @@ object ServiceLocator {
         MatchRemoteMapper()
     }
 
+
+
     // --------------------------------------------------
     // Repositories
     // --------------------------------------------------
@@ -156,6 +159,7 @@ object ServiceLocator {
             appContext = appContext
         )
     }
+
 
     val settingsRepository by lazy {
         SettingsRepositoryDataStore(appContext)
@@ -198,7 +202,7 @@ object ServiceLocator {
     val authRepository: AuthRepository by lazy {
         AuthRepositoryFirebase(
             firebaseAuth = firebaseAuth,
-            context = appContext
+            context = appContext,
         )
     }
 
@@ -252,6 +256,7 @@ object ServiceLocator {
     fun init(context: Context) {
         appContext = context.applicationContext
         FirebaseApp.initializeApp(appContext)
+        DecentralizedLogger.i("ServiceLocator", "API_BASE_URL=" + BuildConfig.API_BASE_URL)
         registrarListenerFirebaseToken()
     }
 

@@ -1,341 +1,142 @@
-import functionsFramework from '@google-cloud/functions-framework';
-import admin from 'firebase-admin';
-import express, {
-  ErrorRequestHandler,
-  NextFunction,
-  Request,
-  RequestHandler,
-  Response,
-} from 'express';
-import cors from 'cors';
-import { OAuth2Client, TokenPayload } from 'google-auth-library';
+import * as admin from "firebase-admin";
+import express from "express";
+import cors from "cors";
+import { onRequest } from "firebase-functions/v2/https";
+import { setGlobalOptions } from "firebase-functions/v2/options";
 
-if (admin.apps.length === 0) {
-  admin.initializeApp();
-}
+setGlobalOptions({ maxInstances: 10 });
 
-const firestore = admin.firestore();
-const oauthClient = process.env.GOOGLE_OAUTH_CLIENT_ID
-  ? new OAuth2Client(process.env.GOOGLE_OAUTH_CLIENT_ID)
-  : null;
-
-type TokenSource = 'firebase' | 'google';
-
-interface AuthenticatedUser {
-  uid: string;
-  email?: string;
-  name?: string;
-  tokenSource: TokenSource;
-}
-
-type AuthenticatedRequest = Request & { user?: AuthenticatedUser };
-
-type DecodedToken = admin.auth.DecodedIdToken | TokenPayload;
-
+admin.initializeApp();
+const db = admin.firestore();
+const MAX_SCORE = 100_000;
+const MAX_PRIZE_VALUE = 100_000;
 
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
-app.options('*', cors());
 
-const unauthorized = (res: Response) => res.status(401).json({ error: 'Unauthorized' });
+type AuthedRequest = express.Request & { user?: admin.auth.DecodedIdToken };
 
-const asyncHandler = (handler: RequestHandler) =>
-  (req: Request, res: Response, next: NextFunction) =>
-    Promise.resolve(handler(req, res, next)).catch(next);
-
-async function authenticate(
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction,
-): Promise<Response | void> {
-  const header = req.get('authorization') || '';
-  if (!header.toLowerCase().startsWith('bearer ')) {
-    return unauthorized(res);
-  }
-
-  const token = header.split(' ')[1];
-  let decoded: DecodedToken | undefined;
-  let tokenSource: TokenSource = 'firebase';
-
+// --- Auth middleware: exige Bearer token y lo verifica ---
+async function requireAuth(req: AuthedRequest, res: express.Response, next: express.NextFunction) {
   try {
-    decoded = await admin.auth().verifyIdToken(token);
-  } catch (firebaseError) {
-    if (oauthClient) {
-      try {
-        const ticket = await oauthClient.verifyIdToken({
-          idToken: token,
-          audience: process.env.GOOGLE_OAUTH_CLIENT_ID,
-        });
-        decoded = ticket.getPayload();
-        tokenSource = 'google';
-      } catch (googleError) {
-        return unauthorized(res);
-      }
-    } else {
-      return unauthorized(res);
-    }
+    const header = req.header("Authorization") || "";
+    const match = header.match(/^Bearer (.+)$/);
+    if (!match) return res.status(401).json({ error: "missing_bearer_token" });
+
+    const idToken = match[1];
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    req.user = decoded;
+    return next();
+  } catch (e: any) {
+    return res.status(401).json({ error: "invalid_token", detail: String(e?.message ?? e) });
   }
-
-const uid = decoded && 'uid' in decoded && decoded.uid
-    ? decoded.uid
-    : (decoded as TokenPayload | undefined)?.sub || '';
-
-  const user: AuthenticatedUser = {
-    uid,
-    email: decoded?.email || undefined,
-    name:
-      decoded?.name ||
-      (decoded as admin.auth.DecodedIdToken | undefined)?.displayName ||
-      (decoded as TokenPayload | undefined)?.name ||
-      (decoded as { alias?: string } | undefined)?.alias,
-    tokenSource,
-  };
-  req.user = user;
-  return next();
 }
 
-function sanitizeAlias(alias: string): string {
-  return alias.trim().toLowerCase().replace(/[^a-z0-9-_]/gi, '_');
+function requireAdmin(req: any, res: any, next: any) {
+  const user = req.user || {};
+  if (user.admin === true || user.role === "admin" || user.claims?.admin === true) {
+    return next();
+  }
+  return res.status(403).json({ error: "forbidden", detail: "admin_only" });
 }
 
-function toPrizeDto(data?: FirebaseFirestore.DocumentData | null) {
-  if (!data) {
-    return { descripcion: '', valor: 0, updatedAt: null };
-  }
-  return {
-    descripcion: (data.descripcion as string) || '',
-    valor: Number.isFinite(data.valor) ? (data.valor as number) : 0,
-    updatedAt: data.updatedAt ? data.updatedAt.toMillis?.() || data.updatedAt : null,
-  };
-}
-
-function toScoreDto(
-  doc: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>,
-  position: number,
-) {
-  const data = doc.data();
-  return {
-    id: doc.id,
-    alias: data.alias as string,
-    score: data.score as number,
-    position,
-    prizeName: (data.prizeName as string) || null,
-    prizeDescription: (data.prizeDescription as string) || null,
-  };
-}
-
-app.post('/login', asyncHandler(async (req: Request, res: Response) => {
-  const body = (req.body ?? {}) as { alias?: string };
-  const { alias } = body;
-  if (!alias || typeof alias !== 'string') {
-    return res.status(400).json({ error: 'Alias requerido' });
-  }
-
-  const normalizedAlias = sanitizeAlias(alias);
-  const uid = `alias_${normalizedAlias}`.slice(0, 128);
-
-  try {
-    await admin.auth().getUser(uid);
-  } catch (getUserError) {
-    await admin.auth().createUser({ uid, displayName: alias }).catch(() => {});
-  }
-
-  const customToken = await admin.auth().createCustomToken(uid, { alias });
-  return res.json({ token: customToken, alias });
-}));
-
-app.post('/matches', authenticate, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const user = req.user as AuthenticatedUser;
-  const matchRef = await firestore.collection('matches').add({
-    status: 'PENDING',
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    createdBy: user.uid,
-  });
-
-  const snapshot = await matchRef.get();
-  return res.status(201).json({ id: matchRef.id, ...snapshot.data() });
-}));
-
-app.post('/matches/:id/ready', authenticate, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const user = req.user as AuthenticatedUser;
-  const { id } = req.params;
-  const { playerNumber } = (req.body ?? {}) as { playerNumber?: number };
-  if (playerNumber === undefined) {
-    return res.status(400).json({ error: 'playerNumber requerido' });
-  }
-
-  const matchRef = firestore.collection('matches').doc(id);
-  const readyRef = matchRef.collection('ready').doc(String(playerNumber));
-
-  await readyRef.set({
-    playerNumber,
-    userId: user.uid,
-    readyAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
-
-  return res.status(204).send();
-}));
-
-app.post('/matches/:id/roll', authenticate, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const user = req.user as AuthenticatedUser;
-  const { id } = req.params;
-  const { playerNumber, roll } = (req.body ?? {}) as { playerNumber?: number; roll?: number };
-  if (playerNumber === undefined || roll === undefined) {
-    return res.status(400).json({ error: 'playerNumber y roll requeridos' });
-  }
-
-  const matchRef = firestore.collection('matches').doc(id);
-  const rollRef = matchRef.collection('rolls').doc(String(playerNumber));
-
-  await firestore.runTransaction(async (transaction: FirebaseFirestore.Transaction) => {
-    const matchSnapshot = await transaction.get(matchRef);
-    if (!matchSnapshot.exists) {
-      throw new Error('Match no encontrado');
-    }
-
-    transaction.set(rollRef, {
-      playerNumber,
-      roll,
-      userId: user.uid,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    transaction.set(
-      matchRef,
-      { [`scores.${playerNumber}`]: roll },
-      { merge: true },
-    );
-  });
-
-  return res.status(204).send();
-}));
-
-app.get('/matches/:id', authenticate, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-  const matchRef = firestore.collection('matches').doc(id);
-  const [matchSnapshot, readySnapshot, rollsSnapshot] = await Promise.all([
-    matchRef.get(),
-    matchRef.collection('ready').get(),
-    matchRef.collection('rolls').get(),
-  ]);
-
-  if (!matchSnapshot.exists) {
-    return res.status(404).json({ error: 'Match no encontrado' });
-  }
-
-const ready = readySnapshot.docs.map(
-    (doc: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>) => ({
-      id: doc.id,
-      ...doc.data(),
-    }),
-  );
-  const rolls = rollsSnapshot.docs.map(
-    (doc: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>) => ({
-      id: doc.id,
-      ...doc.data(),
-    }),
-  );
-
-  return res.json({ id: matchSnapshot.id, ...matchSnapshot.data(), ready, rolls });
-}));
-
-async function getLeaderboard(limit: number) {
-  const effectiveLimit = Number.isFinite(limit) ? Math.min(Math.max(limit, 1), 100) : 10;
-  const snapshot = await firestore
-    .collection('scores')
-    .orderBy('score', 'desc')
-    .orderBy('createdAt', 'asc')
-    .limit(effectiveLimit)
+// --- GET /leaderboard/top10 ---
+app.get("/leaderboard/top10", async (_req, res) => {
+  const snap = await db.collection("scores")
+    .orderBy("score", "desc")
+    .limit(10)
     .get();
 
-  return snapshot.docs.map((doc, index) => toScoreDto(doc, index + 1));
-}
+  const items = snap.docs.map((d, idx) => {
+    const data = d.data() as any;
+    return {
+      id: d.id,
+      alias: data.alias,
+      score: data.score,
+      position: idx + 1,
+      prizeName: data.prizeName ?? null,
+      prizeDescription: data.prizeDescription ?? null,
+    };
+  });
 
-app.get('/leaderboard/top10', authenticate, asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
-  const leaderboard = await getLeaderboard(10);
-  return res.json(leaderboard);
-}));
+  res.json(items);
+});
 
-app.get('/leaderboard', authenticate, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const limitParam = req.query.limit;
-  const limit = typeof limitParam === 'string'
-    ? parseInt(limitParam, 10)
-    : Array.isArray(limitParam) && typeof limitParam[0] === 'string'
-      ? parseInt(limitParam[0], 10)
-      : 10;
+// --- POST /scores (requiere auth) ---
+app.post("/scores", requireAuth, async (req: AuthedRequest, res) => {
+  const { alias, score } = (req.body ?? {}) as any;
 
-  const leaderboard = await getLeaderboard(limit);
-  return res.json(leaderboard);
-}));
+  if (typeof alias !== "string" || !alias.trim()) return res.status(400).json({ error: "invalid_alias" });
+  const sanitizedAlias = alias.trim();
+    if (sanitizedAlias.length < 3 || sanitizedAlias.length > 30)
+      return res.status(400).json({ error: "invalid_alias_length" });
+    if (!Number.isInteger(score) || score < 0 || score > MAX_SCORE)
+      return res.status(400).json({ error: "invalid_score_range" });
+  if (!req.user?.uid) return res.status(401).json({ error: "missing_uid" });
 
-app.post('/scores', authenticate, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const user = req.user as AuthenticatedUser;
-  const body = (req.body ?? {}) as {
-    alias?: string;
-    score?: number;
-    prizeName?: string | null;
-    prizeDescription?: string | null;
-  };
-  const { alias, score } = body;
-  if (!alias || !Number.isFinite(score)) {
-    return res.status(400).json({ error: 'alias y score requeridos' });
-  }
-
-  const entry = {
-    alias,
-    score: score as number,
-    userId: user.uid,
-    prizeName: body.prizeName || null,
-    prizeDescription: body.prizeDescription || null,
+  await db.collection("scores").add({
+    uid: req.user.uid,
+    alias: sanitizedAlias,
+    score,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
-  };
+  });
 
-  const docRef = await firestore.collection('scores').add(entry);
-  return res.status(201).json({ id: docRef.id });
-}));
+  res.status(204).send();
+});
 
-async function fetchPrize() {
-  const prizeRef = firestore.collection('prizes').doc('common');
-  const snapshot = await prizeRef.get();
-  return { prizeRef, snapshot };
-}
+// --- GET /prize/common ---
+app.get("/prize/common", async (_req, res) => {
+  const ref = db.doc("prize/common");
+  const doc = await ref.get();
 
-app.get('/prize/common', authenticate, asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
-  const { snapshot } = await fetchPrize();
-  return res.json(toPrizeDto(snapshot.data()));
-}));
-
-app.get('/commonPrize', authenticate, asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
-  const { snapshot } = await fetchPrize();
-  return res.json(toPrizeDto(snapshot.data()));
-}));
-
-app.put('/prize/common', authenticate, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { descripcion, valor } = (req.body ?? {}) as { descripcion?: string; valor?: number };
-  if (descripcion === undefined || valor === undefined) {
-    return res.status(400).json({ error: 'descripcion y valor requeridos' });
+  if (!doc.exists) {
+    return res.json({ descripcion: "Premio común", valor: 0, updatedAt: Date.now() });
   }
 
-  const { prizeRef } = await fetchPrize();
+  const data = doc.data() as any;
+  res.json({
+    descripcion: data.descripcion ?? "Premio común",
+    valor: data.valor ?? 0,
+    updatedAt: data.updatedAt ?? null,
+  });
+});
+
+// --- PUT /prize/common (requiere auth) ---
+app.put("/prize/common", requireAuth, requireAdmin, async (req: any, res) => {
+  const { descripcion, valor } = (req.body ?? {}) as any;
+
+  if (typeof descripcion !== "string" || !descripcion.trim()) return res.status(400).json({ error: "invalid_descripcion" });
+  if (!Number.isInteger(valor) || valor < 0 || valor > MAX_PRIZE_VALUE) return res.status(400).json({ error: "invalid_valor" });
+  if (!req.user?.uid) return res.status(401).json({ error: "missing_uid" });
+
   const payload = {
-    descripcion,
+    descripcion: descripcion.trim(),
     valor,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: Date.now(),
+    updatedByUid: req.user.uid,
   };
 
-  await prizeRef.set(payload, { merge: true });
-  const snapshot = await prizeRef.get();
-  return res.json(toPrizeDto(snapshot.data()));
-}));
+  await db.doc("prize/common").set(payload, { merge: true });
 
-const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
-  // eslint-disable-next-line no-console
-  console.error('Unhandled error', error);
-  const message = (error as { message?: string })?.message || 'Error interno';
-  return res.status(500).json({ error: message });
-};
+  res.json({ descripcion: payload.descripcion, valor: payload.valor, updatedAt: payload.updatedAt });
+});
 
-app.use(errorHandler);
+// --- POST /login (requiere auth) ---
+// Nota: esto NO "loguea" (ya estás logueado). Solo registra alias.
+app.post("/login", requireAuth, async (req: AuthedRequest, res) => {
+  const alias = String((req.body ?? {}).alias ?? "").trim();
+  if (!alias) return res.status(400).json({ error: "invalid_alias" });
+  if (!req.user?.uid) return res.status(401).json({ error: "missing_uid" });
 
-functionsFramework.http('api', app);
+  await db.doc(`users/${req.user.uid}`).set(
+    { alias, updatedAt: Date.now() },
+    { merge: true }
+  );
+
+  const token = (req.header("Authorization") || "").replace(/^Bearer /, "");
+  res.json({ token, alias });
+});
+
+// Export HTTP function (2nd gen)
+export const api = onRequest({ cors: true }, app);
