@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.rx3.asFlow
 import kotlinx.coroutines.rx3.await
+import kotlinx.coroutines.reactive.asFlow
+
 
 
 class MatchRepositoryRoom(
@@ -33,10 +35,8 @@ class MatchRepositoryRoom(
 
 
     // -------- Wrappers coroutines (opcional) --------
-    fun historial(usuarioId: Long): Flow<List<Partida>> {
-        val history: Flowable<List<Partida>> = historialRx(usuarioId)
-        return history.asFlow()
-    }
+    fun historial(usuarioId: Long): Flow<List<Partida>> =
+        historialRx(usuarioId).asFlow()
 
     suspend fun registrarResultado(partida: Partida, saldoNuevo: Int) {
         partidaDao.insert(partida.toEntity())

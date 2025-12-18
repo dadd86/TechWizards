@@ -15,7 +15,6 @@ import com.diegodiaz.techwizards.data.remote.match.MatchRealtimeDataSource
 import com.diegodiaz.techwizards.data.remote.match.MatchRemoteMapper
 import com.diegodiaz.techwizards.data.remote.match.PlayerReadyDto
 import com.diegodiaz.techwizards.data.remote.match.RollResultDto
-import com.diegodiaz.techwizards.data.repository.impl.MatchRepositoryRoom
 import com.diegodiaz.techwizards.domain.model.Match
 import com.diegodiaz.techwizards.domain.model.MatchEvent
 import com.diegodiaz.techwizards.domain.model.MatchScore
@@ -49,19 +48,30 @@ class MatchRepositoryRemote(
     private val workManager = WorkManager.getInstance(appContext)
 
     override suspend fun upsertMatch(match: Match): Result<Unit, AgentError> =
-        runSafeCall { api.guardarMatch(mapper.toDto(match)) }
+        runSafeCall<Unit>(
+            block = { api.guardarMatch(mapper.toDto(match)) }
+        )
 
     override suspend fun registrarEvento(evento: MatchEvent): Result<Unit, AgentError> =
         Result.Err(AgentError.Validation("Eventos remotos no implementados"))
 
     override suspend fun obtenerHistorial(limite: Int): Result<List<Match>, AgentError> =
-        runSafeCall {
-            api.obtenerMatch("recent") // En un backend real habría endpoint paginado
-            emptyList()
-        }
+        runSafeCall<List<Match>>(
+            block = {
+                api.obtenerMatch("recent") // TODO: mapear a Match cuando exista endpoint real
+                emptyList()
+            }
+        )
 
     override suspend fun guardarScore(score: MatchScore): Result<Unit, AgentError> =
-        runSafeCall { api.registrarLanzamiento(score.matchId, RollResultDto(score.usuarioNumero, score.score)) }
+        runSafeCall<Unit>(
+            block = {
+                api.registrarLanzamiento(
+                    score.matchId,
+                    RollResultDto(score.usuarioNumero, score.score)
+                )
+            }
+        )
 
     override fun observarEstado(matchId: String): Flow<MatchSnapshot> {
         val matchFlow = realtime.streamMatch(matchId).map { dto -> dto?.let(mapper::toDomain) }
@@ -94,8 +104,10 @@ class MatchRepositoryRemote(
                 snapshotLocalDataSource?.guardar(matchId, snapshot)
             }
         }
-        val cacheFlow = mirrorRoom?.observarSnapshot(matchId) ?: snapshotLocalDataSource?.observar(matchId)?.filterNotNull()
-        ?: emptyFlow()
+        val cacheFlow: Flow<MatchSnapshot> =
+            mirrorRoom?.observarSnapshot(matchId)?.filterNotNull()
+                ?: snapshotLocalDataSource?.observar(matchId)?.filterNotNull()
+                ?: emptyFlow()
 
         return merge(cacheFlow, remoto)
     }
