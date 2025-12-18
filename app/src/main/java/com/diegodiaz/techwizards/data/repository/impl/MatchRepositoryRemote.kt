@@ -130,8 +130,8 @@ class MatchRepositoryRemote(
             }
         )
 
-    private inline fun <T> runSafe(
-        block: () -> T,
+    private suspend fun <T> runSafe(
+        block: suspend () -> T,
         onNetworkError: (() -> Unit)? = null
     ): Result<T, AgentError> = try {
         Result.Ok(block())

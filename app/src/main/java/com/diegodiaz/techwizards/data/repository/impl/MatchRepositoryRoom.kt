@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.rx3.asFlow
 import kotlinx.coroutines.rx3.await
+import io.reactivex.rxjava3.core.Flowable
 
 class MatchRepositoryRoom(
     private val matchDao: IMatchDao,
@@ -26,7 +27,7 @@ class MatchRepositoryRoom(
     private val snapshotLocalDataSource: MatchSnapshotLocalDataSource
 ) {
     // -------- Rx nativo --------
-    fun historialRx(usuarioId: Long) =
+    fun historialRx(usuarioId: Long): Flowable<List<Partida>> =
         partidaDao.historial(usuarioId).map { list -> list.map { it.toDomain() } }
 
 

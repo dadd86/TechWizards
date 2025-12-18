@@ -73,9 +73,9 @@ private data class MatchCache(
 private data class MatchParticipantCache(
     val matchId: String,
     val usuarioNumero: Long,
-    val rol: String,
+    val rol: String?,
     val teamId: String?,
-    val joinedAtMs: Long?,
+    val joinedAtMs: Long,
     val leftAtMs: Long?,
     val score: Int
 )

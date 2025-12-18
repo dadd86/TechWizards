@@ -142,7 +142,7 @@ object ServiceLocator {
             realtime = matchRealtimeDataSource,
             mapper = matchRemoteMapper,
             scoreRepository = scoreRepository,
-            sessionManager = sessionManager
+            sessionManager = sessionManager,
             mirrorRoom = MatchRepositoryRoom(
                 matchDao = matchDao,
                 matchParticipantDao = matchParticipantDao,
