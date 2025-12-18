@@ -25,9 +25,12 @@ class ScoreRepositoryRetrofit(
     private val credentialsStore: CredentialsStore,
     private val sessionManager: SessionManager
 ) : ScoreRepository {
+    private fun tokenOrNull(): String? =
+        sessionManager.session.value?.token ?: credentialsStore.obtenerFirebaseToken()
 
     override suspend fun obtenerTopTen(): List<LeaderboardEntry> {
-        val bearer = sessionManager.session.value?.token?.let { "Bearer $it" }
+        val token = tokenOrNull()
+        val bearer = token?.let { "Bearer $it" }
         val dtos = scoreApi.fetchTopTen(bearerToken = bearer)
 
         // DTO ya trae position opcional; forzamos una si viene null
@@ -53,8 +56,9 @@ class ScoreRepositoryRetrofit(
     }
 
     override suspend fun obtenerPremioComun(): CommonPrize {
-        val bearer = sessionManager.session.value?.token?.let { "Bearer $it" }
-        return scoreApi.fetchPrize(bearerToken = bearer).toDomain()
+        val token = tokenOrNull()
+        val bearer = token?.let { "Bearer $it" }
+        return scoreApi.fetchCommonPrize(bearerToken = bearer).toDomain()
     }
 
     override suspend fun actualizarPremioComun(

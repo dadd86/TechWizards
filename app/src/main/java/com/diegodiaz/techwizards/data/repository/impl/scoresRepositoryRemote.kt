@@ -9,7 +9,7 @@ import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 /**
  * Implementación remota (plural) para leaderboard usando ScoresApi.
  *
- * - obtenerTopTen(): llama a /scores/top enviando token por header + query auth.
+ * - obtenerTopTen(): llama a /scores/top enviando token por header.
  * - publicarScore(): publica ScoreRemoteDto y devuelve el registro enriquecido.
  */
 class ScoresRepositoryRemote(
@@ -24,10 +24,7 @@ class ScoresRepositoryRemote(
 
         val bearer = "Bearer $token"
 
-        val remoteScores = scoresApi.obtenerTopTen(
-            bearerToken = bearer,
-            authToken = token
-        )
+        val remoteScores = scoresApi.obtenerTopTen(bearerToken = bearer)
 
         return remoteScores.mapIndexed { index, dto ->
             mapper.toDomain(dto, position = index + 1)
@@ -50,7 +47,6 @@ class ScoresRepositoryRemote(
 
         val saved: ScoreRemoteDto = scoresApi.publicarScore(
             bearerToken = bearer,
-            authToken = token,
             score = payload
         )
 

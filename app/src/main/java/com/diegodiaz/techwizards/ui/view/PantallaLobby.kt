@@ -1,12 +1,21 @@
 package com.diegodiaz.techwizards.ui.view
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,8 +26,10 @@ import com.diegodiaz.techwizards.ui.responsive.UiDims
 
 @Composable
 fun PantallaLobby(
-    dims: UiDims
+    dims: UiDims,
+    onVolver: () -> Unit
 ) {
+    val scrollState = rememberScrollState()
     val lobbies = listOf(
         "#234" to stringResource(id = R.string.lobby_status_open),
         "#235" to stringResource(id = R.string.lobby_status_waiting),
@@ -28,9 +39,13 @@ fun PantallaLobby(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = dims.spaceMd, vertical = dims.spaceSm),
+            .padding(horizontal = dims.spaceMd, vertical = dims.spaceSm)
+            .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(dims.spaceSm)
     ) {
+        TextButton(onClick = onVolver) {
+            Text(text = stringResource(id = R.string.game_back_to_menu))
+        }
         Text(
             text = stringResource(id = R.string.lobby_title),
             fontSize = dims.titleSp,

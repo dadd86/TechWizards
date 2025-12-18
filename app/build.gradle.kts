@@ -34,21 +34,35 @@ android {
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
     }
 
-    buildTypes {
-        debug {
+    flavorDimensions += "target"
+
+    productFlavors {
+        create("emulator") {
+            dimension = "target"
             buildConfigField(
                 "String",
                 "API_BASE_URL",
                 "\"http://10.0.2.2:5002/techwizards-dado/us-central1/api/\""
             )
         }
-        release {
+
+        create("device") {
+            dimension = "target"
             buildConfigField(
                 "String",
                 "API_BASE_URL",
-                "\"https://eur3-techwizards-dado.cloudfunctions.net/api/\""
+                "\"http://192.168.178.23:5002/techwizards-dado/us-central1/api/\""
             )
+        }
+    }
+
+    buildTypes {
+        debug {
+            // opcional: nada aquí
             isMinifyEnabled = false
+        }
+        release {
+            isMinifyEnabled = true // o false si no quieres ofuscar
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

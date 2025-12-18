@@ -14,11 +14,12 @@ sealed interface PremioAdminUiState {
     data object Cargando : PremioAdminUiState
     data class Exito(
         val premio: CommonPrize,
-        val mensaje: String? = null,
+        val mensaje: PremioAdminMensaje? = null,
     ) : PremioAdminUiState
 
     data class Error(val mensaje: String) : PremioAdminUiState
 }
+data class PremioAdminMensaje(val texto: String, val esError: Boolean)
 
 /**
  * Controlador dedicado al flujo administrativo del premio común.
@@ -33,6 +34,7 @@ class ControladorPremioAdmin(
 
     private val _ui = MutableStateFlow<PremioAdminUiState>(PremioAdminUiState.Cargando)
     val ui: StateFlow<PremioAdminUiState> = _ui
+    private var ultimoPremio: CommonPrize? = null
 
     init {
         cargarPremio()
@@ -42,7 +44,10 @@ class ControladorPremioAdmin(
         _ui.value = PremioAdminUiState.Cargando
         viewModelScope.launch {
             runCatching { scoreRepository.obtenerPremioComun() }
-                .onSuccess { premio -> _ui.value = PremioAdminUiState.Exito(premio) }
+                .onSuccess { premio ->
+                    ultimoPremio = premio
+                    _ui.value = PremioAdminUiState.Exito(premio)
+                }
                 .onFailure { _ui.value = PremioAdminUiState.Error("No se pudo cargar el premio común") }
         }
     }
@@ -50,8 +55,25 @@ class ControladorPremioAdmin(
     fun actualizarPremio(descripcion: String, valor: Int) {
         viewModelScope.launch {
             when (val resultado = actualizarPremioComunUseCase(descripcion, valor)) {
-                is Result.Err -> _ui.value = PremioAdminUiState.Error(resultado.error.toUserMessage())
-                is Result.Ok -> _ui.value = PremioAdminUiState.Exito(resultado.value, "Premio actualizado correctamente")
+                is Result.Err -> {
+                    val premioActual = ultimoPremio
+                    if (premioActual != null) {
+                        _ui.value = PremioAdminUiState.Exito(
+                            premio = premioActual,
+                            mensaje = PremioAdminMensaje(resultado.error.toUserMessage(), esError = true)
+                        )
+                    } else {
+                        _ui.value = PremioAdminUiState.Error(resultado.error.toUserMessage())
+                    }
+                }
+
+                is Result.Ok -> {
+                    ultimoPremio = resultado.value
+                    _ui.value = PremioAdminUiState.Exito(
+                        resultado.value,
+                        PremioAdminMensaje("Premio actualizado correctamente", esError = false)
+                    )
+                }
             }
         }
     }

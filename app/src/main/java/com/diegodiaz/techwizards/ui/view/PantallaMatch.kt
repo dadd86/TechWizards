@@ -1,9 +1,5 @@
 package com.diegodiaz.techwizards.ui.view
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,8 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -24,6 +25,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -38,7 +40,6 @@ import com.diegodiaz.techwizards.R
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.ui.controller.MatchOnlineUiState
 import com.diegodiaz.techwizards.ui.responsive.UiDims
-
 @Composable
 fun PantallaMatch(
     dims: UiDims,
@@ -51,13 +52,19 @@ fun PantallaMatch(
 ) {
     val progreso = uiState.progresoPremio
     val ambosListos = uiState.localListo && uiState.remotoListo && uiState.carasSeleccionadas.size >= 2
+    val scrollState = rememberScrollState()
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = dims.spaceMd, vertical = dims.spaceSm),
+            .padding(horizontal = dims.spaceMd, vertical = dims.spaceSm)
+            .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(dims.spaceSm)
     ) {
+        TextButton(onClick = onVolver) {
+            Text(text = stringResource(id = R.string.game_back_to_menu))
+        }
+
         Text(
             text = stringResource(id = R.string.match_title),
             fontSize = dims.titleSp,
@@ -150,7 +157,8 @@ fun PantallaMatch(
             )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+
+        Spacer(modifier = Modifier.height(dims.spaceSm))
 
         Button(
             onClick = onVolver,

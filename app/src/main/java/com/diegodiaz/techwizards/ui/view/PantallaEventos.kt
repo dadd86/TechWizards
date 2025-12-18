@@ -1,7 +1,18 @@
 package com.diegodiaz.techwizards.ui.view
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -12,7 +23,8 @@ import com.diegodiaz.techwizards.ui.responsive.UiDims
 
 @Composable
 fun PantallaEventos(
-    dims: UiDims
+    dims: UiDims,
+    onVolver: () -> Unit
 ) {
     val eventos = listOf(
         Triple(
@@ -35,9 +47,14 @@ fun PantallaEventos(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = dims.spaceMd, vertical = dims.spaceSm),
+            .padding(horizontal = dims.spaceMd, vertical = dims.spaceSm)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(dims.spaceSm)
     ) {
+        TextButton(onClick = onVolver) {
+            Text(text = stringResource(id = R.string.game_back_to_menu))
+        }
+
         Text(
             text = stringResource(id = R.string.events_title),
             fontSize = dims.titleSp,

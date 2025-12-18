@@ -16,13 +16,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.diegodiaz.techwizards.R
 import com.diegodiaz.techwizards.ui.controller.ControladorPremioAdmin
 import com.diegodiaz.techwizards.ui.controller.PremioAdminUiState
 import com.diegodiaz.techwizards.ui.responsive.UiDims
@@ -48,7 +52,7 @@ fun PantallaPremioAdmin(
             .padding(dims.spaceMd),
         verticalArrangement = Arrangement.spacedBy(dims.spaceSm),
     ) {
-        TextButton(onClick = onVolver) { Text("Volver") }
+        TextButton(onClick = onVolver) { Text(text = stringResource(id = R.string.game_back_to_menu)) }
         Text(
             text = "Premio común (admin)",
             style = MaterialTheme.typography.headlineSmall,
@@ -85,8 +89,13 @@ fun PantallaPremioAdmin(
                     valor.value = premio.valor.toString()
                 }
 
-                if (ui.mensaje != null) {
-                    Text(text = ui.mensaje, color = MaterialTheme.colorScheme.primary)
+                ui.mensaje?.let { mensaje ->
+                    val color = if (mensaje.esError) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    }
+                    Text(text = mensaje.texto, color = color)
                 }
 
                 Card(modifier = Modifier.fillMaxWidth()) {

@@ -5,7 +5,6 @@ import com.diegodiaz.techwizards.credenciales.CredentialsStore
 import com.diegodiaz.techwizards.core.SessionManager
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -18,7 +17,6 @@ import retrofit2.converter.moshi.MoshiConverterFactory
  *
  * - Usa un interceptor que añade:
  *   - Cabecera Authorization: Bearer <tokenFirebase>
- *   - Query ?auth=<tokenFirebase>
  *
  * El token se obtiene mediante una lambda para no acoplarse a Firebase directamente.
  */
@@ -30,7 +28,7 @@ object RetrofitProvider {
         .build()
 
     /**
-     * Interceptor que, si hay token, lo añade como Bearer y como query `auth`.
+     * Interceptor que, si hay token, lo añade como cabecera Bearer.
      */
     class FirebaseAuthInterceptor(
         private val tokenProvider: () -> String?,
@@ -44,13 +42,7 @@ object RetrofitProvider {
                 return chain.proceed(originalRequest)
             }
 
-            // Añadir header Authorization y query auth
-            val newUrl: HttpUrl = originalRequest.url.newBuilder()
-                .setQueryParameter("auth", token)
-                .build()
-
-            val newRequest: Request = originalRequest.newBuilder()
-                .url(newUrl)
+               val newRequest: Request = originalRequest.newBuilder()
                 .header("Authorization", "Bearer $token")
                 .build()
 

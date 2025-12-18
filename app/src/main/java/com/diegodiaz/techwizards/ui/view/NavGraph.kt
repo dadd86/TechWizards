@@ -279,15 +279,24 @@ fun NavGraph(
         }
 
         composable("chat") {
-            PantallaChat(dims = dims)
+            PantallaChat(
+                dims = dims,
+                onVolver = { navController.navigate("menu") }
+            )
         }
 
         composable("eventos") {
-            PantallaEventos(dims = dims)
+            PantallaEventos(
+                dims = dims,
+                onVolver = { navController.navigate("menu") }
+            )
         }
 
         composable("lobby") {
-            PantallaLobby(dims = dims)
+            PantallaLobby(
+                dims = dims,
+                onVolver = { navController.navigate("menu") }
+            )
         }
 
         composable(

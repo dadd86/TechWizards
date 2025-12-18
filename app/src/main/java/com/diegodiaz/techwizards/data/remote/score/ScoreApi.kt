@@ -33,7 +33,7 @@ interface ScoreApi {
     )
 
     @GET("prize/common")
-    suspend fun fetchPrize(
+    suspend fun fetchCommonPrize(
         @Header("Authorization") bearerToken: String?
     ): PrizeDto
 
