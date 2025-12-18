@@ -34,6 +34,7 @@ fun PantallaMenu(
     onChat: () -> Unit,
     onEventos: () -> Unit,
     onMatch: () -> Unit,
+    onPremioAdmin: () -> Unit,
     dims: UiDims,
     controladorPartida: ControladorPartida,
     usuario: Usuario?,
@@ -80,6 +81,7 @@ fun PantallaMenu(
             MenuBoton(stringResource(id = R.string.menu_play), dims, onJugar)
             MenuBoton(stringResource(id = R.string.menu_history), dims, onHistorial)
             MenuBoton(texto = "Top Ten", dims = dims, onClick = onRanking)
+            MenuBoton(texto = "Premio común (admin)", dims = dims, onClick = onPremioAdmin)
             MenuBoton(stringResource(id = R.string.menu_settings), dims, onAjustes)
             MenuBoton(stringResource(id = R.string.menu_help), dims, onAyuda)
             MenuBoton(stringResource(id = R.string.lobby_title), dims, onLobby)

@@ -8,6 +8,7 @@ import com.diegodiaz.techwizards.core.usecases.CerrarSesionUseCase
 import com.diegodiaz.techwizards.core.usecases.IniciarSesionConGoogleUseCase
 import com.diegodiaz.techwizards.core.usecases.ObservarUsuarioAutenticadoUseCase
 import com.diegodiaz.techwizards.core.usecases.ObtenerUsuarioAutenticadoUseCase
+import com.diegodiaz.techwizards.core.usecases.ActualizarPremioComunUseCase
 import com.diegodiaz.techwizards.core.usecases.ResolverTiradaUseCase
 import com.diegodiaz.techwizards.core.usecases.RegistrarUbicacionVictoriaUseCase
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
@@ -140,6 +141,8 @@ object ServiceLocator {
             api = matchApi,
             realtime = matchRealtimeDataSource,
             mapper = matchRemoteMapper,
+            scoreRepository = scoreRepository,
+            sessionManager = sessionManager
             mirrorRoom = MatchRepositoryRoom(
                 matchDao = matchDao,
                 matchParticipantDao = matchParticipantDao,
@@ -172,6 +175,9 @@ object ServiceLocator {
             credentialsStore = credentialsStore,
             sessionManager = sessionManager
         )
+    }
+    val actualizarPremioComunUseCase by lazy {
+        ActualizarPremioComunUseCase(scoreRepository, sessionManager)
     }
 
     val victoryRepository by lazy {

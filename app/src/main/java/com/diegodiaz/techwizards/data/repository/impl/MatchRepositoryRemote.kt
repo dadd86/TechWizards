@@ -29,6 +29,8 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.map
+import com.diegodiaz.techwizards.core.SessionManager
+import com.diegodiaz.techwizards.domain.repository.ScoreRepository
 /**
  * Implementación remota de MatchRepository usando Retrofit y una fuente realtime (Firestore/SSE).
  */
@@ -36,10 +38,14 @@ class MatchRepositoryRemote(
     private val api: MatchApi,
     private val realtime: MatchRealtimeDataSource,
     private val mapper: MatchRemoteMapper,
+    private val scoreRepository: ScoreRepository,
+    private val sessionManager: SessionManager,
     private val mirrorRoom: MatchRepositoryRoom?,
     private val snapshotLocalDataSource: MatchSnapshotLocalDataSource?,
     appContext: Context
 ) : MatchRepository {
+
+    private val ultimoScorePublicado = mutableMapOf<Long, Int>()
     private val workManager = WorkManager.getInstance(appContext)
 
     override suspend fun upsertMatch(match: Match): Result<Unit, AgentError> =
@@ -67,7 +73,10 @@ class MatchRepositoryRemote(
         val remoto = combine(matchFlow, participantesFlow, scoreFlow, readyFlow, rollFlow) { match, participantes, scores, readyList, rollList ->
             val carasElegidas = readyList.associate { it.jugadorNumero to it.caraElegida }
             val lanzamientos = rollList.associate { it.jugadorNumero to it.caraObtenida }
-            val (ganadorRonda, empate) = resolverGanador(lanzamientos)
+            val (ganadorRonda, empate) = resolverGanador(
+                lanzamientos = lanzamientos,
+                scores = scores
+            )
 
             MatchSnapshot(
                 match = match,
@@ -145,12 +154,40 @@ class MatchRepositoryRemote(
         workManager.enqueueUniqueWork(name, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
     }
 
-    private fun resolverGanador(lanzamientos: Map<Long, Int>): Pair<Long?, Boolean> {
+    private suspend fun resolverGanador(
+        lanzamientos: Map<Long, Int>,
+        scores: List<MatchScore>
+    ): Pair<Long?, Boolean> {
         if (lanzamientos.isEmpty()) return null to false
         val max = lanzamientos.maxByOrNull { it.value } ?: return null to false
         val jugadoresConMax = lanzamientos.filterValues { it == max.value }.keys
         val empate = jugadoresConMax.size > 1
         val ganador = if (empate) null else max.key
+        if (ganador != null && !empate) {
+            publicarPuntuacionAcumulada(
+                ganador = ganador,
+                lanzamientos = lanzamientos,
+                scores = scores
+            )
+        }
         return ganador to empate
+    }
+    private suspend fun publicarPuntuacionAcumulada(
+        ganador: Long,
+        lanzamientos: Map<Long, Int>,
+        scores: List<MatchScore>
+    ) {
+        val session = sessionManager.session.value ?: return
+        val acumulado = scores.firstOrNull { it.usuarioNumero == ganador }?.score
+            ?: lanzamientos[ganador]
+            ?: 0
+        val ultimoPublicado = ultimoScorePublicado[ganador]
+        if (ultimoPublicado != null && acumulado <= ultimoPublicado) return
+
+        runCatching {
+            scoreRepository.publicarPuntuacion(session, acumulado)
+        }.onSuccess {
+            ultimoScorePublicado[ganador] = acumulado
+        }
     }
 }

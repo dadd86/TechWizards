@@ -31,6 +31,7 @@ import com.diegodiaz.techwizards.ui.controller.ControladorMatch
 import com.diegodiaz.techwizards.ui.controller.ControladorMatchOnline
 import com.diegodiaz.techwizards.ui.controller.ControladorPartida
 import com.diegodiaz.techwizards.ui.controller.ControladorPartidaFactory
+import com.diegodiaz.techwizards.ui.controller.ControladorPremioAdmin
 import com.diegodiaz.techwizards.ui.controller.ControladorRanking
 import com.diegodiaz.techwizards.ui.controller.SimpleVmFactory
 import com.diegodiaz.techwizards.ui.responsive.UiDims
@@ -168,6 +169,7 @@ fun NavGraph(
                     val lobbyId = "lobby-${usuario?.numero ?: 0}"
                     navController.navigate("match/$matchId?lobbyId=$lobbyId")
                 },
+                onPremioAdmin = { navController.navigate("premio-admin") },
                 dims = dims,
                 controladorPartida = controladorPartida,
                 usuario = usuario
@@ -248,6 +250,26 @@ fun NavGraph(
                 dims = dims
             )
         }
+
+
+
+        composable("premio-admin") {
+            val premioVm: ControladorPremioAdmin = viewModel(
+                factory = SimpleVmFactory {
+                    ControladorPremioAdmin(
+                        scoreRepository = scoreRepository,
+                        actualizarPremioComunUseCase = ServiceLocator.actualizarPremioComunUseCase
+                    )
+                }
+            )
+
+            PantallaPremioAdmin(
+                dims = dims,
+                controlador = premioVm,
+                onVolver = { navController.navigate("menu") }
+            )
+        }
+
 
         composable("ayuda") {
             PantallaAyuda(
