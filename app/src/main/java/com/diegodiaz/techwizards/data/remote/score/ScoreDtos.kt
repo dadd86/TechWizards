@@ -4,7 +4,6 @@ import com.diegodiaz.techwizards.domain.model.CommonPrize
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.domain.model.UserSession
 import com.squareup.moshi.Json
-import java.time.Instant
 
 data class ScoreEntryDto(
     val id: String? = null,
@@ -21,18 +20,18 @@ data class ScorePayload(
 )
 
 data class PrizeDto(
-    @Json(name = "description")
+    @Json(name = "descripcion")
     val descripcion: String,
-    @Json(name = "value")
+    @Json(name = "valor")
     val valor: Int,
     @Json(name = "updatedAt")
-    val updatedAt: String? = null
+    val updatedAt: Long? = null
 )
 
 data class PrizeRequestDto(
-    @Json(name = "description")
+    @Json(name = "descripcion")
     val descripcion: String,
-    @Json(name = "value")
+    @Json(name = "valor")
     val valor: Int
 )
 
@@ -57,13 +56,13 @@ fun ScoreEntryDto.toDomain(overridePosition: Int? = null) = LeaderboardEntry(
 fun PrizeDto.toDomain() = CommonPrize(
     descripcion = descripcion,
     valor = valor,
-    updatedAt = updatedAt?.toEpochMillis()
+    updatedAt = updatedAt
 )
 
 fun CommonPrize.toDto() = PrizeDto(
     descripcion = descripcion,
     valor = valor,
-    updatedAt = updatedAt?.toIsoInstant()
+    updatedAt = updatedAt
 )
 
 fun CommonPrize.toRequestDto() = PrizeRequestDto(
@@ -76,8 +75,3 @@ fun SessionResponseDto.toDomain() = UserSession(
     alias = alias
 )
 
-private fun String.toEpochMillis(): Long? =
-    runCatching { Instant.parse(this).toEpochMilli() }.getOrNull()
-
-private fun Long.toIsoInstant(): String =
-    Instant.ofEpochMilli(this).toString()

@@ -25,10 +25,12 @@ class ControladorLobby : ViewModel() {
         creadorNumero: Long,
         codigo: String? = null
     ): Lobby {
+        val codigoNormalizado = normalizarCodigoIngreso(codigo)
+        val lobbyId = codigoNormalizado ?: System.currentTimeMillis().toString()
         val nuevo = Lobby(
-            id = System.currentTimeMillis().toString(),
+            id = lobbyId,
             nombre = nombre,
-            codigo = codigo,
+            codigo = codigoNormalizado,
             modo = modo,
             estado = LobbyEstado.PENDING,
             creadorNumero = creadorNumero,
@@ -48,6 +50,19 @@ class ControladorLobby : ViewModel() {
     }
     fun actualizarCodigoIngreso(nuevoCodigo: String) {
         _ui.value = _ui.value.copy(codigoIngreso = nuevoCodigo)
+    }
+
+    /**
+     * Normaliza el código de lobby ingresado para evitar caracteres inválidos.
+     *
+     * @param codigo Texto crudo ingresado por el usuario.
+     * @return Código limpio o `null` si queda vacío tras limpiar.
+     * @security No persiste ni registra el contenido; solo sanitiza localmente.
+     */
+    fun normalizarCodigoIngreso(codigo: String?): String? {
+        if (codigo.isNullOrBlank()) return null
+        val limpio = codigo.trim().replace(Regex("[^A-Za-z0-9-]"), "")
+        return limpio.ifBlank { null }
     }
 
     fun limpiarError() { _ui.value = _ui.value.copy(error = null) }

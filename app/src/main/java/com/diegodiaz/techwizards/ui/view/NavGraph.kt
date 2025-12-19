@@ -331,8 +331,8 @@ fun NavGraph(
                 },
                 onActualizarCodigo = lobbyVm::actualizarCodigoIngreso,
                 onUnirsePorCodigo = {
-                    val codigo = lobbyState.codigoIngreso.trim()
-                    if (codigo.isNotEmpty()) {
+                    val codigo = lobbyVm.normalizarCodigoIngreso(lobbyState.codigoIngreso)
+                    if (!codigo.isNullOrEmpty()) {
                         lobbyVm.seleccionar(codigo)
                         val matchId = normalizarMatchId(codigo)
                         matchVm.unirseAMatchExistente(matchId = matchId, lobbyId = codigo, usuarioId = usuarioNumero)
