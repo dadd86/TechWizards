@@ -302,7 +302,13 @@ fun NavGraph(
         }
 
         composable("lobby") {
-            val lobbyVm: ControladorLobby = viewModel()
+            val lobbyVm: ControladorLobby = viewModel(
+                factory = SimpleVmFactory {
+                    ControladorLobby(
+                        ServiceLocator.lobbyRealtimeDataSource
+                    )
+                }
+            )
             val lobbyState by lobbyVm.ui.collectAsState()
 
             val matchVm: ControladorMatchOnline = viewModel(
@@ -342,12 +348,14 @@ fun NavGraph(
                     val codigo = lobbyVm.normalizarCodigoIngreso(lobbyState.codigoIngreso)
                     if (!codigo.isNullOrEmpty()) {
                         lobbyVm.seleccionar(codigo)
+                        lobbyVm.unirseLobbyRemoto(codigo, usuarioNumero)
                         val matchId = normalizarMatchId(codigo)
                         matchVm.unirseAMatchExistente(matchId = matchId, lobbyId = codigo, usuarioId = usuarioNumero)
                     }
                 },
                 onEntrarLobby = { lobbyId ->
                     lobbyVm.seleccionar(lobbyId)
+                    lobbyVm.unirseLobbyRemoto(lobbyId, usuarioNumero)
                     matchVm.unirseAMatchExistente(
                         matchId = normalizarMatchId(lobbyId),
                         lobbyId = lobbyId,

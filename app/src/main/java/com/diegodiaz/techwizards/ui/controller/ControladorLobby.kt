@@ -1,23 +1,32 @@
 package com.diegodiaz.techwizards.ui.controller
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.diegodiaz.techwizards.data.remote.lobby.LobbyRealtimeFirebaseDataSource
 import com.diegodiaz.techwizards.domain.model.Lobby
 import com.diegodiaz.techwizards.domain.model.LobbyEstado
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class LobbyUiState(
     val lobbies: List<Lobby> = emptyList(),
     val lobbyActual: Lobby? = null,
     val codigoIngreso: String = "",
+    val jugadoresConectados: Int = 0,
+    val rivalConectado: Boolean = false,
     val error: String? = null
 )
 
-class ControladorLobby : ViewModel() {
+class ControladorLobby(
+    private val lobbyRealtime: LobbyRealtimeFirebaseDataSource
+) : ViewModel() {
 
     private val _ui = MutableStateFlow(LobbyUiState())
     val ui: StateFlow<LobbyUiState> = _ui.asStateFlow()
+    private var lobbyListenerJob: Job? = null
 
     fun crearLobby(
         nombre: String,
@@ -26,7 +35,8 @@ class ControladorLobby : ViewModel() {
         codigo: String? = null
     ): Lobby {
         val codigoNormalizado = normalizarCodigoIngreso(codigo)
-        val lobbyId = codigoNormalizado ?: System.currentTimeMillis().toString()
+        val now = System.currentTimeMillis()
+        val lobbyId = codigoNormalizado ?: "lobby_$now"
         val nuevo = Lobby(
             id = lobbyId,
             nombre = nombre,
@@ -34,12 +44,15 @@ class ControladorLobby : ViewModel() {
             modo = modo,
             estado = LobbyEstado.PENDING,
             creadorNumero = creadorNumero,
-            createdAtMs = System.currentTimeMillis()
+            createdAtMs = now
         )
         _ui.value = _ui.value.copy(
             lobbies = _ui.value.lobbies + nuevo,
             lobbyActual = nuevo
         )
+
+        crearLobbyRemoto(nuevo)
+        observarLobbyRemoto(lobbyId)
         return nuevo
     }
 
@@ -50,6 +63,17 @@ class ControladorLobby : ViewModel() {
     }
     fun actualizarCodigoIngreso(nuevoCodigo: String) {
         _ui.value = _ui.value.copy(codigoIngreso = nuevoCodigo)
+    }
+
+    fun unirseLobbyRemoto(lobbyId: String, usuarioNumero: Long) {
+        observarLobbyRemoto(lobbyId)
+        viewModelScope.launch {
+            runCatching {
+                lobbyRealtime.unirseLobby(lobbyId, usuarioNumero)
+            }.onFailure { error ->
+                _ui.value = _ui.value.copy(error = error.message)
+            }
+        }
     }
 
     /**
@@ -63,6 +87,29 @@ class ControladorLobby : ViewModel() {
         if (codigo.isNullOrBlank()) return null
         val limpio = codigo.trim().replace(Regex("[^A-Za-z0-9-]"), "")
         return limpio.ifBlank { null }
+    }
+
+    private fun crearLobbyRemoto(lobby: Lobby) {
+        viewModelScope.launch {
+            runCatching {
+                lobbyRealtime.crearLobby(lobby)
+            }.onFailure { error ->
+                _ui.value = _ui.value.copy(error = error.message)
+            }
+        }
+    }
+
+    private fun observarLobbyRemoto(lobbyId: String) {
+        lobbyListenerJob?.cancel()
+        lobbyListenerJob = viewModelScope.launch {
+            lobbyRealtime.streamLobby(lobbyId).collect { snapshot ->
+                val jugadores = snapshot?.jugadoresConectados?.size ?: 0
+                _ui.value = _ui.value.copy(
+                    jugadoresConectados = jugadores,
+                    rivalConectado = jugadores >= 2
+                )
+            }
+        }
     }
 
     fun limpiarError() { _ui.value = _ui.value.copy(error = null) }

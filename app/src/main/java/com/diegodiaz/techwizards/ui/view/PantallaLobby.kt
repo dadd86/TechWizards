@@ -133,7 +133,11 @@ fun PantallaLobby(
         } else {
             Spacer(modifier = Modifier.height(dims.spaceSm))
             Text(
-                text = stringResource(id = R.string.lobby_waiting_to_start),
+                text = if (lobbyState.rivalConectado) {
+                    stringResource(id = R.string.lobby_rival_connected)
+                } else {
+                    stringResource(id = R.string.lobby_waiting_to_start)
+                },
                 fontSize = dims.bodySp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

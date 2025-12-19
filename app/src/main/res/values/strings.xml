@@ -84,6 +84,7 @@
     <string name="lobby_action_join">Entrar</string>
     <string name="lobby_active_match">Partida en lobby %1$s</string>
     <string name="lobby_waiting_to_start">Crea o únete a un lobby para iniciar la partida en línea.</string>
+    <string name="lobby_rival_connected">¡Rival conectado! Ya puedes iniciar la partida.</string>
     <string name="lobby_empty">No hay lobbies todavía. ¡Crea uno para invitar a otra persona!</string>
     <string name="events_title">Eventos en curso</string>
     <string name="events_daily_challenge">Desafío diario</string>

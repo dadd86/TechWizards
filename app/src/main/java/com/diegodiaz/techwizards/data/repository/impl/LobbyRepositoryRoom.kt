@@ -43,10 +43,11 @@ class LobbyRepositoryRoom(
         codigo: String? = null
     ): Completable {
         val now = System.currentTimeMillis()
+        val codigoNormalizado = codigo?.trim()?.ifBlank { null }
         val entity = LobbyEntity(
-            id = "lobby_$now",
+            id = codigoNormalizado ?: "lobby_$now",
             nombre = nombre,
-            codigo = codigo,
+            codigo = codigoNormalizado,
             modo = modo,
             estado = LobbyEstado.PENDING.name,
             creadorNumero = creadorNumero,
@@ -80,14 +81,16 @@ class LobbyRepositoryRoom(
         modo: String,
         codigo: String? = null
     ): Lobby {
+        val now = System.currentTimeMillis()
+        val codigoNormalizado = codigo?.trim()?.ifBlank { null }
         val lobby = Lobby(
-            id = "lobby_${System.currentTimeMillis()}",
+            id = codigoNormalizado ?: "lobby_$now",
             nombre = nombre,
-            codigo = codigo,
+            codigo = codigoNormalizado,
             modo = modo,
             estado = LobbyEstado.PENDING,
             creadorNumero = creadorNumero,
-            createdAtMs = System.currentTimeMillis()
+            createdAtMs = now
         )
         lobbyDao.upsert(lobby.toEntity())
         return lobby

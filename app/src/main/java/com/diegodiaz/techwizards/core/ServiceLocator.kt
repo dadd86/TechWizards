@@ -21,6 +21,7 @@ import com.diegodiaz.techwizards.data.local.dao.IMatchScoreDao
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
 import com.diegodiaz.techwizards.data.local.cache.MatchSnapshotLocalDataSource
 import com.diegodiaz.techwizards.data.local.mapper.VictoryLocationLocalMapper
+import com.diegodiaz.techwizards.data.remote.lobby.LobbyRealtimeFirebaseDataSource
 import com.diegodiaz.techwizards.data.remote.match.MatchRealtimeFirebaseDataSource
 import com.diegodiaz.techwizards.data.remote.match.MatchApi
 import com.diegodiaz.techwizards.data.remote.match.MatchRemoteMapper
@@ -121,6 +122,10 @@ object ServiceLocator {
 
     private val matchRealtimeDataSource by lazy {
         MatchRealtimeFirebaseDataSource()
+    }
+
+    val lobbyRealtimeDataSource by lazy {
+        LobbyRealtimeFirebaseDataSource()
     }
 
     private val matchRemoteMapper by lazy {

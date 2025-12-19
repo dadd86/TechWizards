@@ -84,6 +84,7 @@
     <string name="lobby_action_join">Enter</string>
     <string name="lobby_active_match">Match in lobby %1$s</string>
     <string name="lobby_waiting_to_start">Create or join a lobby to start the online match.</string>
+    <string name="lobby_rival_connected">Opponent connected! You can start the match.</string>
     <string name="lobby_empty">No lobbies yet. Create one to invite someone!</string>
     <string name="events_title">Ongoing events</string>
     <string name="events_daily_challenge">Daily challenge</string>
