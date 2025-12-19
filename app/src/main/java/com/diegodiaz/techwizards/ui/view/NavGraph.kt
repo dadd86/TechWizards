@@ -317,7 +317,8 @@ fun NavGraph(
                     ControladorMatchOnline(
                         ServiceLocator.matchRepository,
                         ServiceLocator.scoreRepository,
-                        ServiceLocator.lobbyRepository
+                        ServiceLocator.lobbyRepository,
+                        ServiceLocator.lobbyRealtimeDataSource
                     )
                 }
             )
@@ -401,7 +402,8 @@ fun NavGraph(
                     ControladorMatchOnline(
                         ServiceLocator.matchRepository,
                         ServiceLocator.scoreRepository,
-                        ServiceLocator.lobbyRepository
+                        ServiceLocator.lobbyRepository,
+                        ServiceLocator.lobbyRealtimeDataSource
                     )
                 }
             )

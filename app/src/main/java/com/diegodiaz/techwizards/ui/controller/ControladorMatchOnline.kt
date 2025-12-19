@@ -13,6 +13,7 @@ import com.diegodiaz.techwizards.domain.model.MatchScore
 import com.diegodiaz.techwizards.domain.model.MatchSnapshot
 import com.diegodiaz.techwizards.domain.repository.MatchRepository
 import com.diegodiaz.techwizards.domain.repository.ScoreRepository
+import com.diegodiaz.techwizards.data.remote.lobby.LobbyRealtimeFirebaseDataSource
 import com.diegodiaz.techwizards.data.repository.impl.LobbyRepositoryRoom
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -53,13 +54,15 @@ data class MatchOnlineUiState(
 class ControladorMatchOnline(
     private val matchRepository: MatchRepository,
     private val scoreRepository: ScoreRepository,
-    private val lobbyRepository: LobbyRepositoryRoom
+    private val lobbyRepository: LobbyRepositoryRoom,
+    private val lobbyRealtime: LobbyRealtimeFirebaseDataSource
 ) : ViewModel() {
 
     private val _ui = MutableStateFlow(MatchOnlineUiState())
     val ui: StateFlow<MatchOnlineUiState> = _ui.asStateFlow()
 
     private var streamJob: Job? = null
+    private var lobbyStreamJob: Job? = null
     private var buscarRivalJob: Job? = null
     private var ultimoLanzamientoProcesado: Map<Long, Int> = emptyMap()
 
@@ -157,6 +160,7 @@ class ControladorMatchOnline(
         }
 
         viewModelScope.launch { cargarTopYpremio() }
+        iniciarEscuchaLobby(lobbyId)
 
         // Pre-carga el jugador local en la UI si viene desde un lobby.
         if (usuarioId != null) {
@@ -207,23 +211,25 @@ class ControladorMatchOnline(
         buscarRivalJob?.cancel()
         _ui.value = _ui.value.copy(buscandoRival = true, error = null)
         viewModelScope.launch {
-            val lobbyEncontrado = lobbyRepository.buscarLobbyDisponible(usuarioNumero)
-            if (lobbyEncontrado != null) {
-                unirseAMatchExistente(
-                    matchId = "match-${lobbyEncontrado.id}",
-                    lobbyId = lobbyEncontrado.id,
-                    usuarioId = usuarioNumero
+            val lobbyId = _ui.value.lobbyId
+            if (lobbyId.isNullOrBlank()) {
+                _ui.value = _ui.value.copy(
+                    buscandoRival = false,
+                    error = "No se encontró lobby activo para buscar rival"
                 )
-                _ui.value = _ui.value.copy(buscandoRival = false)
-                return@launch
+               return@launch
             }
 
-            val lobbyCreado = lobbyRepository.crearLobby(
-                nombre = "Lobby $usuarioNumero",
-                modo = "duelo",
-                creadorNumero = usuarioNumero
-            )
-            crearMatchDesdeLobbyId(lobbyId = lobbyCreado.id, creadorNumero = usuarioNumero)
+            runCatching {
+                lobbyRealtime.unirseLobby(lobbyId, usuarioNumero)
+            }.onFailure { error ->
+                _ui.value = _ui.value.copy(
+                    buscandoRival = false,
+                    error = error.message ?: "Error al unirse al lobby remoto"
+                )
+                return@launch
+            }
+            iniciarEscuchaLobby(lobbyId)
             iniciarTimeoutRival()
         }
     }
@@ -270,6 +276,24 @@ class ControladorMatchOnline(
         }
     }
 
+    private fun iniciarEscuchaLobby(lobbyId: String?) {
+        if (lobbyId.isNullOrBlank()) return
+        lobbyStreamJob?.cancel()
+        lobbyStreamJob = viewModelScope.launch {
+            lobbyRealtime.streamLobby(lobbyId).collect { snapshot ->
+                val jugadores = snapshot?.jugadoresConectados?.size ?: 0
+                val rivalListo = jugadores >= 2
+                if (rivalListo && _ui.value.buscandoRival) {
+                    buscarRivalJob?.cancel()
+                }
+                _ui.value = _ui.value.copy(
+                    remotoListo = _ui.value.remotoListo || rivalListo,
+                    buscandoRival = _ui.value.buscandoRival && !rivalListo
+                )
+            }
+        }
+    }
+
     private fun construirMarcador(
         snapshotScores: List<MatchScore>,
         lanzamientos: Map<Long, Int>,
@@ -311,17 +335,18 @@ class ControladorMatchOnline(
         if (snapshot.remotoListo || snapshot.participantes.size >= 2) {
             buscarRivalJob?.cancel()
         }
+        val remotoListo = snapshot.remotoListo || _ui.value.remotoListo
         _ui.value = _ui.value.copy(
             match = snapshot.match,
             participantes = participantes,
             puntuaciones = marcador,
-            remotoListo = snapshot.remotoListo,
+            remotoListo = remotoListo,
             carasSeleccionadas = snapshot.carasElegidas,
             lanzamientos = snapshot.lanzamientos,
             ganadorRonda = snapshot.ganadorRonda,
             huboEmpate = snapshot.empate,
             cargando = false,
-            buscandoRival = _ui.value.buscandoRival && !snapshot.remotoListo
+            buscandoRival = _ui.value.buscandoRival && !remotoListo
         )
     }
 }
