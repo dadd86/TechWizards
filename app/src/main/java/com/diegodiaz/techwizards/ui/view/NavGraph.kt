@@ -366,7 +366,12 @@ fun NavGraph(
                 onSeleccionCara = matchVm::seleccionarCara,
                 onConfirmarApuesta = { matchVm.confirmarApuesta(usuarioNumero) },
                 onLanzarDado = { matchVm.lanzarDado(usuarioNumero) },
-                onBuscarRival = { matchVm.buscarRival(usuarioNumero) }
+                onBuscarRival = {
+                    matchVm.buscarRival(
+                        usuarioNumero,
+                        lobbyState.lobbyActual?.id ?: matchState.lobbyId
+                    )
+                }
             )
         }
 
@@ -422,7 +427,7 @@ fun NavGraph(
                 onSeleccionCara = matchVm::seleccionarCara,
                 onConfirmarApuesta = { usuarioId?.let(matchVm::confirmarApuesta) },
                 onLanzarDado = { usuarioId?.let(matchVm::lanzarDado) },
-                onBuscarRival = { usuarioId?.let(matchVm::buscarRival) },
+                onBuscarRival = { usuarioId?.let { matchVm.buscarRival(it, matchState.lobbyId) } },
                 onVolver = {
                     navController.navigate("menu") {
                         launchSingleTop = true

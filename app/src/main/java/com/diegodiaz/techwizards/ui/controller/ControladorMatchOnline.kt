@@ -6,6 +6,7 @@ import com.diegodiaz.techwizards.core.common.Result
 import com.diegodiaz.techwizards.domain.model.CommonPrize
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.domain.model.Lobby
+import com.diegodiaz.techwizards.domain.model.LobbyEstado
 import com.diegodiaz.techwizards.domain.model.Match
 import com.diegodiaz.techwizards.domain.model.MatchEstado
 import com.diegodiaz.techwizards.domain.model.MatchParticipant
@@ -206,7 +207,7 @@ class ControladorMatchOnline(
      * @param usuarioNumero Identificador numérico del jugador local.
      * @security No expone datos sensibles; usa IDs internos y estado de lobby.
      */
-    fun buscarRival(usuarioNumero: Long) {
+    fun buscarRival(usuarioNumero: Long, lobbyIdOverride: String? = null) {
         if (_ui.value.buscandoRival) return
         buscarRivalJob?.cancel()
         _ui.value = _ui.value.copy(buscandoRival = true, error = null)
@@ -292,6 +293,19 @@ class ControladorMatchOnline(
                 )
             }
         }
+    }
+
+    private suspend fun asegurarLobbyRemoto(lobbyId: String, creadorNumero: Long) {
+        val lobby = Lobby(
+            id = lobbyId,
+            nombre = "Lobby $creadorNumero",
+            codigo = lobbyId,
+            modo = "duelo",
+            estado = LobbyEstado.PENDING,
+            creadorNumero = creadorNumero,
+            createdAtMs = System.currentTimeMillis()
+        )
+        lobbyRealtime.crearLobby(lobby)
     }
 
     private fun construirMarcador(
