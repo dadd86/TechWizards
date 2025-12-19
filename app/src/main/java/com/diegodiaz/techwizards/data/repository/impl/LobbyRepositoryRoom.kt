@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.rx3.await
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
+import java.util.Locale
 
 /**
  * Se encarga de gestionar las salas (lobbies) del juego.
@@ -43,7 +44,7 @@ class LobbyRepositoryRoom(
         codigo: String? = null
     ): Completable {
         val now = System.currentTimeMillis()
-        val codigoNormalizado = codigo?.trim()?.ifBlank { null }
+        val codigoNormalizado = normalizarCodigo(codigo)
         val entity = LobbyEntity(
             id = codigoNormalizado ?: "lobby_$now",
             nombre = nombre,
@@ -82,7 +83,7 @@ class LobbyRepositoryRoom(
         codigo: String? = null
     ): Lobby {
         val now = System.currentTimeMillis()
-        val codigoNormalizado = codigo?.trim()?.ifBlank { null }
+        val codigoNormalizado = normalizarCodigo(codigo)
         val lobby = Lobby(
             id = codigoNormalizado ?: "lobby_$now",
             nombre = nombre,
@@ -103,6 +104,14 @@ class LobbyRepositoryRoom(
      */
     suspend fun upsertLobby(lobby: Lobby) {
         lobbyDao.upsert(lobby.toEntity())
+    }
+
+    private fun normalizarCodigo(codigo: String?): String? {
+        if (codigo.isNullOrBlank()) return null
+        val limpio = codigo.trim()
+            .replace(Regex("[^A-Za-z0-9-]"), "")
+            .uppercase(Locale.ROOT)
+        return limpio.ifBlank { null }
     }
 
 

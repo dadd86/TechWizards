@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.Locale
+
 
 data class LobbyUiState(
     val lobbies: List<Lobby> = emptyList(),
@@ -85,7 +87,9 @@ class ControladorLobby(
      */
     fun normalizarCodigoIngreso(codigo: String?): String? {
         if (codigo.isNullOrBlank()) return null
-        val limpio = codigo.trim().replace(Regex("[^A-Za-z0-9-]"), "")
+        val limpio = codigo.trim()
+            .replace(Regex("[^A-Za-z0-9-]"), "")
+            .uppercase(Locale.ROOT)
         return limpio.ifBlank { null }
     }
 
