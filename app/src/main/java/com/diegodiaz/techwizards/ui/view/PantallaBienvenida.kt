@@ -1,19 +1,27 @@
 package com.diegodiaz.techwizards.ui.view
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import com.diegodiaz.techwizards.BuildConfig
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.CommonStatusCodes
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -23,11 +31,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,20 +43,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import com.diegodiaz.techwizards.R
-import com.diegodiaz.techwizards.ui.responsive.UiDims
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.diegodiaz.techwizards.R
 import com.diegodiaz.techwizards.ui.controller.AuthState
+import com.diegodiaz.techwizards.ui.responsive.UiDims
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
-import androidx.activity.result.IntentSenderRequest
-import android.app.Activity
-
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 
 /**
  * Pantalla de bienvenida que solicita el alias del jugador antes de iniciar.
@@ -72,27 +75,48 @@ fun PantallaBienvenida(
 ) {
     val invalidNameMessage = stringResource(id = R.string.welcome_invalid_name)
     var mostrarDialogo by remember { mutableStateOf(false) }
+
     var nombreJugador by rememberSaveable(nombrePredeterminado, authState.usuario?.displayName) {
         mutableStateOf(nombrePredeterminado ?: authState.usuario?.displayName.orEmpty())
     }
+
     var errorNombre by remember { mutableStateOf<String?>(null) }
     var authError by remember { mutableStateOf<String?>(null) }
+
     val context = LocalContext.current
+
+    val googleWebClientId = remember {
+        val buildConfigValue = BuildConfig.GOOGLE_WEB_CLIENT_ID
+        val fromResources = runCatching { context.getString(R.string.default_web_client_id) }
+            .getOrNull()
+
+        listOf(buildConfigValue, fromResources)
+            .firstOrNull { !it.isNullOrBlank() && it != "CHANGE_ME" }
+            .orEmpty()
+    }
+
+    val hasValidGoogleClientId = googleWebClientId.isNotBlank()
 
     // ---------- Google Identity Services (One Tap) ----------
     val oneTapClient: SignInClient = remember { Identity.getSignInClient(context) }
 
-    val signInRequest = remember {
-        BeginSignInRequest.Builder()
-            .setGoogleIdTokenRequestOptions(
-                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
-                    .setSupported(true)
-                    .setServerClientId(context.getString(R.string.default_web_client_id))
-                    .setFilterByAuthorizedAccounts(false) // permitir cuentas nuevas
-                    .build()
-            )
-            .setAutoSelectEnabled(false)
-            .build()
+    @Suppress("DEPRECATION")
+    val signInRequest = remember(hasValidGoogleClientId, googleWebClientId) {
+        if (!hasValidGoogleClientId) {
+            null
+        } else {
+            @Suppress("DEPRECATION")
+            BeginSignInRequest.Builder()
+                .setGoogleIdTokenRequestOptions(
+                    BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                        .setSupported(true)
+                        .setServerClientId(googleWebClientId)
+                        .setFilterByAuthorizedAccounts(false) // permitir cuentas nuevas
+                        .build()
+                )
+                .setAutoSelectEnabled(false)
+                .build()
+        }
     }
 
     val oneTapLauncher = rememberLauncherForActivityResult(
@@ -100,20 +124,21 @@ fun PantallaBienvenida(
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             try {
+                @Suppress("DEPRECATION")
                 val credential = oneTapClient.getSignInCredentialFromIntent(result.data)
                 val idToken = credential.googleIdToken
+
                 if (idToken.isNullOrEmpty()) {
-                    authError = stringResource(id = R.string.auth_missing_token)
+                    authError = context.getString(R.string.auth_missing_token)
                 } else {
                     onGoogleSignIn(idToken)
                 }
             } catch (e: Exception) {
-                // No hay statusCode como en ApiException, usamos un valor genérico
-                authError = stringResource(id = R.string.auth_google_failed, -1)
+                val code = (e as? ApiException)?.statusCode
+                authError = "getCredential failed: ${code ?: "null"} - ${e.message}"
             }
         } else {
-            // El usuario canceló o el intent falló
-            authError = stringResource(id = R.string.auth_google_failed, -1)
+            authError = context.getString(R.string.auth_google_failed, -1)
         }
     }
     // --------------------------------------------------------
@@ -127,7 +152,10 @@ fun PantallaBienvenida(
             ),
         contentAlignment = Alignment.Center
     ) {
+        val scrollState = rememberScrollState()
+
         Column(
+            modifier = Modifier.verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(dims.spaceLg)
         ) {
@@ -168,13 +196,21 @@ fun PantallaBienvenida(
                 )
             }
 
+            // ✅ SECCIÓN LOGIN GOOGLE (AQUÍ SE MUESTRA EL BOTÓN)
             GoogleAuthSection(
                 dims = dims,
                 authState = authState,
                 authError = authError ?: authState.error,
                 onLoginClick = {
+                    if (!hasValidGoogleClientId || signInRequest == null) {
+                        authError = context.getString(R.string.auth_missing_google_client_id)
+                        return@GoogleAuthSection
+                        }
+
+
                     authError = null
-                    // Lanzamos One Tap
+
+                    @Suppress("DEPRECATION")
                     oneTapClient.beginSignIn(signInRequest)
                         .addOnSuccessListener { result ->
                             val request = IntentSenderRequest.Builder(
@@ -182,9 +218,20 @@ fun PantallaBienvenida(
                             ).build()
                             oneTapLauncher.launch(request)
                         }
-                        .addOnFailureListener {
-                            // No hay cuentas válidas, o fallo genérico
-                            authError = stringResource(id = R.string.auth_google_failed, -1)
+                        .addOnFailureListener { e ->
+                            val code = (e as? ApiException)?.statusCode
+                            val codeText = code?.let { "${it} (${CommonStatusCodes.getStatusCodeString(it)})" } ?: "null"
+                            authError = when (code) {
+                                CommonStatusCodes.CANCELED -> context.getString(
+                                    R.string.auth_google_no_credential,
+                                    codeText
+                                )
+                                else -> context.getString(
+                                    R.string.auth_google_generic_error,
+                                    codeText,
+                                    e.message ?: ""
+                                )
+                            }
                         }
                 },
                 onLogout = {
@@ -307,9 +354,10 @@ private fun GoogleAuthSection(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                authState.usuario.photoUrl?.let { photoUrl ->
+
+                authState.usuario.email?.let { email ->
                     Text(
-                        text = stringResource(id = R.string.auth_photo_placeholder, photoUrl),
+                        text = email,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -317,6 +365,7 @@ private fun GoogleAuthSection(
                     )
                 }
             }
+
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onLogout,

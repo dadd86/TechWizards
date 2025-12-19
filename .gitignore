@@ -50,10 +50,15 @@ Desktop.ini
 
 # Credenciales
 *.json
+!functions/tsconfig.json
 **/google-services.json
 **/app/google-services.json
 # Firebase
 google-services.json
 app/google-services.json
 */google-services.json
+
+# Functions workspace metadata
+!functions/package.json
+
 

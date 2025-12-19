@@ -174,4 +174,42 @@ class JuegoRepositoryRoom(
         return partidaEntity.copy(id = partidaId).toDomain(usuario.alias)
     }
 
+    /**
+     * Registra una tirada resuelta por backend, reutilizando el historial local.
+     *
+     * @param usuarioId Identificador del jugador.
+     * @param resultado Resultado declarado para la tirada.
+     * @param cambioMonedas Delta de monedas aplicado.
+     * @param fechaMs Marca temporal opcional para la partida.
+     * @return Partida persistida con alias del usuario.
+     * @security
+     * - Solo escribe alias y saldos locales; no expone PII adicional.
+     */
+    override suspend fun registrarResultadoRemoto(
+        usuarioId: String,
+        resultado: Resultado,
+        cambioMonedas: Int,
+        fechaMs: Long,
+    ): Partida {
+        val usuarioNumero = usuarioId.toLong()
+        val usuario = usuarioDao.getByNumero(usuarioNumero)
+            ?: error("Usuario inexistente para registrar partida remota")
+        val saldoActual = monederoDao.getMonederoSimple(usuarioNumero)?.saldo ?: 0
+        val saldoAjustado = maxOf(saldoActual + cambioMonedas, 0)
+
+        val partidaEntity = PartidaEntity(
+            usuarioNumero = usuarioNumero,
+            fecha = fechaMs,
+            resultado = resultado,
+            cambioMonedas = cambioMonedas,
+            nombreJugador = usuario.alias
+        )
+        val partidaId = partidaDao.insert(partidaEntity)
+
+        monederoDao.actualizarSaldo(usuarioNumero, saldoAjustado)
+
+        return partidaEntity.copy(id = partidaId).toDomain(usuario.alias)
+    }
+
+
 }

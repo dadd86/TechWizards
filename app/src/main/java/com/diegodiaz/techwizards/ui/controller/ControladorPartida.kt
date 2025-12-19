@@ -3,13 +3,16 @@ package com.diegodiaz.techwizards.ui.controller
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.diegodiaz.techwizards.core.common.Result
 import com.diegodiaz.techwizards.core.usecases.ObservarPreferenciasUseCase
+import com.diegodiaz.techwizards.core.usecases.ResolverTiradaUseCase
 import com.diegodiaz.techwizards.core.usecases.RegistrarUbicacionVictoriaUseCase
 import com.diegodiaz.techwizards.data.local.entity.Resultado
 import com.diegodiaz.techwizards.domain.model.GameSettings
 import com.diegodiaz.techwizards.domain.model.Monedero
 import com.diegodiaz.techwizards.domain.model.Partida
 import com.diegodiaz.techwizards.domain.model.Usuario
+import com.diegodiaz.techwizards.domain.model.ResolucionTiradaRemota
 import com.diegodiaz.techwizards.domain.repository.JuegoRepository
 import com.diegodiaz.techwizards.domain.repository.ScoreRepository
 import com.diegodiaz.techwizards.core.SessionManager
@@ -59,7 +62,8 @@ class ControladorPartida(
     private val sessionManager: SessionManager,
 
     // 👇 AÑADIDO (mínimo cambio)
-    private val registrarUbicacionVictoriaUseCase: RegistrarUbicacionVictoriaUseCase
+    private val registrarUbicacionVictoriaUseCase: RegistrarUbicacionVictoriaUseCase,
+    private val resolverTiradaUseCase: ResolverTiradaUseCase,
 
 ) : ViewModel() {
 
@@ -127,6 +131,24 @@ class ControladorPartida(
             }
         }
     }
+
+    fun resolverTiradaRemota(resolucion: ResolucionTiradaRemota) {
+        viewModelScope.launch {
+            when (val resultado = resolverTiradaUseCase(usuarioId, resolucion)) {
+                is Result.Err -> {
+                    DecentralizedLogger.e(TAG, "No se pudo resolver tirada remota: ${resultado.error}")
+                }
+
+                is Result.Ok -> {
+                    rollCounter.update { it + 1 }
+                    if (resultado.value.gano) {
+                        handleVictoriaSiNecesario(resultado.value.partida, origen = "remoto")
+                    }
+                }
+            }
+        }
+    }
+
     private suspend fun publicarPuntuacionRemota(partida: Partida) {
         val currentSession = sessionManager.session.value ?: return
         val score = partida.deltaMonedas.coerceAtLeast(0) + if (partida.resultado == Resultado.GANADO) 50 else 10
@@ -196,7 +218,8 @@ class ControladorPartidaFactory(
     private val victoryService: VictoryCelebrationService,
     private val sessionManager: SessionManager,
 
-    private val registrarUbicacionVictoriaUseCase: RegistrarUbicacionVictoriaUseCase
+    private val registrarUbicacionVictoriaUseCase: RegistrarUbicacionVictoriaUseCase,
+    private val resolverTiradaUseCase: ResolverTiradaUseCase,
 
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -209,7 +232,8 @@ class ControladorPartidaFactory(
                 observarPreferencias = observarPreferencias,
                 victoryService = victoryService,
                 sessionManager = sessionManager,
-                registrarUbicacionVictoriaUseCase = registrarUbicacionVictoriaUseCase
+                registrarUbicacionVictoriaUseCase = registrarUbicacionVictoriaUseCase,
+                resolverTiradaUseCase = resolverTiradaUseCase,
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

@@ -4,27 +4,20 @@ import com.diegodiaz.techwizards.data.remote.dto.ScoreRemoteDto
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 
 /**
- * Funciones de mapeo entre DTOs remotos y modelos de dominio.
+ * Mapper entre DTO remoto y modelo de dominio para el ranking.
  *
- * Convierte las respuestas del backend (ScoreRemoteDto) en
- * entradas de ranking de dominio (LeaderboardEntry).
+ * IMPORTANTE: Es una clase porque ServiceLocator instancia ScoreRemoteMapper().
  */
+class ScoreRemoteMapper {
 
-/**
- * Mapea un único ScoreRemoteDto a una entrada de leaderboard de dominio.
- */
-fun ScoreRemoteDto.toDomain(): LeaderboardEntry =
-    LeaderboardEntry(
-        id = id.orEmpty(),
-        playerName = player,
-        points = points,
-        position = position ?: 0,
-        prizeName = prize?.name,
-        prizeDescription = prize?.description
-    )
-
-/**
- * Mapea una lista de ScoreRemoteDto a una lista de entradas de leaderboard.
- */
-fun List<ScoreRemoteDto>.toDomain(): List<LeaderboardEntry> =
-    this.map { it.toDomain() }
+    fun toDomain(dto: ScoreRemoteDto, position: Int): LeaderboardEntry {
+        return LeaderboardEntry(
+            id = dto.id,
+            alias = dto.player,
+            score = dto.points,
+            position = dto.position ?: position,
+            prizeName = dto.prize?.name,
+            prizeDescription = dto.prize?.description
+        )
+    }
+}

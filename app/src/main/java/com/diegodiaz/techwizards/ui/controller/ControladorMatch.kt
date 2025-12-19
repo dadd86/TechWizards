@@ -2,21 +2,43 @@ package com.diegodiaz.techwizards.ui.controller
 
 import androidx.lifecycle.ViewModel
 import com.diegodiaz.techwizards.domain.model.*
+import androidx.lifecycle.viewModelScope
+import com.diegodiaz.techwizards.core.SessionManager
+import com.diegodiaz.techwizards.domain.model.CommonPrize
+import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
+import com.diegodiaz.techwizards.domain.model.Match
+import com.diegodiaz.techwizards.domain.model.MatchEstado
+import com.diegodiaz.techwizards.domain.model.MatchParticipant
+import com.diegodiaz.techwizards.domain.model.MatchScore
+import com.diegodiaz.techwizards.domain.repository.ScoreRepository
+import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class MatchUiState(
     val match: Match? = null,
     val participantes: List<MatchParticipant> = emptyList(),
     val puntuaciones: List<MatchScore> = emptyList(),
+    val topTen: List<LeaderboardEntry> = emptyList(),
+    val premioComun: CommonPrize? = null,
+    val progresoPremio: Float = 0f,
+    val actualizadoEnMs: Long? = null,
     val error: String? = null
 )
 
-class ControladorMatch : ViewModel() {
+class ControladorMatch(
+    private val scoreRepository: ScoreRepository,
+    private val sessionManager: SessionManager
+) : ViewModel() {
 
     private val _ui = MutableStateFlow(MatchUiState())
     val ui: StateFlow<MatchUiState> = _ui.asStateFlow()
+
+    init {
+        refrescarEstadoOnline()
+    }
 
     fun crearMatch(
         lobbyId: String?,
@@ -78,5 +100,40 @@ class ControladorMatch : ViewModel() {
 
     fun limpiarError() {
         _ui.value = _ui.value.copy(error = null)
+    }
+
+    fun refrescarEstadoOnline() {
+        viewModelScope.launch {
+            val session = sessionManager.session.value
+            if (session == null) {
+                _ui.value = _ui.value.copy(error = "Inicia sesión para ver el top ten")
+                return@launch
+            }
+            runCatching {
+                val topTen = scoreRepository.obtenerTopTen()
+                val premio = scoreRepository.obtenerPremioComun()
+                val progreso = calcularProgresoPremio(premio, topTen)
+
+                _ui.value.copy(
+                    topTen = topTen,
+                    premioComun = premio,
+                    progresoPremio = progreso,
+                    actualizadoEnMs = System.currentTimeMillis(),
+                    error = null
+                )
+            }.onSuccess { nuevoEstado ->
+                _ui.value = nuevoEstado
+            }.onFailure { error ->
+                DecentralizedLogger.e("ControladorMatch", "No se pudo cargar datos online", error)
+                _ui.value = _ui.value.copy(error = "No se pudo cargar ranking online")
+            }
+        }
+    }
+
+    private fun calcularProgresoPremio(premio: CommonPrize?, topTen: List<LeaderboardEntry>): Float {
+        val objetivo = premio?.valor ?: return 0f
+        if (objetivo <= 0) return 0f
+        val avance = topTen.firstOrNull()?.score ?: 0
+        return (avance.toFloat() / objetivo).coerceIn(0f, 1f)
     }
 }

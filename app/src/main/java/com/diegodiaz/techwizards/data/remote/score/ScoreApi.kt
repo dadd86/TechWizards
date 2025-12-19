@@ -5,6 +5,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Query
 
 /**
  * API REST para ranking y premios.
@@ -15,21 +16,31 @@ import retrofit2.http.PUT
 interface ScoreApi {
 
     @GET("leaderboard/top10")
-    suspend fun fetchTopTen(): List<ScoreEntryDto>
+    suspend fun fetchTopTen(
+        @Header("Authorization") bearerToken: String?
+    ): List<ScoreEntryDto>
+
+    @GET("leaderboard")
+    suspend fun fetchLeaderboard(
+        @Header("Authorization") bearerToken: String?,
+        @Query("limit") limit: Int = 10
+    ): List<ScoreEntryDto>
 
     @POST("scores")
     suspend fun publishScore(
-        @Header("Authorization") bearer: String?,
+        @Header("Authorization") bearerToken: String?,
         @Body payload: ScorePayload
     )
 
     @GET("prize/common")
-    suspend fun fetchPrize(): PrizeDto
+    suspend fun fetchCommonPrize(
+        @Header("Authorization") bearerToken: String?
+    ): PrizeDto
 
     @PUT("prize/common")
     suspend fun updatePrize(
-        @Header("Authorization") bearer: String?,
-        @Body prize: PrizeDto
+        @Header("Authorization") bearerToken: String?,
+        @Body prize: PrizeRequestDto
     ): PrizeDto
 
     @POST("login")

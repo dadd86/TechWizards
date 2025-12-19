@@ -3,6 +3,7 @@ package com.diegodiaz.techwizards.data.repository.impl
 import com.diegodiaz.techwizards.data.local.dao.ILobbyDao
 import com.diegodiaz.techwizards.data.local.entity.LobbyEntity
 import com.diegodiaz.techwizards.data.local.mapper.toDomain
+import com.diegodiaz.techwizards.data.local.mapper.toEntity
 import com.diegodiaz.techwizards.domain.model.Lobby
 import com.diegodiaz.techwizards.domain.model.LobbyEstado
 import io.reactivex.rxjava3.core.Completable
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.rx3.await
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
+import java.util.Locale
 
 /**
  * Se encarga de gestionar las salas (lobbies) del juego.
@@ -42,16 +44,74 @@ class LobbyRepositoryRoom(
         codigo: String? = null
     ): Completable {
         val now = System.currentTimeMillis()
+        val codigoNormalizado = normalizarCodigo(codigo)
         val entity = LobbyEntity(
-            id = "lobby_$now",
+            id = codigoNormalizado ?: "lobby_$now",
             nombre = nombre,
-            codigo = codigo,
+            codigo = codigoNormalizado,
             modo = modo,
             estado = LobbyEstado.PENDING.name,
             creadorNumero = creadorNumero,
             createdAtMs = now
         )
         return lobbyDao.insert(entity)
+    }
+
+    /**
+     * Busca un lobby disponible para emparejar, excluyendo el del creador actual.
+     *
+     * @security No expone datos sensibles; solo metadatos de lobby.
+     */
+    suspend fun buscarLobbyDisponible(
+        creadorNumero: Long,
+        limite: Int = 5
+    ): Lobby? {
+        val lobbies = lobbyDao.listarPorEstado(LobbyEstado.PENDING.name, limite)
+            .map { it.toDomain() }
+        return lobbies.firstOrNull { it.creadorNumero != creadorNumero }
+    }
+
+    /**
+     * Crea un lobby persistente para matchmaking local.
+     *
+     * @security No expone datos sensibles; usa identificadores numéricos internos.
+     */
+    suspend fun crearLobby(
+        nombre: String,
+        creadorNumero: Long,
+        modo: String,
+        codigo: String? = null
+    ): Lobby {
+        val now = System.currentTimeMillis()
+        val codigoNormalizado = normalizarCodigo(codigo)
+        val lobby = Lobby(
+            id = codigoNormalizado ?: "lobby_$now",
+            nombre = nombre,
+            codigo = codigoNormalizado,
+            modo = modo,
+            estado = LobbyEstado.PENDING,
+            creadorNumero = creadorNumero,
+            createdAtMs = now
+        )
+        lobbyDao.upsert(lobby.toEntity())
+        return lobby
+    }
+    /**
+     * Inserta o actualiza un lobby existente.
+     *
+     * @param lobby Lobby a persistir.
+     * @security No expone datos sensibles; persiste solo metadatos del lobby.
+     */
+    suspend fun upsertLobby(lobby: Lobby) {
+        lobbyDao.upsert(lobby.toEntity())
+    }
+
+    private fun normalizarCodigo(codigo: String?): String? {
+        if (codigo.isNullOrBlank()) return null
+        val limpio = codigo.trim()
+            .replace(Regex("[^A-Za-z0-9-]"), "")
+            .uppercase(Locale.ROOT)
+        return limpio.ifBlank { null }
     }
 
 

@@ -74,7 +74,13 @@ class LocationTracker(
 
                 try {
                     @Suppress("MissingPermission")
-                    manager.requestSingleUpdate(provider, listener, Looper.getMainLooper())
+                    manager.requestLocationUpdates(
+                        provider,
+                        0L,
+                        0f,
+                        listener,
+                        Looper.getMainLooper()
+                    )
                 } catch (e: SecurityException) {
                     // Por si acaso los permisos cambian en tiempo de ejecución
                     DecentralizedLogger.e(TAG, "Permiso de localización revocado en requestSingleUpdate", e)

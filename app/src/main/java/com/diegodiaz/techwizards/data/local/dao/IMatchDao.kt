@@ -24,4 +24,7 @@ interface IMatchDao {
 
     @Query("SELECT * FROM Match WHERE id = :matchId LIMIT 1")
     suspend fun obtenerPorId(matchId: String): MatchEntity?
+
+    @Query("SELECT * FROM Match WHERE id = :matchId LIMIT 1")
+    fun observarPorId(matchId: String): kotlinx.coroutines.flow.Flow<MatchEntity?>
 }
