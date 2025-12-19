@@ -38,6 +38,7 @@ import com.diegodiaz.techwizards.ui.controller.SimpleVmFactory
 import com.diegodiaz.techwizards.ui.responsive.UiDims
 import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 @Composable
 fun NavGraph(
@@ -66,14 +67,21 @@ fun NavGraph(
     val victoryService = remember { ServiceLocator.victoryCelebrationService }
 
     val usuarioActual = remember { mutableStateOf<Usuario?>(null) }
+    val fallbackUsuarioNumero = remember { mutableStateOf<Long?>(null) }
     val authState by authVm.ui.collectAsState()
 
     LaunchedEffect(Unit) {
         val existente = usuarioDao.obtenerUsuarioPrincipal()
         usuarioActual.value = existente?.toDomain()
+        if (existente == null) {
+            fallbackUsuarioNumero.value = generarNumeroUsuario()
+        }
     }
 
-    val usuarioId = (usuarioActual.value?.numero ?: 1L).toString()
+    val usuarioNumeroActual = usuarioActual.value?.numero
+        ?: fallbackUsuarioNumero.value
+        ?: generarNumeroUsuario().also { fallbackUsuarioNumero.value = it }
+    val usuarioId = usuarioNumeroActual.toString()
 
     // --------- Instancia de ControladorPartida compartida ---------
     val partidaFactory = remember {
@@ -114,7 +122,7 @@ fun NavGraph(
 
                         val existente = usuarioActual.value
                         val usuario = Usuario(
-                            numero = existente?.numero ?: 1L,
+                            numero = existente?.numero ?: usuarioNumeroActual,
                             alias = nombre,
                             fechaAltaMs = existente?.fechaAltaMs ?: System.currentTimeMillis(),
                             monedas = existente?.monedas ?: 100,
@@ -167,7 +175,7 @@ fun NavGraph(
                 onEventos = { navController.navigate("eventos") },
                 onMatch = {
                     val matchId = "match-${System.currentTimeMillis()}"
-                    val lobbyId = "lobby-${usuario?.numero ?: 0}"
+                    val lobbyId = "lobby-${usuario?.numero ?: usuarioNumeroActual}"
                     navController.navigate("match/$matchId?lobbyId=$lobbyId")
                 },
                 onPremioAdmin = { navController.navigate("premio-admin") },
@@ -309,7 +317,7 @@ fun NavGraph(
             )
 
             val matchState by matchVm.ui.collectAsState()
-            val usuarioNumero = usuarioActual.value?.numero ?: 1L
+            val usuarioNumero = usuarioActual.value?.numero ?: usuarioNumeroActual
             val normalizarMatchId: (String) -> String = { codigo ->
                 if (codigo.startsWith("match-")) codigo else "match-$codigo"
             }
@@ -391,7 +399,7 @@ fun NavGraph(
             )
 
             // ✅ Iniciar solo cuando cambie el matchId/lobbyId/usuarioId
-            val usuarioId = usuarioActual.value?.numero
+            val usuarioId = usuarioActual.value?.numero ?: usuarioNumeroActual
             LaunchedEffect(matchId, lobbyId, usuarioId) {
                 matchVm.iniciar(matchId = matchId, lobbyId = lobbyId, usuarioId = usuarioId)
             }
@@ -415,4 +423,9 @@ fun NavGraph(
             )
         }
     }
+}
+private fun generarNumeroUsuario(): Long {
+    val base = System.currentTimeMillis() % 1_000_000_000L
+    val random = Random.nextLong(1_000L, 1_000_000L)
+    return (base * 1_000_000L) + random
 }
