@@ -327,7 +327,7 @@ fun NavGraph(
                         creadorNumero = usuarioNumero,
                         codigo = codigo
                     )
-                    matchVm.crearMatchDesdeLobby(lobbyId = lobby.id, creadorNumero = usuarioNumero)
+                    matchVm.crearMatchDesdeLobby(lobby = lobby, creadorNumero = usuarioNumero)
                 },
                 onActualizarCodigo = lobbyVm::actualizarCodigoIngreso,
                 onUnirsePorCodigo = {

@@ -92,6 +92,15 @@ class LobbyRepositoryRoom(
         lobbyDao.upsert(lobby.toEntity())
         return lobby
     }
+    /**
+     * Inserta o actualiza un lobby existente.
+     *
+     * @param lobby Lobby a persistir.
+     * @security No expone datos sensibles; persiste solo metadatos del lobby.
+     */
+    suspend fun upsertLobby(lobby: Lobby) {
+        lobbyDao.upsert(lobby.toEntity())
+    }
 
 
 /** Cierra un lobby existente (estado CLOSED). */

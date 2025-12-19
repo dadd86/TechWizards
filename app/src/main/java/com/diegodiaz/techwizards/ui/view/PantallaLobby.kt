@@ -127,7 +127,8 @@ fun PantallaLobby(
                 onConfirmarApuesta = onConfirmarApuesta,
                 onLanzarDado = onLanzarDado,
                 onBuscarRival = onBuscarRival,
-                onVolver = onVolver
+                onVolver = onVolver,
+                enableScroll = false
             )
         } else {
             Spacer(modifier = Modifier.height(dims.spaceSm))

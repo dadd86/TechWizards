@@ -49,17 +49,19 @@ fun PantallaMatch(
     onLanzarDado: () -> Unit,
     onBuscarRival: () -> Unit,
     onVolver: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enableScroll: Boolean = true
 ) {
     val progreso = uiState.progresoPremio
     val ambosListos = uiState.localListo && uiState.remotoListo && uiState.carasSeleccionadas.size >= 2
     val scrollState = rememberScrollState()
+    val scrollModifier = if (enableScroll) Modifier.verticalScroll(scrollState) else Modifier
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = dims.spaceMd, vertical = dims.spaceSm)
-            .verticalScroll(scrollState),
+            .then(scrollModifier),
         verticalArrangement = Arrangement.spacedBy(dims.spaceSm)
     ) {
         TextButton(onClick = onVolver) {

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.diegodiaz.techwizards.core.common.Result
 import com.diegodiaz.techwizards.domain.model.CommonPrize
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
+import com.diegodiaz.techwizards.domain.model.Lobby
 import com.diegodiaz.techwizards.domain.model.Match
 import com.diegodiaz.techwizards.domain.model.MatchEstado
 import com.diegodiaz.techwizards.domain.model.MatchParticipant
@@ -18,6 +19,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
@@ -61,7 +63,30 @@ class ControladorMatchOnline(
     private var buscarRivalJob: Job? = null
     private var ultimoLanzamientoProcesado: Map<Long, Int> = emptyMap()
 
-    fun crearMatchDesdeLobby(lobbyId: String, creadorNumero: Long, modo: String = "duelo") {
+    /**
+     * Crea un match a partir de un lobby ya existente y persistido.
+     *
+     * @param lobby Lobby origen a persistir localmente si es necesario.
+     * @param creadorNumero Identificador numérico del creador.
+     * @param modo Modalidad de juego.
+     * @security No expone PII; persiste solo identificadores internos.
+     */
+    fun crearMatchDesdeLobby(lobby: Lobby, creadorNumero: Long, modo: String = "duelo") {
+        viewModelScope.launch {
+            lobbyRepository.upsertLobby(lobby)
+            crearMatchDesdeLobbyId(lobbyId = lobby.id, creadorNumero = creadorNumero, modo = modo)
+        }
+    }
+
+    /**
+     * Crea un match usando el identificador del lobby.
+     *
+     * @param lobbyId Identificador del lobby.
+     * @param creadorNumero Identificador numérico del creador.
+     * @param modo Modalidad de juego.
+     * @security No expone PII; usa identificadores internos.
+     */
+    private fun crearMatchDesdeLobbyId(lobbyId: String, creadorNumero: Long, modo: String = "duelo") {
         val matchId = "match-$lobbyId"
         val match = Match(
             id = matchId,
@@ -104,16 +129,31 @@ class ControladorMatchOnline(
         _ui.value = _ui.value.copy(matchId = matchId, lobbyId = lobbyId, cargando = true)
 
         viewModelScope.launch {
-            matchRepository.observarEstado(matchId).firstOrNull()?.let { snapshot ->
-                aplicarSnapshot(snapshot)
+            try {
+                matchRepository.observarEstado(matchId).firstOrNull()?.let { snapshot ->
+                    aplicarSnapshot(snapshot)
+                }
+            } catch (error: Exception) {
+                _ui.value = _ui.value.copy(
+                    error = errorToUiMessage(error),
+                    cargando = false
+                )
             }
         }
 
         streamJob?.cancel()
         streamJob = viewModelScope.launch {
-            matchRepository.observarEstado(matchId).collect { snapshot ->
-                aplicarSnapshot(snapshot)
-            }
+            matchRepository.observarEstado(matchId)
+                .catch { error ->
+                    _ui.value = _ui.value.copy(
+                        error = errorToUiMessage(error),
+                        cargando = false,
+                        buscandoRival = false
+                    )
+                }
+                .collect { snapshot ->
+                    aplicarSnapshot(snapshot)
+                }
         }
 
         viewModelScope.launch { cargarTopYpremio() }
@@ -183,7 +223,7 @@ class ControladorMatchOnline(
                 modo = "duelo",
                 creadorNumero = usuarioNumero
             )
-            crearMatchDesdeLobby(lobbyId = lobbyCreado.id, creadorNumero = usuarioNumero)
+            crearMatchDesdeLobbyId(lobbyId = lobbyCreado.id, creadorNumero = usuarioNumero)
             iniciarTimeoutRival()
         }
     }
