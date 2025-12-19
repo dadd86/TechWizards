@@ -91,6 +91,8 @@
     <string name="events_special_drop">Drop especial de recompensas</string>
     <string name="events_progress_label">Progreso</string>
     <string name="match_title">Partida en curso</string>
+    <string name="match_search_rival">Buscar rival</string>
+    <string name="match_searching_rival">Buscando rival…</string>
     <string name="match_subtitle">Controla la puntuación y acciones rápidas de cada jugador.</string>
     <string name="match_subtitle_online">Match %1$s en tiempo real.</string>
     <string name="match_start">Iniciar</string>

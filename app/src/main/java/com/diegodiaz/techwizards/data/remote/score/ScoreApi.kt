@@ -40,7 +40,7 @@ interface ScoreApi {
     @PUT("prize/common")
     suspend fun updatePrize(
         @Header("Authorization") bearerToken: String?,
-        @Body prize: PrizeDto
+        @Body prize: PrizeRequestDto
     ): PrizeDto
 
     @POST("login")

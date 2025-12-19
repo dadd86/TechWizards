@@ -58,6 +58,7 @@ object ServiceLocator {
     private val matchDao: IMatchDao by lazy { db.matchDao() }
     private val matchParticipantDao: IMatchParticipantDao by lazy { db.matchParticipantDao() }
     private val matchScoreDao: IMatchScoreDao by lazy { db.matchScoreDao() }
+    private val lobbyDao by lazy { db.lobbyDao() }
     private val victoryLocationDao by lazy { db.victoryLocationDao() }
 
     private val victoryTransactionRunner by lazy {
@@ -158,6 +159,10 @@ object ServiceLocator {
             snapshotLocalDataSource = matchSnapshotLocalDataSource,
             appContext = appContext
         )
+    }
+
+    val lobbyRepository by lazy {
+        LobbyRepositoryRoom(lobbyDao)
     }
 
 

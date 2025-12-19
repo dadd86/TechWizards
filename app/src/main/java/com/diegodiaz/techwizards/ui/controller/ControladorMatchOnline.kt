@@ -12,7 +12,9 @@ import com.diegodiaz.techwizards.domain.model.MatchScore
 import com.diegodiaz.techwizards.domain.model.MatchSnapshot
 import com.diegodiaz.techwizards.domain.repository.MatchRepository
 import com.diegodiaz.techwizards.domain.repository.ScoreRepository
+import com.diegodiaz.techwizards.data.repository.impl.LobbyRepositoryRoom
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,18 +44,21 @@ data class MatchOnlineUiState(
     val ganadorRonda: Long? = null,
     val huboEmpate: Boolean = false,
     val cargando: Boolean = false,
+    val buscandoRival: Boolean = false,
     val error: String? = null
 )
 
 class ControladorMatchOnline(
     private val matchRepository: MatchRepository,
-    private val scoreRepository: ScoreRepository
+    private val scoreRepository: ScoreRepository,
+    private val lobbyRepository: LobbyRepositoryRoom
 ) : ViewModel() {
 
     private val _ui = MutableStateFlow(MatchOnlineUiState())
     val ui: StateFlow<MatchOnlineUiState> = _ui.asStateFlow()
 
     private var streamJob: Job? = null
+    private var buscarRivalJob: Job? = null
     private var ultimoLanzamientoProcesado: Map<Long, Int> = emptyMap()
 
     fun crearMatchDesdeLobby(lobbyId: String, creadorNumero: Long, modo: String = "duelo") {
@@ -151,6 +156,37 @@ class ControladorMatchOnline(
             }
         }
     }
+    /**
+     * Busca un rival en lobbies disponibles o crea uno nuevo y espera un minuto.
+     *
+     * @param usuarioNumero Identificador numérico del jugador local.
+     * @security No expone datos sensibles; usa IDs internos y estado de lobby.
+     */
+    fun buscarRival(usuarioNumero: Long) {
+        if (_ui.value.buscandoRival) return
+        buscarRivalJob?.cancel()
+        _ui.value = _ui.value.copy(buscandoRival = true, error = null)
+        viewModelScope.launch {
+            val lobbyEncontrado = lobbyRepository.buscarLobbyDisponible(usuarioNumero)
+            if (lobbyEncontrado != null) {
+                unirseAMatchExistente(
+                    matchId = "match-${lobbyEncontrado.id}",
+                    lobbyId = lobbyEncontrado.id,
+                    usuarioId = usuarioNumero
+                )
+                _ui.value = _ui.value.copy(buscandoRival = false)
+                return@launch
+            }
+
+            val lobbyCreado = lobbyRepository.crearLobby(
+                nombre = "Lobby $usuarioNumero",
+                modo = "duelo",
+                creadorNumero = usuarioNumero
+            )
+            crearMatchDesdeLobby(lobbyId = lobbyCreado.id, creadorNumero = usuarioNumero)
+            iniciarTimeoutRival()
+        }
+    }
 
     fun limpiarError() {
         _ui.value = _ui.value.copy(error = null)
@@ -178,6 +214,19 @@ class ControladorMatchOnline(
             _ui.value = _ui.value.copy(topTen = top, premioComun = premio)
         } catch (error: Exception) {
             _ui.value = _ui.value.copy(error = errorToUiMessage(error))
+        }
+    }
+
+    private fun iniciarTimeoutRival() {
+        buscarRivalJob?.cancel()
+        buscarRivalJob = viewModelScope.launch {
+            delay(TIEMPO_ESPERA_RIVAL_MS)
+            if (!_ui.value.remotoListo) {
+                _ui.value = _ui.value.copy(
+                    buscandoRival = false,
+                    error = "No encontramos rival en este momento"
+                )
+            }
         }
     }
 
@@ -219,6 +268,9 @@ class ControladorMatchOnline(
             ganadorRonda = snapshot.ganadorRonda,
             empate = snapshot.empate
         )
+        if (snapshot.remotoListo || snapshot.participantes.size >= 2) {
+            buscarRivalJob?.cancel()
+        }
         _ui.value = _ui.value.copy(
             match = snapshot.match,
             participantes = participantes,
@@ -228,7 +280,8 @@ class ControladorMatchOnline(
             lanzamientos = snapshot.lanzamientos,
             ganadorRonda = snapshot.ganadorRonda,
             huboEmpate = snapshot.empate,
-            cargando = false
+            cargando = false,
+            buscandoRival = _ui.value.buscandoRival && !snapshot.remotoListo
         )
     }
 }
@@ -240,3 +293,5 @@ private fun errorToUiMessage(error: Any?): String {
     }
 
 }
+
+private const val TIEMPO_ESPERA_RIVAL_MS = 60_000L

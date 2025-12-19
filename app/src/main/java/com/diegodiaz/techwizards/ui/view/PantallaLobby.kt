@@ -42,7 +42,8 @@ fun PantallaLobby(
     onEntrarLobby: (String) -> Unit,
     onSeleccionCara: (Int) -> Unit,
     onConfirmarApuesta: () -> Unit,
-    onLanzarDado: () -> Unit
+    onLanzarDado: () -> Unit,
+    onBuscarRival: () -> Unit
 ) {
     val scrollState = rememberScrollState()
 
@@ -125,6 +126,7 @@ fun PantallaLobby(
                 onSeleccionCara = onSeleccionCara,
                 onConfirmarApuesta = onConfirmarApuesta,
                 onLanzarDado = onLanzarDado,
+                onBuscarRival = onBuscarRival,
                 onVolver = onVolver
             )
         } else {

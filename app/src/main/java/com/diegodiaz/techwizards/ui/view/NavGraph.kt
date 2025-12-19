@@ -300,7 +300,11 @@ fun NavGraph(
             val matchVm: ControladorMatchOnline = viewModel(
                 key = "matchOnline-lobby",
                 factory = SimpleVmFactory {
-                    ControladorMatchOnline(ServiceLocator.matchRepository, ServiceLocator.scoreRepository)
+                    ControladorMatchOnline(
+                        ServiceLocator.matchRepository,
+                        ServiceLocator.scoreRepository,
+                        ServiceLocator.lobbyRepository
+                    )
                 }
             )
 
@@ -316,10 +320,12 @@ fun NavGraph(
                 matchState = matchState,
                 onVolver = { navController.navigate("menu") },
                 onCrearLobby = {
+                    val codigo = lobbyState.codigoIngreso.trim().ifBlank { null }
                     val lobby = lobbyVm.crearLobby(
                         nombre = "Lobby $usuarioNumero",
                         modo = "duelo",
-                        creadorNumero = usuarioNumero
+                        creadorNumero = usuarioNumero,
+                        codigo = codigo
                     )
                     matchVm.crearMatchDesdeLobby(lobbyId = lobby.id, creadorNumero = usuarioNumero)
                 },
@@ -342,7 +348,8 @@ fun NavGraph(
                 },
                 onSeleccionCara = matchVm::seleccionarCara,
                 onConfirmarApuesta = { matchVm.confirmarApuesta(usuarioNumero) },
-                onLanzarDado = { matchVm.lanzarDado(usuarioNumero) }
+                onLanzarDado = { matchVm.lanzarDado(usuarioNumero) },
+                onBuscarRival = { matchVm.buscarRival(usuarioNumero) }
             )
         }
 
@@ -375,7 +382,11 @@ fun NavGraph(
             val matchVm: ControladorMatchOnline = viewModel(
                 key = "matchOnline-$matchId",
                 factory = SimpleVmFactory {
-                    ControladorMatchOnline(ServiceLocator.matchRepository, ServiceLocator.scoreRepository)
+                    ControladorMatchOnline(
+                        ServiceLocator.matchRepository,
+                        ServiceLocator.scoreRepository,
+                        ServiceLocator.lobbyRepository
+                    )
                 }
             )
 
@@ -393,6 +404,7 @@ fun NavGraph(
                 onSeleccionCara = matchVm::seleccionarCara,
                 onConfirmarApuesta = { usuarioId?.let(matchVm::confirmarApuesta) },
                 onLanzarDado = { usuarioId?.let(matchVm::lanzarDado) },
+                onBuscarRival = { usuarioId?.let(matchVm::buscarRival) },
                 onVolver = {
                     navController.navigate("menu") {
                         launchSingleTop = true

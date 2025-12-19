@@ -3,6 +3,7 @@ package com.diegodiaz.techwizards.data.repository.impl
 import com.diegodiaz.techwizards.data.local.dao.ILobbyDao
 import com.diegodiaz.techwizards.data.local.entity.LobbyEntity
 import com.diegodiaz.techwizards.data.local.mapper.toDomain
+import com.diegodiaz.techwizards.data.local.mapper.toEntity
 import com.diegodiaz.techwizards.domain.model.Lobby
 import com.diegodiaz.techwizards.domain.model.LobbyEstado
 import io.reactivex.rxjava3.core.Completable
@@ -52,6 +53,44 @@ class LobbyRepositoryRoom(
             createdAtMs = now
         )
         return lobbyDao.insert(entity)
+    }
+
+    /**
+     * Busca un lobby disponible para emparejar, excluyendo el del creador actual.
+     *
+     * @security No expone datos sensibles; solo metadatos de lobby.
+     */
+    suspend fun buscarLobbyDisponible(
+        creadorNumero: Long,
+        limite: Int = 5
+    ): Lobby? {
+        val lobbies = lobbyDao.listarPorEstado(LobbyEstado.PENDING.name, limite)
+            .map { it.toDomain() }
+        return lobbies.firstOrNull { it.creadorNumero != creadorNumero }
+    }
+
+    /**
+     * Crea un lobby persistente para matchmaking local.
+     *
+     * @security No expone datos sensibles; usa identificadores numéricos internos.
+     */
+    suspend fun crearLobby(
+        nombre: String,
+        creadorNumero: Long,
+        modo: String,
+        codigo: String? = null
+    ): Lobby {
+        val lobby = Lobby(
+            id = "lobby_${System.currentTimeMillis()}",
+            nombre = nombre,
+            codigo = codigo,
+            modo = modo,
+            estado = LobbyEstado.PENDING,
+            creadorNumero = creadorNumero,
+            createdAtMs = System.currentTimeMillis()
+        )
+        lobbyDao.upsert(lobby.toEntity())
+        return lobby
     }
 
 

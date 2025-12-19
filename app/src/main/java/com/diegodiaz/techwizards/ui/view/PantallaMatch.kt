@@ -47,6 +47,7 @@ fun PantallaMatch(
     onSeleccionCara: (Int) -> Unit,
     onConfirmarApuesta: () -> Unit,
     onLanzarDado: () -> Unit,
+    onBuscarRival: () -> Unit,
     onVolver: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -94,8 +95,10 @@ fun PantallaMatch(
 
         LeaderboardCard(topTen = uiState.topTen, dims = dims)
 
-        RemotoListoBadge(
+        MatchmakingRow(
             remotoListo = uiState.remotoListo,
+            buscandoRival = uiState.buscandoRival,
+            onBuscarRival = onBuscarRival,
             dims = dims
         )
 
@@ -172,29 +175,59 @@ fun PantallaMatch(
 }
 
 @Composable
-private fun RemotoListoBadge(remotoListo: Boolean, dims: UiDims) {
+private fun MatchmakingRow(
+    remotoListo: Boolean,
+    buscandoRival: Boolean,
+    onBuscarRival: () -> Unit,
+    dims: UiDims
+) {
     val color = if (remotoListo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
     val texto = if (remotoListo) R.string.match_remote_ready else R.string.match_remote_waiting
     Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, color, RoundedCornerShape(12.dp))
-            .padding(horizontal = dims.spaceSm, vertical = dims.spaceXs),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dims.spaceXs)
+        horizontalArrangement = Arrangement.spacedBy(dims.spaceSm)
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .size(12.dp)
-                .clip(CircleShape)
-                .background(color)
-        )
-        Text(
-            text = stringResource(id = texto),
-            fontSize = dims.bodySp,
-            color = color,
-            fontWeight = FontWeight.SemiBold
-        )
+                .weight(1f)
+                .clip(RoundedCornerShape(12.dp))
+                .border(1.dp, color, RoundedCornerShape(12.dp))
+                .padding(horizontal = dims.spaceSm, vertical = dims.spaceXs),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(dims.spaceXs)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+            Text(
+                text = stringResource(id = texto),
+                fontSize = dims.bodySp,
+                color = color,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        if (!remotoListo) {
+            Button(
+                onClick = onBuscarRival,
+                enabled = !buscandoRival,
+                modifier = Modifier.height(dims.buttonHeightSm),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text(
+                    text = stringResource(
+                        id = if (buscandoRival) R.string.match_searching_rival else R.string.match_search_rival
+                    ),
+                    fontSize = dims.bodySp
+                )
+            }
+        }
     }
 }
 

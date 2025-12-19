@@ -4,7 +4,7 @@ import com.diegodiaz.techwizards.core.SessionManager
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
 import com.diegodiaz.techwizards.data.remote.score.ScoreApi
 import com.diegodiaz.techwizards.data.remote.score.toDomain
-import com.diegodiaz.techwizards.data.remote.score.toDto
+import com.diegodiaz.techwizards.data.remote.score.toRequestDto
 import com.diegodiaz.techwizards.domain.model.CommonPrize
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.domain.model.UserSession
@@ -71,7 +71,7 @@ class ScoreRepositoryRetrofit(
         // ScoreApi SOLO acepta el body
         return scoreApi.updatePrize(
             bearerToken = "Bearer ${session.token}",
-            nuevoPremio.toDto()
+            nuevoPremio.toRequestDto()
         ).toDomain()
     }
 
