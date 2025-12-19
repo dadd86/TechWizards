@@ -21,7 +21,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -147,7 +147,7 @@ fun PantallaMatch(
 
         ResultadoDado(uiState, dims)
 
-        Divider()
+        HorizontalDivider()
 
         uiState.participantes.forEach { participante ->
             val score = uiState.puntuaciones.firstOrNull { it.usuarioNumero == participante.usuarioNumero }?.score ?: 0

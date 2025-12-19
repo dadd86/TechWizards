@@ -14,7 +14,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -114,7 +114,7 @@ fun PantallaLobby(
         LobbyListado(lobbies = lobbyState.lobbies, dims = dims, onEntrarLobby = onEntrarLobby)
 
         if (matchState.matchId != null) {
-            Divider()
+            HorizontalDivider()
             Text(
                 text = stringResource(id = R.string.lobby_active_match, matchState.lobbyId ?: matchState.matchId),
                 fontSize = dims.bodySp,

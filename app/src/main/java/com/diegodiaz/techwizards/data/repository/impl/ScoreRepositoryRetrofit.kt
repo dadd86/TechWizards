@@ -40,8 +40,6 @@ class ScoreRepositoryRetrofit(
     }
 
     override suspend fun publicarPuntuacion(session: UserSession, score: Int) {
-        // Si vuestro backend usa token por Interceptor, guardamos el token aquí para que lo inyecte.
-        // (Esto no rompe nada aunque no se use)
         credentialsStore.guardarSesionAlias(session.token, session.alias)
         credentialsStore.guardarFirebaseToken(session.token)
 

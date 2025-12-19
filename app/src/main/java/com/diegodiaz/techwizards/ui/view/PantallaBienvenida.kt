@@ -105,6 +105,7 @@ fun PantallaBienvenida(
         if (!hasValidGoogleClientId) {
             null
         } else {
+            @Suppress("DEPRECATION")
             BeginSignInRequest.Builder()
                 .setGoogleIdTokenRequestOptions(
                     BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
@@ -123,6 +124,7 @@ fun PantallaBienvenida(
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             try {
+                @Suppress("DEPRECATION")
                 val credential = oneTapClient.getSignInCredentialFromIntent(result.data)
                 val idToken = credential.googleIdToken
 
@@ -207,6 +209,8 @@ fun PantallaBienvenida(
 
 
                     authError = null
+
+                    @Suppress("DEPRECATION")
                     oneTapClient.beginSignIn(signInRequest)
                         .addOnSuccessListener { result ->
                             val request = IntentSenderRequest.Builder(
