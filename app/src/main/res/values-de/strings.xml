@@ -1,20 +1,17 @@
 <resources>
     <string name="app_name">Tech Wizards</string>
     <string name="title_activity_main">TechWizards</string>
-
     <string name="victory_calendar_title">Sieg von %1$s</string>
     <string name="victory_calendar_description">Belohnung erhalten: %1$d Münzen.</string>
     <string name="victory_notification_title">Du hast gewonnen!</string>
-    <string name="victory_notification_body">%1$s hat einen neuen Sieg erzielt.</string>
+    <string name="victory_notification_body">%1$s hat einen neuen Sieg errungen.</string>
     <string name="victory_notification_saved_media">Screenshot in der TechWizards-Galerie gespeichert.</string>
-    <string name="victory_notification_calendar_link">Kalendereintrag #%1$d</string>
+    <string name="victory_notification_calendar_link">Ereignis #%1$d im Kalender</string>
     <string name="victory_channel_name">Siege</string>
-
     <string name="music_channel_name">Hintergrundmusik</string>
     <string name="music_notification_title">Musik aktiv</string>
     <string name="music_notification_body">Tech Wizards Soundtrack wird abgespielt</string>
     <string name="music_playback_active">Hintergrundmusik wird abgespielt</string>
-
     <string name="menu_title">Hauptmenü</string>
     <string name="menu_play">Spielen</string>
     <string name="menu_history">Verlauf</string>
@@ -22,49 +19,43 @@
     <string name="menu_help">Hilfe</string>
     <string name="menu_exit">Beenden</string>
     <string name="menu_exit_confirm_title">Beenden bestätigen</string>
-    <string name="menu_exit_confirm_message">Möchten Sie die Anwendung beenden?</string>
+    <string name="menu_exit_confirm_message">Möchtest du die App beenden?</string>
     <string name="menu_exit_confirm_accept">Bestätigen</string>
     <string name="menu_exit_confirm_cancel">Abbrechen</string>
-
-    <string name="help_title">Hilfezentrum</string>
+    <string name="help_title">Hilfe-Center</string>
     <string name="help_url">file:///android_asset/help/index.html</string>
-    <string name="help_language_es">Spanisch</string>
-    <string name="help_language_en">Englisch</string>
+    <string name="help_language_es">Español</string>
+    <string name="help_language_en">English</string>
     <string name="help_language_de">Deutsch</string>
-
     <string name="settings_back_to_menu">Zurück zum Menü</string>
     <string name="settings_sound_section">Sound</string>
     <string name="settings_music_toggle">Hintergrundmusik</string>
     <string name="settings_sfx_toggle">Soundeffekte</string>
-    <string name="settings_pick_track">Benutzerdefinierten Titel auswählen</string>
-    <string name="settings_visual_section">Darstellung</string>
+    <string name="settings_pick_track">Benutzerdefinierten Track auswählen</string>
+    <string name="settings_visual_section">Anzeige</string>
     <string name="settings_dark_mode_toggle">Dunkles Design</string>
     <string name="settings_animations_toggle">Spielanimationen</string>
     <string name="settings_notifications_section">Benachrichtigungen</string>
     <string name="settings_notifications_toggle">Sieg-Benachrichtigungen</string>
     <string name="settings_language_section">Sprache</string>
     <string name="settings_load_error">Fehler beim Laden der Einstellungen.</string>
-    <string name="settings_save_error">Änderungen wurden nicht gespeichert. Bitte erneut versuchen.</string>
-
-    <string name="action_accept">Akzeptieren</string>
+    <string name="settings_save_error">Änderungen wurden nicht gespeichert. Bitte versuche es erneut.</string>
+    <string name="action_accept">OK</string>
     <string name="action_cancel">Abbrechen</string>
-
     <string name="welcome_title">Willkommen bei JuegosAzar!</string>
     <string name="welcome_play">Spielen</string>
     <string name="welcome_enter_name">Gib deinen Namen ein</string>
     <string name="welcome_player_name_label">Spielername</string>
     <string name="welcome_alias_hint">Der Alias erscheint im Spielverlauf.</string>
-    <string name="welcome_invalid_name">Gib einen gültigen Namen ein</string>
+    <string name="welcome_invalid_name">Bitte gib einen gültigen Namen ein</string>
     <string name="welcome_dice_content_description">Würfel</string>
-
     <string name="game_coin_content_description">Münze</string>
     <string name="game_dice_content_description">Würfel</string>
     <string name="game_roll">Würfeln</string>
-    <string name="game_last_roll_placeholder">Letzter Wurf: ...</string>
+    <string name="game_last_roll_placeholder">Letzter Wurf: …</string>
     <string name="game_back_to_menu">Zurück zum Menü</string>
     <string name="game_pick_number_prompt">Wähle eine Zahl von 1 bis 6</string>
     <string name="game_victory_confetti_label">Sieg!</string>
-
     <string name="history_title">Spielverlauf</string>
     <string name="history_player">Spieler</string>
     <string name="history_date">Datum</string>
@@ -73,35 +64,34 @@
     <string name="history_empty">Noch keine Spiele</string>
     <string name="history_win">Gewonnen</string>
     <string name="history_loss">Verloren</string>
-
-    <string name="language_es_label">Spanisch</string>
-    <string name="language_en_label">Englisch</string>
+    <string name="language_es_label">Español</string>
+    <string name="language_en_label">English</string>
     <string name="language_de_label">Deutsch</string>
-
-    <string name="chat_title">Spiel-Chat</string>
-    <string name="chat_placeholder">Nachricht schreiben…</string>
+    <string name="chat_title">Match-Chat</string>
+    <string name="chat_placeholder">Nachricht eingeben…</string>
     <string name="chat_send">Senden</string>
-    <string name="chat_system_welcome">Kanal bereit: teile Spielzüge mit deinem Team.</string>
-    <string name="chat_hint_controls">Nutze die Senden-Taste, um Strategien zu teilen.</string>
-
-    <string name="lobby_title">Spiel-Lobby</string>
+    <string name="chat_system_welcome">Kanal bereit: Teile Spielzüge mit deinem Team.</string>
+    <string name="chat_hint_controls">Nutze die Schaltfläche „Senden“, um Strategien zu teilen.</string>
+    <string name="lobby_title">Match-Lobby</string>
     <string name="lobby_description">Wähle eine aktive Lobby oder erstelle eine neue, um dein Team einzuladen.</string>
     <string name="lobby_status_open">Offen</string>
-    <string name="lobby_status_waiting">Wartet auf Spieler</string>
+    <string name="lobby_status_waiting">Warte auf Spieler</string>
     <string name="lobby_status_private">Privat</string>
     <string name="lobby_create">Lobby erstellen</string>
     <string name="lobby_join">Beitreten</string>
+    <string name="lobby_join_placeholder">Lobby- oder Match-Code</string>
     <string name="lobby_code">Code %1$s</string>
-    <string name="lobby_action_join">Betreten</string>
-
+    <string name="lobby_action_join">Beitreten</string>
+    <string name="lobby_active_match">Match in Lobby %1$s</string>
+    <string name="lobby_waiting_to_start">Erstelle oder tritt einer Lobby bei, um das Online-Spiel zu starten.</string>
+    <string name="lobby_empty">Noch keine Lobbys. Erstelle eine, um jemanden einzuladen!</string>
     <string name="events_title">Laufende Events</string>
     <string name="events_daily_challenge">Tägliche Herausforderung</string>
     <string name="events_weekend_tournament">Wochenendturnier</string>
-    <string name="events_special_drop">Spezielle Belohnung</string>
+    <string name="events_special_drop">Spezial-Drop mit Belohnungen</string>
     <string name="events_progress_label">Fortschritt</string>
-
-    <string name="match_title">Laufendes Spiel</string>
-    <string name="match_subtitle">Steuere Punkte und schnelle Aktionen jedes Spielers.</string>
+    <string name="match_title">Match läuft</string>
+    <string name="match_subtitle">Verwalte Punkte und Schnellaktionen für jeden Spieler.</string>
     <string name="match_subtitle_online">Match %1$s in Echtzeit.</string>
     <string name="match_start">Starten</string>
     <string name="match_finish">Beenden</string>
@@ -109,32 +99,29 @@
     <string name="match_add_points">+1 Punkt</string>
     <string name="match_cta_listo">Bereit / Einsatz bestätigen</string>
     <string name="match_roll">Würfel werfen</string>
-    <string name="match_choose_face">Wähle die Würfelseite</string>
+    <string name="match_choose_face">Wähle die Zahl deiner Wette</string>
     <string name="match_remote_ready">Gegner verbunden</string>
     <string name="match_remote_waiting">Warte auf Gegner…</string>
     <string name="match_no_roll">Noch kein Wurf registriert.</string>
     <string name="match_roll_result">Würfelergebnis: %1$d</string>
-    <string name="match_wait_remote_roll">Warte auf den entfernten Wurf zur Synchronisierung.</string>
-    <string name="match_selected_face">Gewählte Seite: %1$d</string>
+    <string name="match_wait_remote_roll">Warte auf den Wurf des Gegners, um den Spielstand zu synchronisieren.</string>
+    <string name="match_selected_face">Gewählte Zahl: %1$d</string>
     <string name="match_last_roll">Letzter Wurf: %1$d</string>
     <string name="match_roll_player_result">Spieler %1$d würfelte %2$d</string>
     <string name="match_round_winner">Rundensieger: Spieler %1$d</string>
     <string name="match_round_draw">Unentschieden</string>
-
     <string name="common_back">Zurück</string>
-
     <string name="no_money_title">Keine Münzen</string>
-    <string name="no_money_message">Du kannst nicht weiter würfeln, da du keine Münzen mehr hast.</string>
+    <string name="no_money_message">Du kannst nicht weiter würfeln, weil du keine Münzen mehr hast.</string>
     <string name="no_money_action">Zurück zum Menü</string>
-
-    <string name="auth_title">Google-Authentifizierung</string>
+    <string name="auth_title">Anmeldung mit Google</string>
     <string name="auth_with_google">Mit Google anmelden</string>
     <string name="auth_signed_in_as">Angemeldet als: %1$s</string>
     <string name="auth_unknown_user">Spieler</string>
-    <string name="auth_missing_token">Google-Token nicht erhalten. Bitte erneut versuchen.</string>
+    <string name="auth_missing_token">Google-Token wurde nicht empfangen. Bitte versuche es erneut.</string>
     <string name="auth_google_failed">Authentifizierung fehlgeschlagen (Code %1$d).</string>
-    <string name="auth_missing_google_client_id">Konfiguriere die Google-Client-ID (google-services.json oder Variable GOOGLE_WEB_CLIENT_ID) vor der Anmeldung.</string>
-    <string name="auth_google_no_credential">Keine gültigen Anmeldedaten für diese App (Code %1$s). Überprüfe SHA-1 und Client-ID in Google Cloud.</string>
+    <string name="auth_missing_google_client_id">Richte die Google Client-ID (google-services.json oder Variable GOOGLE_WEB_CLIENT_ID) ein, bevor du dich anmeldest.</string>
+    <string name="auth_google_no_credential">Keine gültigen Anmeldedaten für diese App (Code %1$s). Prüfe SHA-1 und die Client-ID in Google Cloud.</string>
     <string name="auth_google_generic_error">Fehler bei der Google-Anmeldung: %1$s (%2$s)</string>
     <string name="auth_photo_placeholder">Profilfoto: %1$s</string>
     <string name="auth_logout">Abmelden</string>

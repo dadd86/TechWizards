@@ -6,6 +6,7 @@ import com.diegodiaz.techwizards.core.common.Result
 import com.diegodiaz.techwizards.domain.model.CommonPrize
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.domain.model.Match
+import com.diegodiaz.techwizards.domain.model.MatchEstado
 import com.diegodiaz.techwizards.domain.model.MatchParticipant
 import com.diegodiaz.techwizards.domain.model.MatchScore
 import com.diegodiaz.techwizards.domain.model.MatchSnapshot
@@ -54,6 +55,44 @@ class ControladorMatchOnline(
 
     private var streamJob: Job? = null
     private var ultimoLanzamientoProcesado: Map<Long, Int> = emptyMap()
+
+    fun crearMatchDesdeLobby(lobbyId: String, creadorNumero: Long, modo: String = "duelo") {
+        val matchId = "match-$lobbyId"
+        val match = Match(
+            id = matchId,
+            lobbyId = lobbyId,
+            modo = modo,
+            estado = MatchEstado.PENDING,
+            createdByNumero = creadorNumero,
+            createdAtMs = System.currentTimeMillis(),
+            startedAtMs = null,
+            finishedAtMs = null
+        )
+
+        viewModelScope.launch {
+            matchRepository.upsertMatch(match)
+            iniciar(matchId = matchId, lobbyId = lobbyId, usuarioId = creadorNumero)
+        }
+    }
+
+    fun unirseAMatchExistente(matchId: String, lobbyId: String?, usuarioId: Long) {
+        viewModelScope.launch {
+            // Garantiza que exista un registro inicial en caso de que el host aún no lo haya publicado
+            matchRepository.upsertMatch(
+                Match(
+                    id = matchId,
+                    lobbyId = lobbyId,
+                    modo = "duelo",
+                    estado = MatchEstado.PENDING,
+                    createdByNumero = usuarioId,
+                    createdAtMs = System.currentTimeMillis(),
+                    startedAtMs = null,
+                    finishedAtMs = null
+                )
+            )
+            iniciar(matchId = matchId, lobbyId = lobbyId, usuarioId = usuarioId)
+        }
+    }
 
     fun iniciar(matchId: String, lobbyId: String?, usuarioId: Long?) {
         if (matchId == _ui.value.matchId) return

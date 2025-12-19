@@ -29,6 +29,7 @@ import com.diegodiaz.techwizards.ui.controller.ControladorAjustes
 import com.diegodiaz.techwizards.ui.controller.ControladorAuth
 import com.diegodiaz.techwizards.ui.controller.ControladorMatch
 import com.diegodiaz.techwizards.ui.controller.ControladorMatchOnline
+import com.diegodiaz.techwizards.ui.controller.ControladorLobby
 import com.diegodiaz.techwizards.ui.controller.ControladorPartida
 import com.diegodiaz.techwizards.ui.controller.ControladorPartidaFactory
 import com.diegodiaz.techwizards.ui.controller.ControladorPremioAdmin
@@ -293,9 +294,55 @@ fun NavGraph(
         }
 
         composable("lobby") {
+            val lobbyVm: ControladorLobby = viewModel()
+            val lobbyState by lobbyVm.ui.collectAsState()
+
+            val matchVm: ControladorMatchOnline = viewModel(
+                key = "matchOnline-lobby",
+                factory = SimpleVmFactory {
+                    ControladorMatchOnline(ServiceLocator.matchRepository, ServiceLocator.scoreRepository)
+                }
+            )
+
+            val matchState by matchVm.ui.collectAsState()
+            val usuarioNumero = usuarioActual.value?.numero ?: 1L
+            val normalizarMatchId: (String) -> String = { codigo ->
+                if (codigo.startsWith("match-")) codigo else "match-$codigo"
+            }
+
             PantallaLobby(
                 dims = dims,
-                onVolver = { navController.navigate("menu") }
+                lobbyState = lobbyState,
+                matchState = matchState,
+                onVolver = { navController.navigate("menu") },
+                onCrearLobby = {
+                    val lobby = lobbyVm.crearLobby(
+                        nombre = "Lobby $usuarioNumero",
+                        modo = "duelo",
+                        creadorNumero = usuarioNumero
+                    )
+                    matchVm.crearMatchDesdeLobby(lobbyId = lobby.id, creadorNumero = usuarioNumero)
+                },
+                onActualizarCodigo = lobbyVm::actualizarCodigoIngreso,
+                onUnirsePorCodigo = {
+                    val codigo = lobbyState.codigoIngreso.trim()
+                    if (codigo.isNotEmpty()) {
+                        lobbyVm.seleccionar(codigo)
+                        val matchId = normalizarMatchId(codigo)
+                        matchVm.unirseAMatchExistente(matchId = matchId, lobbyId = codigo, usuarioId = usuarioNumero)
+                    }
+                },
+                onEntrarLobby = { lobbyId ->
+                    lobbyVm.seleccionar(lobbyId)
+                    matchVm.unirseAMatchExistente(
+                        matchId = normalizarMatchId(lobbyId),
+                        lobbyId = lobbyId,
+                        usuarioId = usuarioNumero
+                    )
+                },
+                onSeleccionCara = matchVm::seleccionarCara,
+                onConfirmarApuesta = { matchVm.confirmarApuesta(usuarioNumero) },
+                onLanzarDado = { matchVm.lanzarDado(usuarioNumero) }
             )
         }
 

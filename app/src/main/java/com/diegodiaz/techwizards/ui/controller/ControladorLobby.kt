@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 data class LobbyUiState(
     val lobbies: List<Lobby> = emptyList(),
     val lobbyActual: Lobby? = null,
+    val codigoIngreso: String = "",
     val error: String? = null
 )
 
@@ -23,7 +24,7 @@ class ControladorLobby : ViewModel() {
         modo: String,
         creadorNumero: Long,
         codigo: String? = null
-    ) {
+    ): Lobby {
         val nuevo = Lobby(
             id = System.currentTimeMillis().toString(),
             nombre = nombre,
@@ -37,12 +38,16 @@ class ControladorLobby : ViewModel() {
             lobbies = _ui.value.lobbies + nuevo,
             lobbyActual = nuevo
         )
+        return nuevo
     }
 
     fun seleccionar(lobbyId: String?) {
         _ui.value = _ui.value.copy(
             lobbyActual = _ui.value.lobbies.find { it.id == lobbyId }
         )
+    }
+    fun actualizarCodigoIngreso(nuevoCodigo: String) {
+        _ui.value = _ui.value.copy(codigoIngreso = nuevoCodigo)
     }
 
     fun limpiarError() { _ui.value = _ui.value.copy(error = null) }
