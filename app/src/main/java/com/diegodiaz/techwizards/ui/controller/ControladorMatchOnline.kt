@@ -212,17 +212,17 @@ class ControladorMatchOnline(
         buscarRivalJob?.cancel()
         _ui.value = _ui.value.copy(buscandoRival = true, error = null)
         viewModelScope.launch {
-            val lobbyId = _ui.value.lobbyId
+            val lobbyId = lobbyIdOverride?.takeIf { it.isNotBlank() } ?: _ui.value.lobbyId
             if (lobbyId.isNullOrBlank()) {
                 _ui.value = _ui.value.copy(
                     buscandoRival = false,
                     error = "No se encontró lobby activo para buscar rival"
                 )
-               return@launch
+                return@launch
             }
 
             runCatching {
-                lobbyRealtime.unirseLobby(lobbyId, usuarioNumero)
+                asegurarLobbyRemoto(lobbyId, usuarioNumero)
             }.onFailure { error ->
                 _ui.value = _ui.value.copy(
                     buscandoRival = false,

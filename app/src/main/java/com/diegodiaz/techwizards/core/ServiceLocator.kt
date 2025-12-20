@@ -9,6 +9,7 @@ import com.diegodiaz.techwizards.core.usecases.IniciarSesionConGoogleUseCase
 import com.diegodiaz.techwizards.core.usecases.ObservarUsuarioAutenticadoUseCase
 import com.diegodiaz.techwizards.core.usecases.ObtenerUsuarioAutenticadoUseCase
 import com.diegodiaz.techwizards.core.usecases.ActualizarPremioComunUseCase
+import com.diegodiaz.techwizards.core.usecases.RegistrarHistorialRemotoUseCase
 import com.diegodiaz.techwizards.core.usecases.ResolverTiradaUseCase
 import com.diegodiaz.techwizards.core.usecases.RegistrarUbicacionVictoriaUseCase
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
@@ -22,6 +23,7 @@ import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
 import com.diegodiaz.techwizards.data.local.cache.MatchSnapshotLocalDataSource
 import com.diegodiaz.techwizards.data.local.mapper.VictoryLocationLocalMapper
 import com.diegodiaz.techwizards.data.remote.lobby.LobbyRealtimeFirebaseDataSource
+import com.diegodiaz.techwizards.data.remote.history.PartidaHistoryFirebaseDataSource
 import com.diegodiaz.techwizards.data.remote.match.MatchRealtimeFirebaseDataSource
 import com.diegodiaz.techwizards.data.remote.match.MatchApi
 import com.diegodiaz.techwizards.data.remote.match.MatchRemoteMapper
@@ -32,6 +34,7 @@ import com.diegodiaz.techwizards.data.repository.impl.*
 import com.diegodiaz.techwizards.data.transaction.RoomTransactionRunner
 import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.domain.repository.AuthRepository
+import com.diegodiaz.techwizards.domain.repository.PartidaHistoryRepository
 import com.diegodiaz.techwizards.integration.victory.WorkManagerVictoryCelebrationService
 import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import com.google.firebase.FirebaseApp
@@ -132,6 +135,10 @@ object ServiceLocator {
         MatchRemoteMapper()
     }
 
+    private val partidaHistoryDataSource by lazy {
+        PartidaHistoryFirebaseDataSource()
+    }
+
 
 
     // --------------------------------------------------
@@ -189,6 +196,10 @@ object ServiceLocator {
             credentialsStore = credentialsStore,
             sessionManager = sessionManager
         )
+    }
+
+    private val partidaHistoryRepository: PartidaHistoryRepository by lazy {
+        PartidaHistoryRepositoryFirebase(partidaHistoryDataSource)
     }
     val actualizarPremioComunUseCase by lazy {
         ActualizarPremioComunUseCase(scoreRepository, sessionManager)
@@ -249,6 +260,9 @@ object ServiceLocator {
 
     val resolverTiradaUseCase by lazy {
         ResolverTiradaUseCase(juegoRepository)
+    }
+    val registrarHistorialRemotoUseCase by lazy {
+        RegistrarHistorialRemotoUseCase(partidaHistoryRepository)
     }
 
     val victoryCelebrationService by lazy {

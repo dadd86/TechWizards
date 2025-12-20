@@ -4,6 +4,7 @@ import com.diegodiaz.techwizards.data.local.dao.*
 import com.diegodiaz.techwizards.data.local.entity.MonederoEntity
 import com.diegodiaz.techwizards.data.local.entity.PartidaEntity
 import com.diegodiaz.techwizards.data.local.entity.Resultado
+import com.diegodiaz.techwizards.data.local.entity.UsuarioEntity
 import com.diegodiaz.techwizards.data.local.mapper.toDomain
 import com.diegodiaz.techwizards.data.local.mapper.toEntity
 import com.diegodiaz.techwizards.domain.repository.JuegoRepository
@@ -149,10 +150,27 @@ class JuegoRepositoryRoom(
     override suspend fun lanzarDado(usuarioId: String): Partida {
         val usuarioNumero = usuarioId.toLong()
         val monedero = monederoDao.getMonederoSimple(usuarioNumero)
-        var saldo = monedero?.saldo ?: 0
+        val saldoInicial = monedero?.saldo ?: MONEDAS_INICIALES
+        if (monedero == null) {
+            monederoDao.upsertSuspend(
+                MonederoEntity(
+                    id = "wallet_$usuarioNumero",
+                    usuarioNumero = usuarioNumero,
+                    saldo = saldoInicial
+                )
+            )
+        }
+        var saldo = saldoInicial
 
         val usuario = usuarioDao.getByNumero(usuarioNumero)
-            ?: error("Usuario inexistente para registrar partida")
+            ?: UsuarioEntity(
+                numero = usuarioNumero,
+                alias = "Player $usuarioNumero",
+                fechaAltaMs = System.currentTimeMillis(),
+                monedas = saldoInicial,
+                ganoUltimaPartida = false,
+                firebaseUid = null
+            ).also { usuarioDao.upsertSuspend(it) }
 
         val dado = (1..6).random()
         val gano = dado == 6
@@ -213,3 +231,4 @@ class JuegoRepositoryRoom(
 
 
 }
+private const val MONEDAS_INICIALES = 100

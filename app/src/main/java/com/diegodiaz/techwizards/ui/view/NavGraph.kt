@@ -92,6 +92,10 @@ fun NavGraph(
             observarPreferencias = observarPreferencias,
             victoryService = victoryService,
             sessionManager = sessionManager,
+            registrarHistorialRemotoUseCase = ServiceLocator.registrarHistorialRemotoUseCase,
+            firebaseUidProvider = {
+                authState.usuario?.uid ?: usuarioActual.value?.firebaseUid
+            },
             registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase,
             resolverTiradaUseCase = ServiceLocator.resolverTiradaUseCase
         )
@@ -170,15 +174,15 @@ fun NavGraph(
                 onRanking = { navController.navigate("ranking") },
                 onAjustes = { navController.navigate("ajustes") },
                 onAyuda = { navController.navigate("ayuda") },
-                onLobby = { navController.navigate("lobby") },
-                onChat = { navController.navigate("chat") },
-                onEventos = { navController.navigate("eventos") },
-                onMatch = {
+                //onLobby = { navController.navigate("lobby") },
+                //onChat = { navController.navigate("chat") },
+                //onEventos = { navController.navigate("eventos") },
+                /*onMatch = {
                     val matchId = "match-${System.currentTimeMillis()}"
                     val lobbyId = "lobby-${usuario?.numero ?: usuarioNumeroActual}"
                     navController.navigate("match/$matchId?lobbyId=$lobbyId")
-                },
-                onPremioAdmin = { navController.navigate("premio-admin") },
+                },*/
+                //onPremioAdmin = { navController.navigate("premio-admin") },
                 dims = dims,
                 controladorPartida = controladorPartida,
                 usuario = usuario

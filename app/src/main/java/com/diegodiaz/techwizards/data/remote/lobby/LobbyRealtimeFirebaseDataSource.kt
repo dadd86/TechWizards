@@ -91,15 +91,30 @@ class LobbyRealtimeFirebaseDataSource(
      * @security No expone datos sensibles; solo usa IDs numéricos.
      */
     suspend fun unirseLobby(lobbyId: String, jugadorNumero: Long) {
-        firestore.collection("lobbies")
-            .document(lobbyId)
-            .update(
-                mapOf(
-                    "jugadoresConectados" to FieldValue.arrayUnion(jugadorNumero),
-                    "updatedAt" to FieldValue.serverTimestamp()
+        val docRef = firestore.collection("lobbies").document(lobbyId)
+        firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(docRef)
+            if (!snapshot.exists()) {
+                transaction.set(
+                    docRef,
+                    mapOf(
+                        "codigo" to lobbyId,
+                        "estado" to "PENDING",
+                        "creadorNumero" to jugadorNumero,
+                        "jugadoresConectados" to listOf(jugadorNumero),
+                        "updatedAt" to FieldValue.serverTimestamp()
+                    )
                 )
-            )
-            .await()
+            } else {
+                transaction.update(
+                    docRef,
+                    mapOf(
+                        "jugadoresConectados" to FieldValue.arrayUnion(jugadorNumero),
+                        "updatedAt" to FieldValue.serverTimestamp()
+                    )
+                )
+            }
+        }.await()
     }
 }
 
