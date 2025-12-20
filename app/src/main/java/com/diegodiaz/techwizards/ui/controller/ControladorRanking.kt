@@ -17,7 +17,8 @@ sealed interface RankingUiState {
         val topTen: List<LeaderboardEntry>,
         val premio: CommonPrize?,
         val actualizadoEnMs: Long,
-        val puedeActualizarPremio: Boolean
+        val puedeActualizarPremio: Boolean,
+        val mensajeError: String? = null
     ) : RankingUiState
 
     data class Error(val mensaje: String) : RankingUiState
@@ -44,19 +45,27 @@ class ControladorRanking(
     }
 
     fun refrescarTodo() {
+        val estadoPrevio = _uiState.value as? RankingUiState.Exito
         _uiState.value = RankingUiState.Cargando
         viewModelScope.launch {
             runCatching {
                 val topTen = scoreRepository.obtenerTopTen()
-                val premio = scoreRepository.obtenerPremioComun()
-                RankingUiState.Exito(
+                val premio = runCatching { scoreRepository.obtenerPremioComun() }
+                    .onFailure { error ->
+                        DecentralizedLogger.e(
+                            "ControladorRanking",
+                            "No se pudo refrescar premio",
+                            error
+                        )
+                    }
+                    .getOrElse { estadoPrevio?.premio }
+                _uiState.value = RankingUiState.Exito(
                     topTen = topTen,
                     premio = premio,
                     actualizadoEnMs = System.currentTimeMillis(),
-                    puedeActualizarPremio = sessionManager.session.value != null
+                    puedeActualizarPremio = sessionManager.session.value != null,
+                    mensajeError = null
                 )
-            }.onSuccess { nuevoEstado ->
-                _uiState.value = nuevoEstado
             }.onFailure { error ->
                 DecentralizedLogger.e("ControladorRanking", "Error al cargar ranking", error)
                 _uiState.value = RankingUiState.Error("No pudimos cargar el top ten")
@@ -72,12 +81,15 @@ class ControladorRanking(
                 .onSuccess { premioActualizado ->
                     _uiState.value = estadoActual.copy(
                         premio = premioActualizado,
-                        actualizadoEnMs = System.currentTimeMillis()
+                        actualizadoEnMs = System.currentTimeMillis(),
+                        mensajeError = null
                     )
                 }
                 .onFailure { error ->
                     DecentralizedLogger.e("ControladorRanking", "No se pudo refrescar premio", error)
-                    _uiState.value = RankingUiState.Error("No pudimos refrescar el premio común")
+                    _uiState.value = estadoActual.copy(
+                        mensajeError = "No pudimos refrescar el premio común"
+                    )
                 }
         }
     }
@@ -100,11 +112,25 @@ class ControladorRanking(
                     topTen = top,
                     premio = premio,
                     actualizadoEnMs = System.currentTimeMillis(),
-                    puedeActualizarPremio = true
+                    puedeActualizarPremio = true,
+                    mensajeError = null
                 )
             }.onFailure { error ->
                 DecentralizedLogger.e("ControladorRanking", "No se pudo actualizar premio", error)
-                _uiState.value = RankingUiState.Error("Error actualizando premio común")
+                val estadoActual = _uiState.value as? RankingUiState.Exito
+                val mensaje = when (error) {
+                    is retrofit2.HttpException -> {
+                        if (error.code() == 403) {
+                            "Solo admin puede actualizar el premio común"
+                        } else {
+                            "Error actualizando premio común"
+                        }
+                    }
+                    else -> "Error actualizando premio común"
+                }
+                _uiState.value = estadoActual?.copy(
+                    mensajeError = mensaje
+                ) ?: RankingUiState.Error(mensaje)
             }
         }
     }

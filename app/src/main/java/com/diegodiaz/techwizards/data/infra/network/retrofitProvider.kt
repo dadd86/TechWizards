@@ -78,6 +78,7 @@ object RetrofitProvider {
     private fun createLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
+            redactHeader("Authorization")
         }
     }
 
