@@ -43,8 +43,8 @@ function requireAdmin(req: any, res: any, next: any) {
 
 // --- GET /leaderboard/top10 ---
 app.get("/leaderboard/top10", async (_req, res) => {
-  const snap = await db.collection("scores")
-    .orderBy("score", "desc")
+  const snap = await db.collection("players")
+    .orderBy("coins", "desc")
     .limit(10)
     .get();
 
@@ -52,11 +52,11 @@ app.get("/leaderboard/top10", async (_req, res) => {
     const data = d.data() as any;
     return {
       id: d.id,
-      alias: data.alias,
-      score: data.score,
+      alias: data.alias ?? "Jugador",
+      score: data.coins ?? 0,
       position: idx + 1,
-      prizeName: data.prizeName ?? null,
-      prizeDescription: data.prizeDescription ?? null,
+      prizeName: null,
+      prizeDescription: null,
     };
   });
 
@@ -65,24 +65,29 @@ app.get("/leaderboard/top10", async (_req, res) => {
 
 // --- POST /scores (requiere auth) ---
 app.post("/scores", requireAuth, async (req: AuthedRequest, res) => {
-  const { alias, score } = (req.body ?? {}) as any;
+  try {
+    const { alias, score } = (req.body ?? {}) as any;
 
-  if (typeof alias !== "string" || !alias.trim()) return res.status(400).json({ error: "invalid_alias" });
-  const sanitizedAlias = alias.trim();
+    if (typeof alias !== "string" || !alias.trim()) return res.status(400).json({ error: "invalid_alias" });
+    const sanitizedAlias = alias.trim();
     if (sanitizedAlias.length < 3 || sanitizedAlias.length > 30)
       return res.status(400).json({ error: "invalid_alias_length" });
     if (!Number.isInteger(score) || score < 0 || score > MAX_SCORE)
       return res.status(400).json({ error: "invalid_score_range" });
-  if (!req.user?.uid) return res.status(401).json({ error: "missing_uid" });
+    if (!req.user?.uid) return res.status(401).json({ error: "missing_uid" });
 
-  await db.collection("scores").add({
-    uid: req.user.uid,
-    alias: sanitizedAlias,
-    score,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
+    await db.collection("scores").add({
+      uid: req.user.uid,
+      alias: sanitizedAlias,
+      score,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
 
-  res.status(204).send();
+    return res.status(204).send();
+  } catch (e: any) {
+    console.error("POST /scores failed", e);
+    return res.status(500).json({ error: "internal", detail: String(e?.message ?? e) });
+  }
 });
 
 // --- GET /prize/common ---

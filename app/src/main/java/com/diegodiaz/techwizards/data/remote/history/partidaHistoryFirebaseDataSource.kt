@@ -28,6 +28,10 @@ class PartidaHistoryFirebaseDataSource(
      * - Actualiza solo métricas agregadas del jugador (wins/losses/coins).
      */
     suspend fun registrarPartida(firebaseUid: String, partida: PartidaHistoryDto) {
+        require(firebaseUid.isNotBlank()) { "firebaseUid vacío" }
+        require(partida.aliasJugador.isNotBlank()) { "aliasJugador vacío" }
+        require(partida.resultado.isNotBlank()) { "resultado vacío" }
+        require(partida.fechaMs > 0) { "fechaMs inválida" }
         val historyDocument = historyCollection(firebaseUid).document()
         val playerDocument = playerDocument(firebaseUid)
         val victoria = partida.resultado == "GANADO"
