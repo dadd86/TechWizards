@@ -135,7 +135,8 @@ app.post("/login", requireAuth, async (req: AuthedRequest, res) => {
   );
 
   const token = (req.header("Authorization") || "").replace(/^Bearer /, "");
-  res.json({ token, alias });
+  const isAdmin = req.user.admin === true || req.user.role === "admin" || req.user.claims?.admin === true;
+  res.json({ token, alias, isAdmin });
 });
 
 // Export HTTP function (2nd gen)

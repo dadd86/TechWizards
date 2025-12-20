@@ -63,7 +63,7 @@ class ControladorRanking(
                     topTen = topTen,
                     premio = premio,
                     actualizadoEnMs = System.currentTimeMillis(),
-                    puedeActualizarPremio = sessionManager.session.value != null,
+                    puedeActualizarPremio = sessionManager.session.value?.isAdmin == true,
                     mensajeError = null
                 )
             }.onFailure { error ->
@@ -100,6 +100,13 @@ class ControladorRanking(
             _uiState.value = RankingUiState.Error("Inicia sesión para actualizar el premio")
             return
         }
+        if (!session.isAdmin) {
+            val estadoActual = _uiState.value as? RankingUiState.Exito
+            val mensaje = "Solo admin puede actualizar el premio común"
+            _uiState.value = estadoActual?.copy(mensajeError = mensaje)
+                ?: RankingUiState.Error(mensaje)
+            return
+        }
         viewModelScope.launch {
             runCatching {
                 scoreRepository.actualizarPremioComun(
@@ -112,7 +119,7 @@ class ControladorRanking(
                     topTen = top,
                     premio = premio,
                     actualizadoEnMs = System.currentTimeMillis(),
-                    puedeActualizarPremio = true,
+                    puedeActualizarPremio = session.isAdmin,
                     mensajeError = null
                 )
             }.onFailure { error ->
