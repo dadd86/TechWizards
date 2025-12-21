@@ -48,7 +48,7 @@
             android:exported="true"
             android:label="@string/title_activity_main"
             android:windowSoftInputMode="adjustResize"
-            android:theme="@style/Theme.TechWizards">
+            android:theme="@style/Theme.TechWizards.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

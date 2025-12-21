@@ -48,19 +48,40 @@ class App : Application() {
      */
     private fun aplicarIdiomaPreferido() {
         appScope.launch {
-            val languageTag = when (val prefs = ServiceLocator.settingsRepository.obtenerPreferencias()) {
-                is Result.Ok -> prefs.value.selectedLanguageTag
-                is Result.Err -> gameSettingsDefault.selectedLanguageTag
+            val languageTag = withContext(Dispatchers.IO) {
+                when (val prefs = ServiceLocator.settingsRepository.obtenerPreferencias()) {
+                    is Result.Ok -> prefs.value.selectedLanguageTag
+                    is Result.Err -> gameSettingsDefault.selectedLanguageTag
+                }
             }
 
+            val sanitizedTag = sanitizeLanguageTag(languageTag)
             val currentTag = AppCompatDelegate.getApplicationLocales().toLanguageTags()
-            if (currentTag == languageTag) return@launch
+            if (sanitizedTag.isBlank() || currentTag == sanitizedTag) {
+                LocaleStartupState.markReady()
+                return@launch
+            }
 
             withContext(Dispatchers.Main) {
-                AppCompatDelegate.setApplicationLocales(
-                    LocaleListCompat.forLanguageTags(languageTag)
-                )
+                val localeList = LocaleListCompat.forLanguageTags(sanitizedTag)
+                if (localeList.isEmpty) {
+                    LocaleStartupState.markReady()
+                    return@withContext
+                }
+                if (AppCompatDelegate.getApplicationLocales() != localeList) {
+                    AppCompatDelegate.setApplicationLocales(localeList)
+                }
+                LocaleStartupState.markReady()
+                }
             }
         }
+    }
+private fun sanitizeLanguageTag(languageTag: String): String {
+    if (languageTag.isBlank()) return gameSettingsDefault.selectedLanguageTag
+    val localeList = LocaleListCompat.forLanguageTags(languageTag)
+    return if (localeList.isEmpty) {
+        gameSettingsDefault.selectedLanguageTag
+    } else {
+        languageTag
     }
 }
