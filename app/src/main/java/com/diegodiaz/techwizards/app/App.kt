@@ -10,7 +10,11 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.diegodiaz.techwizards.core.common.Result
 import com.diegodiaz.techwizards.domain.model.gameSettingsDefault
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Punto de entrada de la aplicación responsable de inicializar el *Service Locator*
@@ -20,6 +24,7 @@ import kotlinx.coroutines.runBlocking
  * - Registra enmascaramiento para identificadores extensos y evita PII en los sinks.
  */
 class App : Application() {
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     /**
      * Inicializa repositorios y sinks de logging al arrancar la app.
      *
@@ -42,10 +47,20 @@ class App : Application() {
      * en preferencias. Si no existe, fuerza español como idioma principal.
      */
     private fun aplicarIdiomaPreferido() {
-        val languageTag = when (val prefs = runBlocking { ServiceLocator.settingsRepository.obtenerPreferencias() }) {
-            is Result.Ok -> prefs.value.selectedLanguageTag
-            is Result.Err -> gameSettingsDefault.selectedLanguageTag
+        appScope.launch {
+            val languageTag = when (val prefs = ServiceLocator.settingsRepository.obtenerPreferencias()) {
+                is Result.Ok -> prefs.value.selectedLanguageTag
+                is Result.Err -> gameSettingsDefault.selectedLanguageTag
+            }
+
+            val currentTag = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+            if (currentTag == languageTag) return@launch
+
+            withContext(Dispatchers.Main) {
+                AppCompatDelegate.setApplicationLocales(
+                    LocaleListCompat.forLanguageTags(languageTag)
+                )
+            }
         }
-        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(languageTag))
     }
 }

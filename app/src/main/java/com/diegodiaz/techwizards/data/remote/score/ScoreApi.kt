@@ -15,8 +15,14 @@ import retrofit2.http.Query
  */
 interface ScoreApi {
 
-    @GET("leaderboard/top10")
+    @GET("scores/top10")
     suspend fun fetchTopTen(
+        @Header("Authorization") bearerToken: String?,
+        @Query("since") since: String? = null
+    ): ScoreTopTenResponse
+
+    @GET("leaderboard/top10")
+    suspend fun fetchTopTenLegacy(
         @Header("Authorization") bearerToken: String?
     ): List<ScoreEntryDto>
 

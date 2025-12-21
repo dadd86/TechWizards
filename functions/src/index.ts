@@ -42,30 +42,39 @@ function requireAdmin(req: any, res: any, next: any) {
 }
 
 // --- GET /leaderboard/top10 ---
-app.get("/leaderboard/top10", async (_req, res) => {
+async function buildTopTen() {
   const snap = await db.collection("players")
     .orderBy("coins", "desc")
     .limit(10)
     .get();
 
-  const items = snap.docs.map((d, idx) => {
+  return snap.docs.map((d, idx) => {
     const data = d.data() as any;
     const alias = typeof data.alias === "string" && data.alias.trim()
-          ? data.alias.trim()
-          : (typeof data.aliasJugador === "string" && data.aliasJugador.trim()
-            ? data.aliasJugador.trim()
-            : "Jugador");
-        const score = Number.isFinite(data.coins) ? Number(data.coins) : 0;
-        const playerId = data.usuarioNumero != null ? String(data.usuarioNumero) : d.id;
+      ? data.alias.trim()
+      : (typeof data.aliasJugador === "string" && data.aliasJugador.trim()
+        ? data.aliasJugador.trim()
+        : "Jugador");
+    const score = Number.isFinite(data.coins) ? Number(data.coins) : 0;
+    const playerId = data.usuarioNumero != null ? String(data.usuarioNumero) : d.id;
     return {
       id: playerId,
-            alias,
-            score,
+      alias,
+      score,
       position: idx + 1,
       prizeName: null,
       prizeDescription: null,
     };
   });
+ }
+ app.get("/scores/top10", async (_req, res) => {
+   const items = await buildTopTen();
+   res.json({ items });
+ });
+
+ // --- GET /leaderboard/top10 (legacy) ---
+ app.get("/leaderboard/top10", async (_req, res) => {
+   const items = await buildTopTen();
 
   res.json(items);
 });

@@ -36,7 +36,15 @@ class ScoreRepositoryRetrofit(
     override suspend fun obtenerTopTen(): List<LeaderboardEntry> {
         val token = tokenOrNull()
         val bearer = token?.let { "Bearer $it" }
-        val dtos = scoreApi.fetchTopTen(bearerToken = bearer)
+        val dtos = runCatching {
+            scoreApi.fetchTopTen(bearerToken = bearer).items
+        }.recoverCatching { error ->
+            if (error is retrofit2.HttpException && error.code() == 404) {
+                scoreApi.fetchTopTenLegacy(bearerToken = bearer)
+            } else {
+                throw error
+            }
+        }.getOrThrow()
 
         // DTO ya trae position opcional; forzamos una si viene null
         return dtos.mapIndexed { index, dto ->
