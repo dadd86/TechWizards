@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.diegodiaz.techwizards.core.common.Result
 import com.diegodiaz.techwizards.core.usecases.ObservarPreferenciasUseCase
+import com.diegodiaz.techwizards.core.usecases.RegistrarHistorialRemotoUseCase
 import com.diegodiaz.techwizards.core.usecases.ResolverTiradaUseCase
 import com.diegodiaz.techwizards.core.usecases.RegistrarUbicacionVictoriaUseCase
 import com.diegodiaz.techwizards.data.local.entity.Resultado
@@ -60,6 +61,8 @@ class ControladorPartida(
     private val observarPreferencias: ObservarPreferenciasUseCase,
     private val victoryService: VictoryCelebrationService,
     private val sessionManager: SessionManager,
+    private val registrarHistorialRemotoUseCase: RegistrarHistorialRemotoUseCase,
+    private val firebaseUidProvider: () -> String?,
 
     // 👇 AÑADIDO (mínimo cambio)
     private val registrarUbicacionVictoriaUseCase: RegistrarUbicacionVictoriaUseCase,
@@ -113,6 +116,7 @@ class ControladorPartida(
             try {
                 val partida = repo.lanzarDado(usuarioId)
                 rollCounter.update { it + 1 }
+                registrarHistorialRemoto(partida)
                 publicarPuntuacionRemota(partida)
                 handleVictoriaSiNecesario(partida, origen = "lanzar")
             } catch (t: Throwable) {
@@ -126,6 +130,7 @@ class ControladorPartida(
             if (num in 1..6) {
                 val partida = repo.lanzarDado(usuarioId)
                 rollCounter.update { it + 1 }
+                registrarHistorialRemoto(partida)
                 publicarPuntuacionRemota(partida)
                 handleVictoriaSiNecesario(partida, origen = "elegirNumero($num)")
             }
@@ -141,6 +146,7 @@ class ControladorPartida(
 
                 is Result.Ok -> {
                     rollCounter.update { it + 1 }
+                    registrarHistorialRemoto(resultado.value.partida)
                     if (resultado.value.gano) {
                         handleVictoriaSiNecesario(resultado.value.partida, origen = "remoto")
                     }
@@ -177,6 +183,19 @@ class ControladorPartida(
             } catch (t: Throwable) {
                 DecentralizedLogger.e(TAG, "Error al registrar ubicación", t)
             }
+        }
+    }
+
+    private suspend fun registrarHistorialRemoto(partida: Partida) {
+        val resultado = registrarHistorialRemotoUseCase(
+            firebaseUid = firebaseUidProvider(),
+            partida = partida
+        )
+        if (resultado is Result.Err) {
+            DecentralizedLogger.e(
+                TAG,
+                "No se pudo registrar historial remoto: ${resultado.error}"
+            )
         }
     }
     /**
@@ -217,7 +236,8 @@ class ControladorPartidaFactory(
     private val observarPreferencias: ObservarPreferenciasUseCase,
     private val victoryService: VictoryCelebrationService,
     private val sessionManager: SessionManager,
-
+    private val registrarHistorialRemotoUseCase: RegistrarHistorialRemotoUseCase,
+    private val firebaseUidProvider: () -> String?,
     private val registrarUbicacionVictoriaUseCase: RegistrarUbicacionVictoriaUseCase,
     private val resolverTiradaUseCase: ResolverTiradaUseCase,
 
@@ -232,6 +252,8 @@ class ControladorPartidaFactory(
                 observarPreferencias = observarPreferencias,
                 victoryService = victoryService,
                 sessionManager = sessionManager,
+                registrarHistorialRemotoUseCase = registrarHistorialRemotoUseCase,
+                firebaseUidProvider = firebaseUidProvider,
                 registrarUbicacionVictoriaUseCase = registrarUbicacionVictoriaUseCase,
                 resolverTiradaUseCase = resolverTiradaUseCase,
             ) as T

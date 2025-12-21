@@ -25,6 +25,11 @@ class ScoreRepositoryRetrofit(
     private val credentialsStore: CredentialsStore,
     private val sessionManager: SessionManager
 ) : ScoreRepository {
+    private companion object {
+        private const val MIN_ALIAS_LENGTH = 3
+        private const val MAX_ALIAS_LENGTH = 30
+        private const val MAX_SCORE = 100_000
+    }
     private fun tokenOrNull(): String? =
         sessionManager.session.value?.token ?: credentialsStore.obtenerFirebaseToken()
 
@@ -43,11 +48,19 @@ class ScoreRepositoryRetrofit(
         credentialsStore.guardarSesionAlias(session.token, session.alias)
         credentialsStore.guardarFirebaseToken(session.token)
 
+        val sanitizedAlias = session.alias.trim()
+        require(sanitizedAlias.isNotBlank()) { "alias vacío" }
+        require(sanitizedAlias.length in MIN_ALIAS_LENGTH..MAX_ALIAS_LENGTH) {
+            "alias fuera de rango"
+        }
+        require(score in 0..MAX_SCORE) { "score fuera de rango" }
+
+
         // ScoreApi SOLO acepta el body
         scoreApi.publishScore(
             bearerToken = "Bearer ${session.token}",
             ScorePayload(
-                alias = session.alias,
+                alias = sanitizedAlias,
                 score = score
             )
         )

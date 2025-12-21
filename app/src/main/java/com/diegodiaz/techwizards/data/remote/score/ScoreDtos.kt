@@ -41,7 +41,8 @@ data class LoginRequest(
 
 data class SessionResponseDto(
     val token: String,
-    val alias: String
+    val alias: String,
+    val isAdmin: Boolean? = null
 )
 
 fun ScoreEntryDto.toDomain(overridePosition: Int? = null) = LeaderboardEntry(
@@ -72,6 +73,7 @@ fun CommonPrize.toRequestDto() = PrizeRequestDto(
 
 fun SessionResponseDto.toDomain() = UserSession(
     token = token,
-    alias = alias
+    alias = alias,
+    isAdmin = isAdmin ?: false
 )
 
