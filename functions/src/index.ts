@@ -50,10 +50,17 @@ app.get("/leaderboard/top10", async (_req, res) => {
 
   const items = snap.docs.map((d, idx) => {
     const data = d.data() as any;
+    const alias = typeof data.alias === "string" && data.alias.trim()
+          ? data.alias.trim()
+          : (typeof data.aliasJugador === "string" && data.aliasJugador.trim()
+            ? data.aliasJugador.trim()
+            : "Jugador");
+        const score = Number.isFinite(data.coins) ? Number(data.coins) : 0;
+        const playerId = data.usuarioNumero != null ? String(data.usuarioNumero) : d.id;
     return {
-      id: d.id,
-      alias: data.alias ?? "Jugador",
-      score: data.coins ?? 0,
+      id: playerId,
+            alias,
+            score,
       position: idx + 1,
       prizeName: null,
       prizeDescription: null,
