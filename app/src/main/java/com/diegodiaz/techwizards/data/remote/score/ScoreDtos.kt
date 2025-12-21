@@ -42,7 +42,26 @@ fun ScoreEntryDto.toDomain(): LeaderboardEntry =
         prizeName = prizeName,
         prizeDescription = prizeDescription
     )
+data class ScoreTopTenResponseDto(
+    val items: List<ScoreTopTenItemDto> = emptyList()
+)
 
+data class ScoreTopTenItemDto(
+    val userId: String? = null,
+    val userName: String = "Jugador",
+    val points: Int = 0,
+    val timestamp: String? = null
+)
+
+fun ScoreTopTenItemDto.toDomain(position: Int): LeaderboardEntry =
+    LeaderboardEntry(
+        id = userId,
+        alias = userName,
+        score = points,
+        position = position,
+        prizeName = null,
+        prizeDescription = null
+    )
 data class PrizeCommonDto(
     val descripcion: String,
     val valor: Int,

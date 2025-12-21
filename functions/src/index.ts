@@ -121,7 +121,41 @@ app.get("/leaderboard/top10", async (_req, res) => {
 
   res.json(items);
 });
+/* =========================================================
+ * GET /scores/top10 (compat con OpenAPI actual)
+ * ========================================================= */
+app.get("/scores/top10", async (_req, res) => {
+  console.log("[SCORES_TOP10] IN");
 
+  const snap = await db
+    .collection("players")
+    .orderBy("coins", "desc")
+    .limit(10)
+    .get();
+
+  const items = snap.docs.map((d) => {
+    const data = d.data() as any;
+    const updatedAt = data.updatedAt ?? null;
+    const updatedAtIso =
+      typeof updatedAt?.toDate === "function"
+        ? updatedAt.toDate().toISOString()
+        : typeof updatedAt === "number"
+          ? new Date(updatedAt).toISOString()
+          : null;
+
+    return {
+      userId: data.usuarioNumero?.toString() ?? d.id,
+      userName:
+        data.alias?.trim() ||
+        data.aliasJugador?.trim() ||
+        "Jugador",
+      points: Number(data.coins ?? 0),
+      timestamp: updatedAtIso,
+    };
+  });
+
+  res.json({ items });
+});
 /* =========================================================
  * POST /login
  * ========================================================= */

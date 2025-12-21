@@ -3,6 +3,7 @@ package com.diegodiaz.techwizards.data.infra.network
 import com.diegodiaz.techwizards.BuildConfig
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
 import com.diegodiaz.techwizards.core.SessionManager
+import com.google.gson.GsonBuilder
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.Interceptor
@@ -138,7 +139,13 @@ object RetrofitProvider {
         val tokenProvider = { credentialsStore.obtenerFirebaseToken() }
 
         val converter = when (serializer.lowercase()) {
-            "gson" -> retrofit2.converter.gson.GsonConverterFactory.create()
+            "gson" -> {
+                val gson = GsonBuilder()
+                    .serializeNulls()
+                    .setLenient()
+                    .create()
+                retrofit2.converter.gson.GsonConverterFactory.create(gson)
+            }
             else -> MoshiConverterFactory.create(moshi) // ✅ y aquí
         }
 

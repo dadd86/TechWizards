@@ -3,7 +3,6 @@ package com.diegodiaz.techwizards.ui.controller
 import androidx.lifecycle.ViewModel
 import com.diegodiaz.techwizards.domain.model.*
 import androidx.lifecycle.viewModelScope
-import com.diegodiaz.techwizards.core.SessionManager
 import com.diegodiaz.techwizards.domain.model.CommonPrize
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.domain.model.Match
@@ -29,8 +28,7 @@ data class MatchUiState(
 )
 
 class ControladorMatch(
-    private val scoreRepository: ScoreRepository,
-    private val sessionManager: SessionManager
+    private val scoreRepository: ScoreRepository
 ) : ViewModel() {
 
     private val _ui = MutableStateFlow(MatchUiState())
@@ -104,11 +102,6 @@ class ControladorMatch(
 
     fun refrescarEstadoOnline() {
         viewModelScope.launch {
-            val session = sessionManager.session.value
-            if (session == null) {
-                _ui.value = _ui.value.copy(error = "Inicia sesión para ver el top ten")
-                return@launch
-            }
             runCatching {
                 val topTen = scoreRepository.obtenerTopTen()
                 val premio = scoreRepository.obtenerPremioComun()

@@ -10,8 +10,25 @@ import com.diegodiaz.techwizards.data.remote.dto.BackendLoginResponseDto
 
 interface ScoreApi {
 
-    @GET("leaderboard/top10")
+    /**
+     * Obtiene el top 10 desde el endpoint REST más reciente.
+     *
+     * @param bearerToken Token Firebase opcional.
+     * @security No persiste ni registra tokens.
+     */
+    @GET("scores/top10")
     suspend fun fetchTopTen(
+        @Header("Authorization") bearerToken: String? = null
+    ): ScoreTopTenResponseDto
+
+    /**
+     * Obtiene el top 10 desde el endpoint legacy en Firebase Functions.
+     *
+     * @param bearerToken Token Firebase opcional.
+     * @security No persiste ni registra tokens.
+     */
+    @GET("leaderboard/top10")
+    suspend fun fetchTopTenLegacy(
         @Header("Authorization") bearerToken: String? = null
     ): List<ScoreEntryDto>
 
@@ -39,4 +56,3 @@ interface ScoreApi {
         @Body request: LoginRequest
     ): SessionResponseDto
 }
-

@@ -11,7 +11,7 @@ import com.diegodiaz.techwizards.domain.model.CommonPrize
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.domain.repository.ScoreRepository
-
+import retrofit2.HttpException
 class ScoreRepositoryRetrofit(
     private val scoreApi: ScoreApi,
     private val credentialsStore: CredentialsStore,
@@ -29,12 +29,23 @@ class ScoreRepositoryRetrofit(
 
     override suspend fun obtenerTopTen(): List<LeaderboardEntry> {
         val bearer = tokenOrNull()?.let { "Bearer $it" }
-        val dtos = scoreApi.fetchTopTen(bearerToken = bearer)
-
-        return dtos.mapIndexed { index, dto ->
-            dto.toDomain().copy(
-                position = dto.position ?: (index + 1)
-            )
+        return runCatching {
+            scoreApi.fetchTopTen(bearerToken = bearer)
+        }.map { response ->
+            response.items.mapIndexed { index, item ->
+                item.toDomain(position = index + 1)
+            }
+        }.getOrElse { error ->
+            val httpError = error as? HttpException
+            if (httpError != null && httpError.code() in setOf(404, 405)) {
+                val dtos = scoreApi.fetchTopTenLegacy(bearerToken = bearer)
+                return@getOrElse dtos.mapIndexed { index, dto ->
+                    dto.toDomain().copy(
+                        position = dto.position ?: (index + 1)
+                    )
+                }
+            }
+            throw error
         }
     }
 
