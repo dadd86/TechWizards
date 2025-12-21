@@ -82,7 +82,18 @@ app.post("/scores", requireAuth, async (req: AuthedRequest, res) => {
       score,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+    const playerRef = db.doc(`players/${req.user.uid}`);
+        await db.runTransaction(async (tx) => {
+          const snap = await tx.get(playerRef);
+          const currentCoins = (snap.exists ? (snap.data() as any).coins : 0) ?? 0;
+          const nextCoins = Math.max(currentCoins, score);
 
+          tx.set(playerRef, {
+            alias: sanitizedAlias,
+            coins: nextCoins,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+        });
     return res.status(204).send();
   } catch (e: any) {
     console.error("POST /scores failed", e);
