@@ -11,12 +11,15 @@ import com.diegodiaz.techwizards.core.usecases.ObtenerUsuarioAutenticadoUseCase
 import com.diegodiaz.techwizards.core.usecases.ActualizarPremioComunUseCase
 import com.diegodiaz.techwizards.core.usecases.RegistrarHistorialRemotoUseCase
 import com.diegodiaz.techwizards.core.usecases.ResolverTiradaUseCase
+import com.diegodiaz.techwizards.core.usecases.LoginBackendUseCase
 import com.diegodiaz.techwizards.core.usecases.RegistrarUbicacionVictoriaUseCase
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
 import com.diegodiaz.techwizards.credenciales.EncryptedCredentialsStore
 import com.diegodiaz.techwizards.data.infra.network.RetrofitProvider
 import com.diegodiaz.techwizards.data.local.dao.IPartidaDao
 import com.diegodiaz.techwizards.data.local.dao.IMatchDao
+import com.google.firebase.auth.FirebaseAuth
+
 import com.diegodiaz.techwizards.data.local.dao.IMatchParticipantDao
 import com.diegodiaz.techwizards.data.local.dao.IMatchScoreDao
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
@@ -28,6 +31,13 @@ import com.diegodiaz.techwizards.data.remote.match.MatchRealtimeFirebaseDataSour
 import com.diegodiaz.techwizards.data.remote.match.MatchApi
 import com.diegodiaz.techwizards.data.remote.match.MatchRemoteMapper
 import com.diegodiaz.techwizards.data.remote.api.ScoresApi
+import android.util.Log
+import com.diegodiaz.techwizards.data.remote.score.LoginRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.diegodiaz.techwizards.data.remote.mapper.ScoreRemoteMapper
 import com.diegodiaz.techwizards.data.remote.score.ScoreApi
 import com.diegodiaz.techwizards.data.repository.impl.*
@@ -36,9 +46,7 @@ import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.domain.repository.AuthRepository
 import com.diegodiaz.techwizards.domain.repository.PartidaHistoryRepository
 import com.diegodiaz.techwizards.integration.victory.WorkManagerVictoryCelebrationService
-import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import com.google.firebase.FirebaseApp
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
@@ -199,11 +207,25 @@ object ServiceLocator {
     }
 
     private val partidaHistoryRepository: PartidaHistoryRepository by lazy {
-        PartidaHistoryRepositoryFirebase(partidaHistoryDataSource)
+        PartidaHistoryRepositoryFirebase(
+            dataSource = partidaHistoryDataSource,
+            scoreApi = scoreApi,
+            sessionManager = sessionManager,
+            loginBackendUseCase = loginBackendUseCase //
+        )
     }
     val actualizarPremioComunUseCase by lazy {
         ActualizarPremioComunUseCase(scoreRepository, sessionManager)
     }
+
+    val loginBackendUseCase by lazy {
+        LoginBackendUseCase(
+            firebaseAuth = FirebaseAuth.getInstance(),
+            scoreApi = scoreApi,
+            sessionManager = sessionManager
+        )
+    }
+
 
     val victoryRepository by lazy {
         VictoryRepositoryRoom(
@@ -231,9 +253,13 @@ object ServiceLocator {
         IniciarSesionConGoogleUseCase(
             authRepository = authRepository,
             sessionManager = sessionManager,
-            credentialsStore = credentialsStore
+            credentialsStore = credentialsStore,
+            scoreApi = scoreApi // ✅
         )
     }
+
+
+
 
     val cerrarSesionUseCase by lazy {
         CerrarSesionUseCase(
@@ -284,6 +310,8 @@ object ServiceLocator {
     }
 
 
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     private fun registrarListenerFirebaseToken() {
         firebaseAuth.addIdTokenListener(object : FirebaseAuth.IdTokenListener {
             override fun onIdTokenChanged(auth: FirebaseAuth) {
@@ -293,13 +321,56 @@ object ServiceLocator {
                     sessionManager.clearSession()
                     return
                 }
+
                 user.getIdToken(false)
                     .addOnSuccessListener { result ->
-                        credentialsStore.guardarFirebaseToken(result.token)
-                        val token = result.token
-                        if (!token.isNullOrBlank()) {
-                            val alias = user.displayName ?: user.email ?: "Jugador"
-                            sessionManager.setSession(UserSession(token = token, alias = alias))
+                        val firebaseToken = result.token
+                        credentialsStore.guardarFirebaseToken(firebaseToken)
+
+                        if (firebaseToken.isNullOrBlank()) return@addOnSuccessListener
+
+                        val alias = user.displayName ?: user.email ?: "Jugador"
+
+                        // 1) Conserva backendToken si ya existía
+                        val currentSession = sessionManager.session.value
+                        sessionManager.setSession(
+                            UserSession(
+                                token = firebaseToken,
+                                alias = alias,
+                                backendToken = currentSession?.backendToken,
+                                isAdmin = currentSession?.isAdmin ?: false
+                            )
+                        )
+
+                        // 2) ✅ Si aún NO tenemos backendToken, hacemos /login al backend
+                        if (currentSession?.backendToken.isNullOrBlank()) {
+                            serviceScope.launch {
+                                try {
+                                    Log.d("BACKEND", "Haciendo POST /login...")
+
+                                    val resp = scoreApi.login(
+                                        bearerToken = "Bearer $firebaseToken",
+                                        request = LoginRequest(alias = alias)
+                                    )
+
+                                    Log.d("BACKEND", "Login OK, backendToken recibido")
+
+                                    // Guardar backendToken en SessionManager
+                                    withContext(Dispatchers.Main) {
+                                        val latest = sessionManager.session.value
+                                        sessionManager.setSession(
+                                            UserSession(
+                                                token = firebaseToken,
+                                                alias = resp.alias,
+                                                backendToken = resp.token,
+                                                isAdmin = resp.isAdmin
+                                            )
+                                        )
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e("BACKEND", "Fallo en /login", e)
+                                }
+                            }
                         }
                     }
                     .addOnFailureListener {
@@ -309,4 +380,6 @@ object ServiceLocator {
             }
         })
     }
+
+
 }
