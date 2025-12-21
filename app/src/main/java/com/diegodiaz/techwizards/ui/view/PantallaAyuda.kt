@@ -247,6 +247,9 @@ private fun actualizarIdiomaAyuda(language: String, onSelected: (String) -> Unit
         "en" -> "en"
         else -> "es"
     }
-    AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
+    val currentTag = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+    if (currentTag != tag) {
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
+    }
     DecentralizedLogger.i("Help", "Idioma de ayuda seleccionado=$language")
 }

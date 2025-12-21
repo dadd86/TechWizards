@@ -237,8 +237,12 @@ fun NavGraph(
             val ajustesState by ajustesVm.ui.collectAsState()
 
             LaunchedEffect(ajustesState.settings.selectedLanguageTag) {
-                val localeList = LocaleListCompat.forLanguageTags(ajustesState.settings.selectedLanguageTag)
-                AppCompatDelegate.setApplicationLocales(localeList)
+                val selectedTag = ajustesState.settings.selectedLanguageTag
+                val currentTag = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+                if (currentTag != selectedTag) {
+                    val localeList = LocaleListCompat.forLanguageTags(selectedTag)
+                    AppCompatDelegate.setApplicationLocales(localeList)
+                }
             }
 
             PantallaAjustes(
@@ -255,9 +259,12 @@ fun NavGraph(
                 onElegirPista = ajustesVm::seleccionarPista,
                 onSeleccionIdioma = { tag ->
                     ajustesVm.actualizarIdioma(tag)
-                    AppCompatDelegate.setApplicationLocales(
-                        LocaleListCompat.forLanguageTags(tag)
-                    )
+                    val currentTag = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+                    if (currentTag != tag) {
+                        AppCompatDelegate.setApplicationLocales(
+                            LocaleListCompat.forLanguageTags(tag)
+                        )
+                    }
                 },
                 onVolverAlMenu = { navController.navigate("menu") },
                 dims = dims
