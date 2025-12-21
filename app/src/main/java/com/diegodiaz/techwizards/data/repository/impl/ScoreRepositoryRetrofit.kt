@@ -2,6 +2,8 @@ package com.diegodiaz.techwizards.data.repository.impl
 
 import com.diegodiaz.techwizards.core.SessionManager
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
+import com.diegodiaz.techwizards.data.remote.firestore.FirestorePlayersApi
+import com.diegodiaz.techwizards.data.remote.firestore.winsOrNull
 import com.diegodiaz.techwizards.data.remote.score.LoginRequest
 import com.diegodiaz.techwizards.data.remote.score.ScoreApi
 import com.diegodiaz.techwizards.data.remote.score.ScorePayload
@@ -11,11 +13,16 @@ import com.diegodiaz.techwizards.domain.model.CommonPrize
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.domain.repository.ScoreRepository
+import com.google.gson.JsonSyntaxException
+import com.squareup.moshi.JsonDataException
+import com.squareup.moshi.JsonEncodingException
 import retrofit2.HttpException
+
 class ScoreRepositoryRetrofit(
     private val scoreApi: ScoreApi,
     private val credentialsStore: CredentialsStore,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val firestorePlayersApi: FirestorePlayersApi? = null
 ) : ScoreRepository {
 
     private companion object {
@@ -29,7 +36,7 @@ class ScoreRepositoryRetrofit(
 
     override suspend fun obtenerTopTen(): List<LeaderboardEntry> {
         val bearer = tokenOrNull()?.let { "Bearer $it" }
-        return runCatching {
+        val base = runCatching {
             scoreApi.fetchTopTen(bearerToken = bearer)
         }.map { response ->
             response.items.mapIndexed { index, item ->
@@ -37,7 +44,11 @@ class ScoreRepositoryRetrofit(
             }
         }.getOrElse { error ->
             val httpError = error as? HttpException
-            if (httpError != null && httpError.code() in setOf(404, 405)) {
+
+            val isParsingError = error is JsonDataException ||
+                    error is JsonEncodingException ||
+                    error is JsonSyntaxException
+            if ((httpError != null && httpError.code() in setOf(404, 405)) || isParsingError) {
                 val dtos = scoreApi.fetchTopTenLegacy(bearerToken = bearer)
                 return@getOrElse dtos.mapIndexed { index, dto ->
                     dto.toDomain().copy(
@@ -47,6 +58,7 @@ class ScoreRepositoryRetrofit(
             }
             throw error
         }
+        return completarVictorias(base)
     }
 
     override suspend fun publicarPuntuacion(session: UserSession, score: Int) {
@@ -91,5 +103,23 @@ class ScoreRepositoryRetrofit(
         credentialsStore.guardarFirebaseToken(session.token)
 
         return session
+    }
+    private suspend fun completarVictorias(
+        topTen: List<LeaderboardEntry>
+    ): List<LeaderboardEntry> {
+        val api = firestorePlayersApi ?: return topTen
+        if (tokenOrNull().isNullOrBlank()) return topTen
+        return topTen.map { entry ->
+            if (entry.wins != null) return@map entry
+            val userId = entry.id ?: return@map entry
+            val wins = runCatching {
+                api.obtenerJugador(userId).winsOrNull()
+            }.getOrNull()
+            if (wins == null) {
+                entry
+            } else {
+                entry.copy(wins = wins)
+            }
+        }
     }
 }

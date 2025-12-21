@@ -5,6 +5,7 @@ data class LeaderboardEntry(
     val alias: String,
     val score: Int,
     val position: Int? = null,
+    val wins: Int? = null,
     val prizeName: String? = null,
     val prizeDescription: String? = null
 )

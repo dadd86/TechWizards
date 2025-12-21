@@ -31,6 +31,7 @@ import com.diegodiaz.techwizards.data.remote.match.MatchRealtimeFirebaseDataSour
 import com.diegodiaz.techwizards.data.remote.match.MatchApi
 import com.diegodiaz.techwizards.data.remote.match.MatchRemoteMapper
 import com.diegodiaz.techwizards.data.remote.api.ScoresApi
+import com.diegodiaz.techwizards.data.remote.firestore.FirestorePlayersApi
 import android.util.Log
 import com.diegodiaz.techwizards.data.remote.score.LoginRequest
 import kotlinx.coroutines.CoroutineScope
@@ -122,6 +123,27 @@ object ServiceLocator {
             sessionManager = sessionManager
         )
     }
+    private val firestoreBaseUrl by lazy {
+        FirebaseApp.getInstance().options.projectId?.let { projectId ->
+            "https://firestore.googleapis.com/v1/projects/$projectId/databases/(default)/documents/"
+        }
+    }
+
+    private val firestoreRetrofit by lazy {
+        firestoreBaseUrl?.let { baseUrl ->
+            RetrofitProvider.retrofit(
+                credentialsStore = credentialsStore,
+                baseUrl = baseUrl,
+                serializer = BuildConfig.API_SERIALIZER,
+                sessionManager = sessionManager
+            )
+        }
+    }
+
+    private val firestorePlayersApi by lazy {
+        firestoreRetrofit?.create(FirestorePlayersApi::class.java)
+    }
+
 
     private val scoreApi by lazy {
         retrofitScore.create(ScoreApi::class.java)
@@ -202,7 +224,8 @@ object ServiceLocator {
         ScoreRepositoryRetrofit(
             scoreApi = scoreApi,
             credentialsStore = credentialsStore,
-            sessionManager = sessionManager
+            sessionManager = sessionManager,
+            firestorePlayersApi = firestorePlayersApi
         )
     }
 

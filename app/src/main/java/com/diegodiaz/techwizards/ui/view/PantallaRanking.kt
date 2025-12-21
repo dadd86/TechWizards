@@ -29,6 +29,8 @@ import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.ui.controller.ControladorRanking
 import com.diegodiaz.techwizards.ui.controller.RankingUiState
 import com.diegodiaz.techwizards.ui.responsive.UiDims
+import androidx.compose.ui.res.stringResource
+import com.diegodiaz.techwizards.R
 
 /**
  * Pantalla para visualizar el top ten y el premio común con estados de carga.
@@ -175,8 +177,13 @@ private fun EntradaRanking(posicion: Int, entry: LeaderboardEntry, dims: UiDims)
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "#$posicion ${entry.alias}")
-            Text(text = "${entry.score} pts", fontWeight = FontWeight.SemiBold)
+            Column(verticalArrangement = Arrangement.spacedBy(dims.spaceXs)) {
+                Text(text = "#$posicion ${entry.alias}")
+                entry.wins?.let { wins ->
+                    Text(text = stringResource(id = R.string.ranking_wins, wins))
+                }
+            }
+            // Text(text = "${entry.score} pts", fontWeight = FontWeight.SemiBold)
         }
     }
 }

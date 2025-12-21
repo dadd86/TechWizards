@@ -29,6 +29,7 @@ data class ScoreEntryDto(
     val alias: String = "Jugador",
     val score: Int = 0,
     val position: Int = 0,
+    val wins: Int? = null,
     val prizeName: String? = null,
     val prizeDescription: String? = null
 )
@@ -39,6 +40,7 @@ fun ScoreEntryDto.toDomain(): LeaderboardEntry =
         alias = alias,
         score = score,
         position = position,
+        wins = wins,
         prizeName = prizeName,
         prizeDescription = prizeDescription
     )
@@ -50,7 +52,8 @@ data class ScoreTopTenItemDto(
     val userId: String? = null,
     val userName: String = "Jugador",
     val points: Int = 0,
-    val timestamp: String? = null
+    val timestamp: String? = null,
+    val wins: Int? = null
 )
 
 fun ScoreTopTenItemDto.toDomain(position: Int): LeaderboardEntry =
@@ -59,6 +62,7 @@ fun ScoreTopTenItemDto.toDomain(position: Int): LeaderboardEntry =
         alias = userName,
         score = points,
         position = position,
+        wins = wins,
         prizeName = null,
         prizeDescription = null
     )

@@ -64,6 +64,7 @@
     <string name="history_empty">No matches yet</string>
     <string name="history_win">Won</string>
     <string name="history_loss">Lost</string>
+    <string name="ranking_wins">Wins: %1$d</string>
     <string name="language_es_label">Español</string>
     <string name="language_en_label">English</string>
     <string name="language_de_label">Deutsch</string>
