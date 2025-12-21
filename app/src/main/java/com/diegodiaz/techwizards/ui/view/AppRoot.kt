@@ -24,12 +24,13 @@ import com.diegodiaz.techwizards.core.ServiceLocator
 import com.diegodiaz.techwizards.core.usecases.ObtenerPreferenciasUseCase
 import com.diegodiaz.techwizards.core.usecases.ActualizarPreferenciasUseCase
 import com.diegodiaz.techwizards.core.usecases.ObservarPreferenciasUseCase
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
 
 @Composable
 fun AppRoot(
     isDarkTheme: Boolean,
     onToggleTheme: (Boolean) -> Unit
-) {
+){
     val context = LocalContext.current
     val musicController = remember { MusicPlaybackController(context.applicationContext) }
 

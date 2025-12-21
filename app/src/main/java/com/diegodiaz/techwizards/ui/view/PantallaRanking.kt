@@ -172,7 +172,7 @@ private fun EntradaRanking(posicion: Int, entry: LeaderboardEntry, dims: UiDims)
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = "#$posicion ${entry.alias}")
-            Text(text = "${entry.score} pts", fontWeight = FontWeight.SemiBold)
+            Text(text = "${entry.score} coins", fontWeight = FontWeight.SemiBold)
         }
     }
 }

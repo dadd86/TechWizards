@@ -118,7 +118,7 @@
     <string name="no_money_message">No puedes continuar lanzando porque no tienes más monedas.</string>
     <string name="no_money_action">Volver al menú</string>
     <string name="auth_title">Autenticación con Google</string>
-    <string name="auth_with_google">Entrar con Google</string>
+    <string name="auth_with_google">Iniciar sesión con Google</string>
     <string name="auth_signed_in_as">Sesión activa: %1$s</string>
     <string name="auth_unknown_user">Jugador</string>
     <string name="auth_missing_token">No se recibió el token de Google. Inténtalo nuevamente.</string>
@@ -128,4 +128,5 @@
     <string name="auth_google_generic_error">Error al iniciar sesión con Google: %1$s (%2$s)</string>
     <string name="auth_photo_placeholder">Foto de perfil: %1$s</string>
     <string name="auth_logout">Cerrar sesión</string>
+    <string name="default_web_client_id">714750538448-a0laabk4oa1v0vaq0ogld8f2ma17r2p1.apps.googleusercontent.com</string>
 </resources>

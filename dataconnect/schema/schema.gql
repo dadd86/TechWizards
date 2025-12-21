@@ -1,0 +1,57 @@
+type User @table {
+  displayName: String!
+  email: String!
+  createdAt: Timestamp!
+  photoUrl: String
+  bio: String
+  academicInstitution: String
+}
+
+type Course @table {
+  user: User!
+  name: String!
+  createdAt: Timestamp!
+  instructor: String
+  description: String
+  schedule: String
+}
+
+type Assignment @table {
+  user: User!
+  course: Course!
+  title: String!
+  dueDate: Timestamp!
+  status: String!
+  createdAt: Timestamp!
+  description: String
+  estimatedTime: Int
+  actualTimeSpent: Int
+}
+
+type StudySession @table {
+  user: User!
+  course: Course
+  startTime: Timestamp!
+  endTime: Timestamp!
+  durationMinutes: Int!
+  createdAt: Timestamp!
+  topic: String
+  goals: String
+  notes: String
+}
+
+type StudyGroup @table {
+  creator: User!
+  name: String!
+  createdAt: Timestamp!
+  isPublic: Boolean!
+  description: String
+  joinCode: String
+}
+
+type GroupMembership @table(key: ["user", "studyGroup"]) {
+  user: User!
+  studyGroup: StudyGroup!
+  joinedAt: Timestamp!
+  role: String!
+}

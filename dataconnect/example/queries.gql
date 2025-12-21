@@ -1,0 +1,30 @@
+mutation CreateNewUser($displayName: String!, $email: String!) @auth(level: USER, insecureReason: "This mutation is safe to expose to all logged in users.") {
+  user_insert(data: {displayName: $displayName, email: $email, id_expr: "uuidV4()", createdAt_expr: "request.time"})
+}
+
+query GetCurrentUser($id: UUID!) @auth(level: USER) {
+  user(id: $id) {
+    id
+    displayName
+    email
+    bio
+    photoUrl
+    academicInstitution
+  }
+}
+
+mutation UpdateCurrentUser($id: UUID!, $displayName: String, $email: String, $bio: String, $photoUrl: String, $academicInstitution: String) @auth(level: USER) {
+  user_update(id: $id, data: {displayName: $displayName, email: $email, bio: $bio, photoUrl: $photoUrl, academicInstitution: $academicInstitution})
+}
+
+query ListPublicStudyGroups @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  studyGroups(where: {isPublic: {eq: true}}) {
+    id
+    name
+    description
+    creator {
+      id
+      displayName
+    }
+  }
+}

@@ -31,14 +31,14 @@ class ScoreRepositoryRetrofit(
         private const val MAX_SCORE = 100_000
     }
     private fun tokenOrNull(): String? =
-        sessionManager.session.value?.token ?: credentialsStore.obtenerFirebaseToken()
+        sessionManager.session.value?.token?.takeIf { !it.startsWith("local-") }
+            ?: credentialsStore.obtenerFirebaseToken()?.takeIf { !it.startsWith("local-") }
 
     override suspend fun obtenerTopTen(): List<LeaderboardEntry> {
         val token = tokenOrNull()
-        val bearer = token?.let { "Bearer $it" }
-        val dtos = scoreApi.fetchTopTen(bearerToken = bearer)
+        val bearer = token?.let { "Bearer ${it.trim()}" }  // solo si no es local-*
 
-        // DTO ya trae position opcional; forzamos una si viene null
+        val dtos = scoreApi.fetchTopTen(bearerToken = bearer)
         return dtos.mapIndexed { index, dto ->
             dto.toDomain(overridePosition = dto.position ?: (index + 1))
         }
@@ -68,7 +68,7 @@ class ScoreRepositoryRetrofit(
 
     override suspend fun obtenerPremioComun(): CommonPrize {
         val token = tokenOrNull()
-        val bearer = token?.let { "Bearer $it" }
+        val bearer = token?.let { "Bearer ${it.trim()}" }
         return scoreApi.fetchCommonPrize(bearerToken = bearer).toDomain()
     }
 

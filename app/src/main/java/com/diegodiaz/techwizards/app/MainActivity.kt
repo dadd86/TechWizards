@@ -1,7 +1,6 @@
 package com.diegodiaz.techwizards.app
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -26,3 +25,4 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
+

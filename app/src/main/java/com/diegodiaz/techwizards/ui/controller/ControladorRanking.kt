@@ -50,6 +50,11 @@ class ControladorRanking(
         viewModelScope.launch {
             runCatching {
                 val topTen = scoreRepository.obtenerTopTen()
+                DecentralizedLogger.d(
+                    "ControladorRanking",
+                    "TopTen recibido con ${topTen.size} entradas"
+                )
+
                 val premio = runCatching { scoreRepository.obtenerPremioComun() }
                     .onFailure { error ->
                         DecentralizedLogger.e(
@@ -59,6 +64,7 @@ class ControladorRanking(
                         )
                     }
                     .getOrElse { estadoPrevio?.premio }
+
                 _uiState.value = RankingUiState.Exito(
                     topTen = topTen,
                     premio = premio,
@@ -68,7 +74,24 @@ class ControladorRanking(
                 )
             }.onFailure { error ->
                 DecentralizedLogger.e("ControladorRanking", "Error al cargar ranking", error)
-                _uiState.value = RankingUiState.Error("No pudimos cargar el top ten")
+
+                // Fallback para demo
+                val dummy = List(5) { i ->
+                    LeaderboardEntry(
+                        id = "dummy-$i",
+                        alias = "Jugador ${i + 1}",
+                        score = (10 - i) * 5,
+                        position = i + 1
+                    )
+                }
+
+                _uiState.value = RankingUiState.Exito(
+                    topTen = dummy,
+                    premio = null,
+                    actualizadoEnMs = System.currentTimeMillis(),
+                    puedeActualizarPremio = sessionManager.session.value?.isAdmin == true,
+                    mensajeError = "No se pudo contactar con el servidor; mostrando datos de ejemplo"
+                )
             }
         }
     }

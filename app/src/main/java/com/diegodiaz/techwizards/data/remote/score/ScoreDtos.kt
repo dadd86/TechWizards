@@ -8,7 +8,7 @@ import com.squareup.moshi.Json
 data class ScoreEntryDto(
     val id: String? = null,
     val alias: String,
-    val score: Int,
+    val coins: Int,
     val position: Int? = null,
     val prizeName: String? = null,
     val prizeDescription: String? = null
@@ -48,7 +48,7 @@ data class SessionResponseDto(
 fun ScoreEntryDto.toDomain(overridePosition: Int? = null) = LeaderboardEntry(
     id = id,
     alias = alias,
-    score = score,
+    score = coins,
     position = overridePosition ?: position,
     prizeName = prizeName,
     prizeDescription = prizeDescription
