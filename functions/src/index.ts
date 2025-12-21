@@ -1,3 +1,4 @@
+import { FieldValue } from "firebase-admin/firestore";
 import * as admin from "firebase-admin";
 import express from "express";
 import cors from "cors";
@@ -228,7 +229,7 @@ app.post("/scores", requireAuth, async (req: AuthedRequest, res) => {
         alias: sanitizedAlias,
         deltaMonedas,
         coinsAfter: newCoins,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       });
     });
 
