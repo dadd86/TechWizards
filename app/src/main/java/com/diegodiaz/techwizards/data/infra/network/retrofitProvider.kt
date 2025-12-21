@@ -35,20 +35,23 @@ object RetrofitProvider {
     ) : Interceptor {
         override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
             val originalRequest: Request = chain.request()
-            val token = tokenProvider()
 
-            if (token.isNullOrBlank()) {
-                // Sin token => petición tal cual
+            // ✅ Si ya trae Authorization (por @Header en Retrofit), no lo toques
+            if (originalRequest.header("Authorization") != null) {
                 return chain.proceed(originalRequest)
             }
 
-               val newRequest: Request = originalRequest.newBuilder()
+            val token = tokenProvider()
+            if (token.isNullOrBlank()) return chain.proceed(originalRequest)
+
+            val newRequest: Request = originalRequest.newBuilder()
                 .header("Authorization", "Bearer $token")
                 .build()
 
             return chain.proceed(newRequest)
         }
     }
+
     /**
      * Interceptor que añade la cabecera Authorization leyendo desde [SessionManager].
      *
@@ -59,21 +62,24 @@ object RetrofitProvider {
         private val sessionManager: SessionManager,
     ) : Interceptor {
         override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
-            val session = sessionManager.session.value
-            val token = session?.token
+            val original = chain.request()
 
-            if (token.isNullOrBlank()) {
-                return chain.proceed(chain.request())
+            // ✅ Si ya trae Authorization (por @Header en Retrofit), no lo toques
+            if (original.header("Authorization") != null) {
+                return chain.proceed(original)
             }
 
-            val newRequest = chain.request()
-                .newBuilder()
+            val token = sessionManager.session.value?.token
+            if (token.isNullOrBlank()) return chain.proceed(original)
+
+            val newRequest = original.newBuilder()
                 .header("Authorization", "Bearer $token")
                 .build()
 
             return chain.proceed(newRequest)
         }
     }
+
 
     private fun createLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {

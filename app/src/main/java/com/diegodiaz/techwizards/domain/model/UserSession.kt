@@ -11,7 +11,9 @@ package com.diegodiaz.techwizards.domain.model
 data class UserSession(
     val token: String,
     val alias: String,
-    val isAdmin: Boolean = false
+    val isAdmin: Boolean = false,
+    val backendToken: String? = null // NUEVO
+
 ) {
     val bearerToken: String
     get() = "Bearer $token"

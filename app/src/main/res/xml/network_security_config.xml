@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
-        <!-- IP del PC con emuladores -->
+        <!-- Android Emulator: localhost del PC -->
+        <domain includeSubdomains="false">10.0.2.2</domain>
+
+        <!-- (Opcional) localhost -->
+        <domain includeSubdomains="false">127.0.0.1</domain>
+
+        <!-- IP del PC para pruebas en móvil físico (si algún día lo usáis) -->
         <domain includeSubdomains="false">192.168.178.23</domain>
     </domain-config>
 </network-security-config>
+
