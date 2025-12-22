@@ -183,7 +183,7 @@ private fun EntradaRanking(posicion: Int, entry: LeaderboardEntry, dims: UiDims)
                     Text(text = stringResource(id = R.string.ranking_wins, wins))
                 }
             }
-            Text(text = "${entry.score} pts", fontWeight = FontWeight.SemiBold)
+            // Text(text = "${entry.score} pts", fontWeight = FontWeight.SemiBold)
         }
     }
 }
