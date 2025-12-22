@@ -17,6 +17,10 @@ import com.google.gson.JsonSyntaxException
 import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.JsonEncodingException
 import retrofit2.HttpException
+import com.diegodiaz.techwizards.data.remote.score.PrizeIncrementRequestDto
+import com.diegodiaz.techwizards.data.remote.score.PrizeClaimRequestDto
+import com.diegodiaz.techwizards.data.remote.score.PrizeClaimResponseDto
+
 
 class ScoreRepositoryRetrofit(
     private val scoreApi: ScoreApi,
@@ -72,6 +76,12 @@ class ScoreRepositoryRetrofit(
         // score aquí es DELTA (puede ser negativo)
         require(score in -MAX_SCORE..MAX_SCORE) { "score fuera de rango" }
 
+        scoreApi.publicarScore(
+            bearerToken = "Bearer ${session.token}",
+            score = ScorePayload(alias = sanitizedAlias, deltaMonedas = score)
+        )
+
+
 
     }
 
@@ -122,4 +132,30 @@ class ScoreRepositoryRetrofit(
             }
         }
     }
+
+    override suspend fun incrementarPremioComun(session: UserSession, delta: Int): CommonPrize {
+        credentialsStore.guardarSesionAlias(session.token, session.alias)
+        credentialsStore.guardarFirebaseToken(session.token)
+
+        require(delta > 0) { "delta debe ser > 0" }
+
+        return scoreApi.incrementCommonPrize(
+            bearerToken = "Bearer ${session.token}",
+            request = PrizeIncrementRequestDto(delta = delta)
+        ).toDomain()
+    }
+
+    override suspend fun reclamarPremioComun(session: UserSession, claimId: String): Int {
+        credentialsStore.guardarSesionAlias(session.token, session.alias)
+        credentialsStore.guardarFirebaseToken(session.token)
+
+        require(claimId.isNotBlank()) { "claimId vacío" }
+
+        val resp = scoreApi.claimCommonPrize(
+            bearerToken = "Bearer ${session.token}",
+            request = PrizeClaimRequestDto(claimId = claimId)
+        )
+        return resp.claimed
+    }
+
 }

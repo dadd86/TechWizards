@@ -37,6 +37,7 @@ data class JuegoUiState(
 
 sealed interface JuegoUiEvent {
     data class Victoria(val partida: Partida) : JuegoUiEvent
+    data class PremioComunReclamado(val monedas: Int) : JuegoUiEvent
 }
 
 private fun Partida.formatoResumen(): String = when (resultado) {
@@ -118,6 +119,7 @@ class ControladorPartida(
                 rollCounter.update { it + 1 }
                 registrarHistorialRemoto(partida)
                 publicarPuntuacionRemota(partida)
+                aplicarPremioComun(partida)
                 handleVictoriaSiNecesario(partida, origen = "lanzar")
             } catch (t: Throwable) {
                 DecentralizedLogger.e(TAG, "Error al lanzar", t)
@@ -132,6 +134,7 @@ class ControladorPartida(
                 rollCounter.update { it + 1 }
                 registrarHistorialRemoto(partida)
                 publicarPuntuacionRemota(partida)
+                aplicarPremioComun(partida)
                 handleVictoriaSiNecesario(partida, origen = "elegirNumero($num)")
             }
         }
@@ -147,6 +150,7 @@ class ControladorPartida(
                 is Result.Ok -> {
                     rollCounter.update { it + 1 }
                     registrarHistorialRemoto(resultado.value.partida)
+                    aplicarPremioComun(resultado.value.partida)
                     if (resultado.value.gano) {
                         handleVictoriaSiNecesario(resultado.value.partida, origen = "remoto")
                     }
@@ -164,6 +168,69 @@ class ControladorPartida(
             DecentralizedLogger.e(TAG, "No se pudo publicar la puntuación", error)
         }
     }
+
+    private suspend fun aplicarPremioComun(partida: Partida) {
+        val currentSession = sessionManager.session.value
+        DecentralizedLogger.i(TAG, "aplicarPremioComun() session=${currentSession != null}")
+        if (currentSession == null) return
+
+        runCatching {
+            when (partida.resultado) {
+                Resultado.PERDIDO -> {
+                    val delta = kotlin.math.abs(partida.deltaMonedas).coerceAtLeast(1)
+                    DecentralizedLogger.i(TAG, "PREMIO: PERDIDO delta=$delta")
+                    scoreRepository.incrementarPremioComun(currentSession, delta)
+                    DecentralizedLogger.i(TAG, "PREMIO: increment OK")
+                }
+
+                Resultado.GANADO -> {
+                    val uid = firebaseUidProvider()
+                    DecentralizedLogger.i(TAG, "PREMIO: GANADO uid=$uid deltaMonedas=${partida.deltaMonedas}")
+
+                    if (uid == null) return
+
+                    val claimId = "${uid}_${System.currentTimeMillis()}"
+                    DecentralizedLogger.i(TAG, "PREMIO: claimId=$claimId")
+
+                    val claimed = scoreRepository.reclamarPremioComun(currentSession, claimId)
+                    DecentralizedLogger.i(TAG, "PREMIO: claimed=$claimed")
+
+                    if (claimed > 0) {
+                        repo.sumarMonedas(usuarioId, claimed)
+                        // 👈 suma al monedero local
+                        _eventos.tryEmit(JuegoUiEvent.PremioComunReclamado(claimed))
+                    }
+                }
+            }
+
+        }.onFailure { error ->
+            val http = error as? retrofit2.HttpException
+            if (http != null) {
+                val body = runCatching { http.response()?.errorBody()?.string() }.getOrNull()
+                DecentralizedLogger.e(
+                    TAG,
+                    "No se pudo aplicar premio común: HTTP ${http.code()} body=$body",
+                    error
+                )
+            } else {
+                DecentralizedLogger.e(TAG, "No se pudo aplicar premio común", error)
+            }
+        }
+
+    }
+
+    // helper: usa un timestamp estable para claimId
+    private fun Partida.createdAtMsOrFallback(): Long {
+        // usa el que tengas en Partida si existe; si no, fallback a now
+        return try {
+            // si tu Partida tiene un campo tipo createdAtMs / timestamp etc.
+            val f = this::class.members.firstOrNull { it.name == "createdAtMs" } ?: return System.currentTimeMillis()
+            (f.call(this) as? Long) ?: System.currentTimeMillis()
+        } catch (_: Throwable) {
+            System.currentTimeMillis()
+        }
+    }
+
 
 
     private suspend fun handleVictoriaSiNecesario(partida: Partida, origen: String) {

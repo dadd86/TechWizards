@@ -55,4 +55,17 @@ interface ScoreApi {
         @Header("Authorization") bearerToken: String,
         @Body request: LoginRequest
     ): SessionResponseDto
+
+    @POST("prize/common/increment")
+    suspend fun incrementCommonPrize(
+        @Header("Authorization") bearerToken: String,
+        @Body request: PrizeIncrementRequestDto
+    ): PrizeCommonDto
+
+    @POST("prize/common/claim")
+    suspend fun claimCommonPrize(
+        @Header("Authorization") bearerToken: String,
+        @Body request: PrizeClaimRequestDto
+    ): PrizeClaimResponseDto
+
 }

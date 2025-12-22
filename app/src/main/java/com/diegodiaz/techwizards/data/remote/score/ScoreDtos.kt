@@ -83,4 +83,19 @@ data class PrizeUpdateRequestDto(
 fun CommonPrize.toRequestDto(): PrizeUpdateRequestDto =
     PrizeUpdateRequestDto(descripcion = descripcion, valor = valor)
 
+data class PrizeIncrementRequestDto(
+    val delta: Int
+)
+
+data class PrizeClaimRequestDto(
+    val claimId: String
+)
+
+data class PrizeClaimResponseDto(
+    val descripcion: String,
+    val claimed: Int,
+    val alreadyClaimed: Boolean
+)
+
+
 

@@ -327,6 +327,135 @@ app.put(
 );
 
 /* =========================================================
+ * POST /prize/common/increment
+ *  - Suma delta al premio común
+ * ========================================================= */
+app.post("/prize/common/increment", requireAuth, async (req: AuthedRequest, res) => {
+  const uid = req.user?.uid ?? null;
+  const delta = Number(req.body?.delta);
+
+  console.log("[PRIZE_INC] IN", { uid, delta });
+
+  if (!Number.isInteger(delta) || delta <= 0 || delta > MAX_PRIZE_VALUE) {
+    return res.status(400).json({ error: "invalid_delta" });
+  }
+
+  try {
+    const ref = db.doc("prize/common");
+
+    const result = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const current = Number(snap.data()?.valor ?? 0);
+      const next = current + delta;
+
+      tx.set(ref, {
+        descripcion: snap.data()?.descripcion ?? "Premio común",
+        valor: next,
+        updatedAt: Date.now(),
+        updatedByUid: uid,
+      }, { merge: true });
+
+      return { descripcion: snap.data()?.descripcion ?? "Premio común", valor: next };
+    });
+
+    console.log("[PRIZE_INC] OK", { uid, valor: result.valor });
+    return res.json(result);
+   } catch (e: any) {
+    console.error("[PRIZE_INC] FAIL FULL", e);
+    return res.status(500).json({ error: e?.message ?? String(e) });
+  }
+});
+
+/* =========================================================
+ * POST /prize/common/claim
+ *  - Cobra el premio común y lo resetea a 0 (desaparece)
+ *  - Idempotente con claimId
+ * ========================================================= */
+app.post("/prize/common/claim", requireAuth, async (req: AuthedRequest, res) => {
+  const uid = req.user?.uid;
+  const claimId = String(req.body?.claimId ?? "").trim();
+
+  console.log("[PRIZE_CLAIM] IN", { uid: uid ?? null, claimId });
+
+  if (!uid) return res.status(401).json({ error: "missing_uid" });
+  if (!claimId) return res.status(400).json({ error: "invalid_claimId" });
+
+  try {
+    const prizeRef = db.doc("prize/common");
+    const playerRef = db.doc(`players/${uid}`);
+
+    const result = await db.runTransaction(async (tx) => {
+      const prizeSnap = await tx.get(prizeRef);
+      const data = (prizeSnap.data() ?? {}) as any;
+
+      const lastClaimId = String(data.lastClaimId ?? "");
+      const lastClaimAmount = Number(data.lastClaimAmount ?? 0);
+
+      // Idempotencia: si reintenta el mismo claimId, devolvemos lo mismo sin pagar de nuevo
+      if (lastClaimId && lastClaimId === claimId) {
+        return {
+          descripcion: data.descripcion ?? "Premio común",
+          claimed: lastClaimAmount,
+          alreadyClaimed: true,
+        };
+      }
+
+      const currentPrize = Number(data.valor ?? 0);
+      const claimed = Math.max(0, currentPrize);
+
+      // Resetea el bote y registra el claim
+      tx.set(prizeRef, {
+        descripcion: data.descripcion ?? "Premio común",
+        valor: 0,
+        lastClaimId: claimId,
+        lastClaimAmount: claimed,
+        lastClaimedByUid: uid,
+        lastClaimedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: Date.now(),
+        updatedByUid: uid,
+      }, { merge: true });
+
+            // Paga al jugador sumando coins (robusto: si coins no es number, lo repara)
+      if (claimed > 0) {
+        const playerSnap = await tx.get(playerRef);
+        const currentCoinsRaw = playerSnap.data()?.coins;
+
+        const currentCoins =
+          typeof currentCoinsRaw === "number" && Number.isFinite(currentCoinsRaw)
+            ? currentCoinsRaw
+            : 0;
+
+        tx.set(
+          playerRef,
+          {
+            coins: currentCoins + claimed,
+            updatedAt: Date.now(),
+          },
+          { merge: true }
+        );
+      }
+
+
+      return {
+        descripcion: data.descripcion ?? "Premio común",
+        claimed,
+        alreadyClaimed: false,
+      };
+    });
+
+    console.log("[PRIZE_CLAIM] OK", { uid, claimed: result.claimed, alreadyClaimed: result.alreadyClaimed });
+    return res.json(result);
+  } catch (e: any) {
+    console.error("[PRIZE_CLAIM] FAIL FULL", e);
+    return res.status(500).json({
+      error: e?.message ?? String(e),
+      stack: e?.stack ?? null,
+    });
+  }
+});
+
+
+/* =========================================================
  * Export
  * ========================================================= */
 export const api = onRequest({ cors: true }, app);

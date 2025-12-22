@@ -229,6 +229,30 @@ class JuegoRepositoryRoom(
         return partidaEntity.copy(id = partidaId).toDomain(usuario.alias)
     }
 
+    override suspend fun sumarMonedas(usuarioId: String, delta: Int) {
+        require(delta != 0) { "delta no puede ser 0" }
+
+        val usuarioNumero = usuarioId.toLong()
+        val monedero = monederoDao.getMonederoSimple(usuarioNumero)
+
+        val saldoActual = monedero?.saldo ?: MONEDAS_INICIALES
+        val nuevoSaldo = maxOf(saldoActual + delta, 0)
+
+        // Si no existía monedero, lo creamos
+        if (monedero == null) {
+            monederoDao.upsertSuspend(
+                MonederoEntity(
+                    id = "wallet_$usuarioNumero",
+                    usuarioNumero = usuarioNumero,
+                    saldo = nuevoSaldo
+                )
+            )
+        } else {
+            monederoDao.actualizarSaldo(usuarioNumero, nuevoSaldo)
+        }
+    }
+
+
 
 }
 private const val MONEDAS_INICIALES = 100

@@ -24,6 +24,9 @@ interface JuegoRepository {
     fun cargarUsuarioRx(usuarioId: String): io.reactivex.rxjava3.core.Maybe<Usuario>
     fun inicializarMonedasRx(usuario: Usuario, monedasIniciales: Int): Completable
 
+    suspend fun sumarMonedas(usuarioId: String, delta: Int)
+
+
     // 🔹 Coroutines — versión suspendida
     fun observarSaldo(usuarioId: String): Flow<Monedero>
     suspend fun inicializarMonedas(usuario: Usuario, monedasIniciales: Int)

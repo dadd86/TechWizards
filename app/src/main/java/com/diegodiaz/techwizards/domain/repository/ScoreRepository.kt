@@ -29,4 +29,20 @@ interface ScoreRepository {
 
     /** Login por alias: el backend devuelve la sesión (token, etc.) */
     suspend fun autenticarAlias(alias: String): UserSession
+
+    /** Suma al premio común (bote global) */
+    suspend fun incrementarPremioComun(
+        session: UserSession,
+        delta: Int
+    ): CommonPrize
+
+    /**
+     * Reclama el premio común (cobra el bote global y lo resetea a 0)
+     * @return monedas cobradas
+     */
+    suspend fun reclamarPremioComun(
+        session: UserSession,
+        claimId: String
+    ): Int
 }
+
