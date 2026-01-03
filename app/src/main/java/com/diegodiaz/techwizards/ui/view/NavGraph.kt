@@ -249,16 +249,7 @@ fun NavGraph(
                 onJugar = { navController.navigate("partida") },
                 onHistorial = { navController.navigate("historial") },
                 onRanking = {
-                    val sessionValida = isSesionFirebaseValida(sessionManager.session.value)
-                    if (!sessionValida) {
-                        Toast.makeText(
-                            context,
-                            "Ranking disponible solo en modo online",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        navController.navigate("ranking")
-                    }
+                    navController.navigate("ranking")
                 },
                 onAjustes = { navController.navigate("ajustes") },
                 onAyuda = { navController.navigate("ayuda") },
