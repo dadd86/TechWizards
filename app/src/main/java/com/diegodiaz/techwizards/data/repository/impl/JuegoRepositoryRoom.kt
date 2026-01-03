@@ -106,7 +106,7 @@ class JuegoRepositoryRoom(
             MonederoEntity(
                 id = "wallet_${usuario.numero}",
                 usuarioNumero = usuario.numero,
-                saldo = monedasIniciales
+                saldo = saldoActual
             )
         )
     }

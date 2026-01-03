@@ -161,9 +161,8 @@ class ControladorPartida(
 
     private suspend fun publicarPuntuacionRemota(partida: Partida) {
         val currentSession = sessionManager.session.value ?: return
-        val score = partida.deltaMonedas.coerceAtLeast(0) + if (partida.resultado == Resultado.GANADO) 50 else 10
         runCatching {
-            scoreRepository.publicarPuntuacion(currentSession, score)
+            scoreRepository.publicarPuntuacion(currentSession, partida.deltaMonedas)
         }.onFailure { error ->
             DecentralizedLogger.e(TAG, "No se pudo publicar la puntuación", error)
         }

@@ -14,7 +14,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.material3.Text
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -75,7 +74,6 @@ fun NavGraph(
 
     val usuarioActual = remember { mutableStateOf<Usuario?>(null) }
     val fallbackUsuarioNumero = remember { mutableStateOf<Long?>(null) }
-    val cargaUsuarioRealizada = remember { mutableStateOf(false) }
 
     val isUsuarioLoaded = remember { mutableStateOf(false) }
     val authState by authVm.ui.collectAsState()
@@ -85,31 +83,24 @@ fun NavGraph(
         val usuarioPersistidoNumero = usuarioPersistidoId?.toLongOrNull()
         val usuarioPersistido = usuarioPersistidoNumero?.let { usuarioDao.getByNumero(it) }
 
-        usuarioActual.value = usuarioPersistido?.toDomain()
+        val usuarioRoom = usuarioPersistido ?: usuarioDao.obtenerUsuarioPrincipal()
+        usuarioActual.value = usuarioRoom?.toDomain()
 
-        if (usuarioActual.value == null) {
-            val existente = usuarioDao.obtenerUsuarioPrincipal()
-            if (existente != null) {
-                usuarioActual.value = existente.toDomain()
-                userIdLocalDataSource.guardarUsuarioId(existente.numero.toString())
-            } else if (usuarioPersistidoNumero != null) {
-                fallbackUsuarioNumero.value = usuarioPersistidoNumero
-            } else {
-                fallbackUsuarioNumero.value = generarNumeroUsuario()
-            }
+        if (usuarioActual.value != null) {
+            userIdLocalDataSource.guardarUsuarioId(usuarioActual.value!!.numero.toString())
 
+            DecentralizedLogger.d(
+                "NavGraph",
+                "Usuario persistido cargado id=${redactId(usuarioActual.value?.numero.toString())}"
+            )
+        } else {
+            fallbackUsuarioNumero.value = usuarioPersistidoNumero ?: generarNumeroUsuario()
             DecentralizedLogger.d(
                 "NavGraph",
                 "Fallback usuario generado id=${redactId(fallbackUsuarioNumero.value?.toString())}"
             )
-        } else {
-            DecentralizedLogger.d(
-                "NavGraph",
-                "Usuario persistido cargado id=${redactId(existente.numero.toString())}"
-            )
         }
         isUsuarioLoaded.value = true
-        cargaUsuarioRealizada.value = true
     }
 
     val usuarioNumeroActual = if (isUsuarioLoaded.value) {
@@ -132,30 +123,29 @@ fun NavGraph(
     val usuarioNumeroFinal = requireNotNull(usuarioNumeroActual) {
         "Usuario no inicializado."
     }
-    val usuarioIdFinal = requireNotNull(usuarioId) {
-        "UsuarioId no inicializado."
-    }
+    val usuarioIdFinal = requireNotNull(usuarioId) { "UsuarioId no inicializado." }
 
     // --------- Instancia de ControladorPartida compartida ---------
-    val controladorPartida: ControladorPartida? = usuarioIdPersistido?.let { usuarioId ->
-        val partidaFactory = remember(usuarioId) {
-            ControladorPartidaFactory(
-                repo = repo,
-                usuarioId = usuarioId,
-                scoreRepository = scoreRepository,
-                observarPreferencias = observarPreferencias,
-                victoryService = victoryService,
-                sessionManager = sessionManager,
-                registrarHistorialRemotoUseCase = ServiceLocator.registrarHistorialRemotoUseCase,
-                firebaseUidProvider = {
-                    authState.usuario?.uid ?: usuarioActual.value?.firebaseUid
-                },
-                registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase,
-                resolverTiradaUseCase = ServiceLocator.resolverTiradaUseCase
-            )
-        }
-        viewModel(factory = partidaFactory)
+    val partidaFactory = remember(usuarioIdFinal) {
+        ControladorPartidaFactory(
+            repo = repo,
+            usuarioId = usuarioIdFinal,
+            scoreRepository = scoreRepository,
+            observarPreferencias = observarPreferencias,
+            victoryService = victoryService,
+            sessionManager = sessionManager,
+            registrarHistorialRemotoUseCase = ServiceLocator.registrarHistorialRemotoUseCase,
+            firebaseUidProvider = {
+                authState.usuario?.uid ?: usuarioActual.value?.firebaseUid
+            },
+            registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase,
+            resolverTiradaUseCase = ServiceLocator.resolverTiradaUseCase
+        )
     }
+    val controladorPartida: ControladorPartida = viewModel(
+        key = "controladorPartida-$usuarioIdFinal",
+        factory = partidaFactory
+    )
     // ------------------------------------------------------------------------
 
     LaunchedEffect(usuarioIdPersistido) {
@@ -198,7 +188,7 @@ fun NavGraph(
                             )
                         } else {
                             Usuario(
-                                numero = usuarioNumeroActual,
+                                numero = usuarioNumeroFinal,
                                 alias = nombre,
                                 fechaAltaMs = System.currentTimeMillis(),
                                 monedas = 100,
@@ -244,71 +234,53 @@ fun NavGraph(
         composable("menu") {
             val usuario = usuarioActual.value
 
-            if (controladorPartida == null) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "Cargando usuario...")
-                }
-            } else {
-                PantallaMenu(
-                    isDarkTheme = isDarkTheme,
-                    onJugar = { navController.navigate("partida") },
-                    onHistorial = { navController.navigate("historial") },
-                    onRanking = { navController.navigate("ranking") },
-                    onAjustes = { navController.navigate("ajustes") },
-                    onAyuda = { navController.navigate("ayuda") },
-                    //onLobby = { navController.navigate("lobby") },
-                    //onChat = { navController.navigate("chat") },
-                    //onEventos = { navController.navigate("eventos") },
-                    /*onMatch = {
-                        val matchId = "match-${System.currentTimeMillis()}"
-                        val lobbyId = "lobby-${usuario?.numero ?: usuarioNumeroActual}"
-                        navController.navigate("match/$matchId?lobbyId=$lobbyId")
-                    },*/
-                    //onPremioAdmin = { navController.navigate("premio-admin") },
-                    dims = dims,
-                    controladorPartida = controladorPartida,
-                    usuario = usuario
-                )
-            }
+            PantallaMenu(
+                isDarkTheme = isDarkTheme,
+                onJugar = { navController.navigate("partida") },
+                onHistorial = { navController.navigate("historial") },
+                onRanking = { navController.navigate("ranking") },
+                onAjustes = { navController.navigate("ajustes") },
+                onAyuda = { navController.navigate("ayuda") },
+                //onLobby = { navController.navigate("lobby") },
+                //onChat = { navController.navigate("chat") },
+                //onEventos = { navController.navigate("eventos") },
+                /*onMatch = {
+                    val matchId = "match-${System.currentTimeMillis()}"
+                    val lobbyId = "lobby-${usuario?.numero ?: usuarioNumeroFinal}"
+                    navController.navigate("match/$matchId?lobbyId=$lobbyId")
+                },*/
+                //onPremioAdmin = { navController.navigate("premio-admin") },
+                dims = dims,
+                controladorPartida = controladorPartida,
+                usuario = usuario
+            )
         }
 
         composable("partida") {
-            if (controladorPartida == null) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "Cargando usuario...")
-                }
-            } else {
-                val uiState = controladorPartida.ui.collectAsState().value
+            val uiState = controladorPartida.ui.collectAsState().value
 
-                PantallaPartida(
-                    isDarkTheme = isDarkTheme,
-                    uiState = uiState,
-                    eventos = controladorPartida.eventos,
-                    onVolverAlMenu = { navController.navigate("menu") },
-                    onElegirNumero = { num -> controladorPartida.elegirNumero(num) },
-                    onProgramarCelebracion = { payload ->
-                        controladorPartida.programarCelebracion(payload)
-                    },
-                    dims = dims
-                )
-            }
+            PantallaPartida(
+                isDarkTheme = isDarkTheme,
+                uiState = uiState,
+                eventos = controladorPartida.eventos,
+                onVolverAlMenu = { navController.navigate("menu") },
+                onElegirNumero = { num -> controladorPartida.elegirNumero(num) },
+                onProgramarCelebracion = { payload ->
+                    controladorPartida.programarCelebracion(payload)
+                },
+                dims = dims
+            )
         }
 
         composable("historial") {
-            if (controladorPartida == null) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "Cargando historial...")
-                }
-            } else {
-                val historial by controladorPartida.historial.collectAsState()
+            val historial by controladorPartida.historial.collectAsState()
 
-                PantallaHistorial(
-                    isDarkTheme = isDarkTheme,
-                    historial = historial,
-                    onVolverAlMenu = { navController.navigate("menu") },
-                    dims = dims
-                )
-            }
+            PantallaHistorial(
+                isDarkTheme = isDarkTheme,
+                historial = historial,
+                onVolverAlMenu = { navController.navigate("menu") },
+                dims = dims
+            )
         }
 
         composable("ranking") {
