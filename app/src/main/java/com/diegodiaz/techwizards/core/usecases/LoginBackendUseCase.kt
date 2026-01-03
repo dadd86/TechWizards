@@ -37,7 +37,6 @@ class LoginBackendUseCase(
             val session = UserSession(
                 token = idToken,
                 alias = resp.alias,
-                backendToken = resp.token,
                 isAdmin = resp.isAdmin,
                 backendToken = resp.token
             )
