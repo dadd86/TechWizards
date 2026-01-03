@@ -42,8 +42,8 @@ class ScoreRepositoryRetrofit(
         val validSessionToken = isFirebaseToken(sessionToken, session?.backendToken)
         val validStoredToken = isFirebaseToken(storedToken, session?.backendToken)
         return when {
-            validStoredToken -> storedToken
             validSessionToken -> sessionToken
+            validStoredToken -> storedToken
             else -> null
         }
     }
@@ -52,9 +52,16 @@ class ScoreRepositoryRetrofit(
         val normalizedToken = token?.trim().orEmpty()
         if (normalizedToken.isEmpty()) return false
         if (normalizedToken.startsWith("local-")) return false
+        if (!isLikelyJwt(normalizedToken)) return false
         if (!backendToken.isNullOrBlank() && backendToken == normalizedToken) return false
         return true
     }
+
+    private fun isLikelyJwt(token: String): Boolean {
+        val parts = token.split('.')
+        return parts.size == 3 && parts.all { it.isNotBlank() }
+    }
+
 
     private fun requireFirebaseToken(session: UserSession): String {
         val token = session.token.trim()

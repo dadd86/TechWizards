@@ -175,6 +175,9 @@ fun NavGraph(
 
                         val session = runCatching {
                             // ✅ ScoreRepository usa autenticarAlias(alias)
+                            if (!isSesionFirebaseValida(sessionManager.session.value)) {
+                                throw IllegalStateException("Firebase token no disponible")
+                            }
                             scoreRepository.autenticarAlias(nombre)
                         }.getOrElse { error ->
                             DecentralizedLogger.e("NavGraph", "Fallo en login remoto", error)
