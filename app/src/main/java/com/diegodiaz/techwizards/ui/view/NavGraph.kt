@@ -177,10 +177,14 @@ fun NavGraph(
                             scoreRepository.autenticarAlias(nombre)
                         }.getOrElse { error ->
                             DecentralizedLogger.e("NavGraph", "Fallo en login remoto", error)
-                            UserSession(token = "local-$nombre", alias = nombre)
+                            null
                         }
 
-                        sessionManager.setSession(session)
+                        if (session != null) {
+                            sessionManager.setSession(session)
+                        } else {
+                            sessionManager.clearSession()
+                        }
 
                         val usuario = if (existenteEnRoom != null) {
                             existenteEnRoom.copy(

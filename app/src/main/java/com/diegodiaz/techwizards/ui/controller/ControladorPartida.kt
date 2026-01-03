@@ -14,6 +14,7 @@ import com.diegodiaz.techwizards.domain.model.Monedero
 import com.diegodiaz.techwizards.domain.model.Partida
 import com.diegodiaz.techwizards.domain.model.Usuario
 import com.diegodiaz.techwizards.domain.model.ResolucionTiradaRemota
+import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.domain.repository.JuegoRepository
 import com.diegodiaz.techwizards.domain.repository.ScoreRepository
 import com.diegodiaz.techwizards.core.SessionManager
@@ -171,7 +172,10 @@ class ControladorPartida(
     private suspend fun aplicarPremioComun(partida: Partida) {
         val currentSession = sessionManager.session.value
         DecentralizedLogger.i(TAG, "aplicarPremioComun() session=${currentSession != null}")
-        if (currentSession == null) return
+        if (currentSession == null || !esSesionFirebaseValida(currentSession)) {
+            DecentralizedLogger.i(TAG, "Premio común omitido por sesión inválida")
+            return
+        }
 
         runCatching {
             when (partida.resultado) {
@@ -184,15 +188,13 @@ class ControladorPartida(
 
                 Resultado.GANADO -> {
                     val uid = firebaseUidProvider()
-                    DecentralizedLogger.i(TAG, "PREMIO: GANADO uid=$uid deltaMonedas=${partida.deltaMonedas}")
-
-                    if (uid == null) return
+                    DecentralizedLogger.i(TAG, "PREMIO: GANADO uidDisponible=${uid != null}")
+                    if (uid.isNullOrBlank()) return
 
                     val claimId = "${uid}_${System.currentTimeMillis()}"
                     DecentralizedLogger.i(TAG, "PREMIO: claimId=$claimId")
 
                     val claimed = scoreRepository.reclamarPremioComun(currentSession, claimId)
-                    DecentralizedLogger.i(TAG, "PREMIO: claimed=$claimed")
 
                     if (claimed > 0) {
                         repo.sumarMonedas(usuarioId, claimed)
@@ -292,6 +294,14 @@ class ControladorPartida(
         viewModelScope.launch {
             repo.inicializarMonedas(usuario, nuevoSaldo)
         }
+    }
+    private fun esSesionFirebaseValida(session: UserSession): Boolean {
+        val token = session.token.trim()
+        if (token.isEmpty()) return false
+        if (token.startsWith("local-")) return false
+        val backendToken = session.backendToken
+        if (!backendToken.isNullOrBlank() && backendToken == token) return false
+        return true
     }
 }
 

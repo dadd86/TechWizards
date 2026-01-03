@@ -104,13 +104,20 @@ class ScoreRepositoryRetrofit(
         val firebaseToken = tokenOrNull()
             ?: error("No hay Firebase token. Debes autenticarte con Firebase antes de llamar /login")
 
-        val session = scoreApi.login(
+        val backendSession = scoreApi.login(
             bearerToken = "Bearer $firebaseToken",
             request = LoginRequest(alias)
-        ).toDomain()
+        )
 
-        credentialsStore.guardarSesionAlias(session.token, session.alias)
-        credentialsStore.guardarFirebaseToken(session.token)
+        val session = UserSession(
+            token = firebaseToken,
+            alias = backendSession.alias,
+            backendToken = backendSession.token,
+            isAdmin = backendSession.isAdmin
+        )
+
+        credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
+        credentialsStore.guardarFirebaseToken(firebaseToken)
 
         return session
     }
