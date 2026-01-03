@@ -185,6 +185,11 @@ fun NavGraph(
                             sessionManager.setSession(session)
                         } else {
                             sessionManager.clearSession()
+                            Toast.makeText(
+                                context,
+                                "Modo offline: ranking y premios no disponibles",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
 
                         val usuario = if (existenteEnRoom != null) {

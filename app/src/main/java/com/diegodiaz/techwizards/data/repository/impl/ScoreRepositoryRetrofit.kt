@@ -38,15 +38,30 @@ class ScoreRepositoryRetrofit(
     private fun tokenOrNull(): String? {
         val session = sessionManager.session.value
         val sessionToken = session?.token?.trim()
-        val looksLikeBackendToken = !session?.backendToken.isNullOrBlank() &&
-                session?.backendToken == sessionToken
-        val looksLocal = sessionToken?.startsWith("local-") == true
-        return if (!sessionToken.isNullOrBlank() && !looksLikeBackendToken && !looksLocal) {
-            sessionToken
-        } else {
-            credentialsStore.obtenerFirebaseToken()
+        val storedToken = credentialsStore.obtenerFirebaseToken()?.trim()
+        val validSessionToken = isFirebaseToken(sessionToken, session?.backendToken)
+        val validStoredToken = isFirebaseToken(storedToken, session?.backendToken)
+        return when {
+            validStoredToken -> storedToken
+            validSessionToken -> sessionToken
+            else -> null
         }
     }
+
+    private fun isFirebaseToken(token: String?, backendToken: String?): Boolean {
+        val normalizedToken = token?.trim().orEmpty()
+        if (normalizedToken.isEmpty()) return false
+        if (normalizedToken.startsWith("local-")) return false
+        if (!backendToken.isNullOrBlank() && backendToken == normalizedToken) return false
+        return true
+    }
+
+    private fun requireFirebaseToken(session: UserSession): String {
+        val token = session.token.trim()
+        check(isFirebaseToken(token, session.backendToken)) { "Sesión Firebase inválida" }
+        return token
+    }
+
 
     override suspend fun obtenerTopTen(): List<LeaderboardEntry> {
         val bearer = tokenOrNull()?.let { "Bearer $it" }
@@ -76,8 +91,9 @@ class ScoreRepositoryRetrofit(
     }
 
     override suspend fun publicarPuntuacion(session: UserSession, score: Int) {
-        credentialsStore.guardarSesionAlias(session.token, session.alias)
-        credentialsStore.guardarFirebaseToken(session.token)
+        val firebaseToken = requireFirebaseToken(session)
+        credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
+        credentialsStore.guardarFirebaseToken(firebaseToken)
 
         val sanitizedAlias = session.alias.trim()
         require(sanitizedAlias.isNotBlank()) { "alias vacío" }
@@ -87,7 +103,7 @@ class ScoreRepositoryRetrofit(
         require(score in -MAX_SCORE..MAX_SCORE) { "score fuera de rango" }
 
         scoreApi.publicarScore(
-            bearerToken = "Bearer ${session.token}",
+            bearerToken = "Bearer $firebaseToken",
             score = ScorePayload(alias = sanitizedAlias, deltaMonedas = score)
         )
     }
@@ -98,11 +114,12 @@ class ScoreRepositoryRetrofit(
     }
 
     override suspend fun actualizarPremioComun(session: UserSession, nuevoPremio: CommonPrize): CommonPrize {
-        credentialsStore.guardarSesionAlias(session.token, session.alias)
-        credentialsStore.guardarFirebaseToken(session.token)
+        val firebaseToken = requireFirebaseToken(session)
+        credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
+        credentialsStore.guardarFirebaseToken(firebaseToken)
 
         return scoreApi.updatePrize(
-            bearerToken = "Bearer ${session.token}",
+            bearerToken = "Bearer $firebaseToken",
             request = nuevoPremio.toRequestDto()
         ).toDomain()
     }
@@ -150,25 +167,27 @@ class ScoreRepositoryRetrofit(
     }
 
     override suspend fun incrementarPremioComun(session: UserSession, delta: Int): CommonPrize {
-        credentialsStore.guardarSesionAlias(session.token, session.alias)
-        credentialsStore.guardarFirebaseToken(session.token)
+        val firebaseToken = requireFirebaseToken(session)
+        credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
+        credentialsStore.guardarFirebaseToken(firebaseToken)
 
         require(delta > 0) { "delta debe ser > 0" }
 
         return scoreApi.incrementCommonPrize(
-            bearerToken = "Bearer ${session.token}",
+            bearerToken = "Bearer $firebaseToken",
             request = PrizeIncrementRequestDto(delta = delta)
         ).toDomain()
     }
 
     override suspend fun reclamarPremioComun(session: UserSession, claimId: String): Int {
-        credentialsStore.guardarSesionAlias(session.token, session.alias)
-        credentialsStore.guardarFirebaseToken(session.token)
+        val firebaseToken = requireFirebaseToken(session)
+        credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
+        credentialsStore.guardarFirebaseToken(firebaseToken)
 
         require(claimId.isNotBlank()) { "claimId vacío" }
 
         val resp = scoreApi.claimCommonPrize(
-            bearerToken = "Bearer ${session.token}",
+            bearerToken = "Bearer $firebaseToken",
             request = PrizeClaimRequestDto(claimId = claimId)
         )
         return resp.claimed

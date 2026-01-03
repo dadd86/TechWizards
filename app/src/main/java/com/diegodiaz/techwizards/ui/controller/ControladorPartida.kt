@@ -191,10 +191,14 @@ class ControladorPartida(
                 }
 
                 Resultado.GANADO -> {
-                    val uid = firebaseUidProvider()
+                    val uid = firebaseUidProvider()?.trim()
                     DecentralizedLogger.i(TAG, "PREMIO: GANADO uidDisponible=${uid != null}")
                     if (uid.isNullOrBlank()) {
                         DecentralizedLogger.i(TAG, "PREMIO: UID Firebase no disponible")
+                        return
+                    }
+                    if (!esSesionFirebaseValida(currentSession)) {
+                        DecentralizedLogger.i(TAG, "PREMIO: sesión Firebase inválida para reclamar")
                         return
                     }
 
