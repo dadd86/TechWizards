@@ -194,12 +194,12 @@ class ControladorPartida(
                     val uid = firebaseUidProvider()
                     DecentralizedLogger.i(TAG, "PREMIO: GANADO uidDisponible=${uid != null}")
                     if (uid.isNullOrBlank()) {
-                        DecentralizedLogger.i(TAG, "Premio común omitido: firebaseUid vacío")
+                        DecentralizedLogger.i(TAG, "PREMIO: UID Firebase no disponible")
                         return
                     }
 
                     val claimId = "${uid}_${System.currentTimeMillis()}"
-                    DecentralizedLogger.i(TAG, "PREMIO: claimId=$claimId")
+                    DecentralizedLogger.i(TAG, "PREMIO: claimId=${redactId(claimId)}")
 
                     val claimed = scoreRepository.reclamarPremioComun(currentSession, claimId)
 
@@ -310,6 +310,9 @@ class ControladorPartida(
         if (!backendToken.isNullOrBlank() && backendToken == token) return false
         return true
     }
+
+    private fun redactId(value: String?): String =
+        value?.take(2)?.plus("***") ?: "***"
 }
 
 class ControladorPartidaFactory(

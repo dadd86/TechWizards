@@ -35,8 +35,18 @@ class ScoreRepositoryRetrofit(
         private const val MAX_SCORE = 100_000
     }
 
-    private fun tokenOrNull(): String? =
-        sessionManager.session.value?.token ?: credentialsStore.obtenerFirebaseToken()
+    private fun tokenOrNull(): String? {
+        val session = sessionManager.session.value
+        val sessionToken = session?.token?.trim()
+        val looksLikeBackendToken = !session?.backendToken.isNullOrBlank() &&
+                session?.backendToken == sessionToken
+        val looksLocal = sessionToken?.startsWith("local-") == true
+        return if (!sessionToken.isNullOrBlank() && !looksLikeBackendToken && !looksLocal) {
+            sessionToken
+        } else {
+            credentialsStore.obtenerFirebaseToken()
+        }
+    }
 
     override suspend fun obtenerTopTen(): List<LeaderboardEntry> {
         val bearer = tokenOrNull()?.let { "Bearer $it" }
@@ -80,9 +90,6 @@ class ScoreRepositoryRetrofit(
             bearerToken = "Bearer ${session.token}",
             score = ScorePayload(alias = sanitizedAlias, deltaMonedas = score)
         )
-
-
-
     }
 
     override suspend fun obtenerPremioComun(): CommonPrize {

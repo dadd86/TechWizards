@@ -38,7 +38,8 @@ class LoginBackendUseCase(
                 token = idToken,
                 alias = resp.alias,
                 backendToken = resp.token,
-                isAdmin = resp.isAdmin
+                isAdmin = resp.isAdmin,
+                backendToken = resp.token
             )
 
             sessionManager.setSession(session)

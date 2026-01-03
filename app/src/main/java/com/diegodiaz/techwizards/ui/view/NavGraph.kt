@@ -14,6 +14,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -242,7 +243,18 @@ fun NavGraph(
                 isDarkTheme = isDarkTheme,
                 onJugar = { navController.navigate("partida") },
                 onHistorial = { navController.navigate("historial") },
-                onRanking = { navController.navigate("ranking") },
+                onRanking = {
+                    val sessionValida = isSesionFirebaseValida(sessionManager.session.value)
+                    if (!sessionValida) {
+                        Toast.makeText(
+                            context,
+                            "Ranking disponible solo en modo online",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        navController.navigate("ranking")
+                    }
+                },
                 onAjustes = { navController.navigate("ajustes") },
                 onAyuda = { navController.navigate("ayuda") },
                 //onLobby = { navController.navigate("lobby") },
@@ -529,3 +541,12 @@ private fun generarNumeroUsuario(): Long {
 
 private fun redactId(id: String?): String =
     id?.takeLast(2)?.padStart(4, '*') ?: "***"
+
+private fun isSesionFirebaseValida(session: UserSession?): Boolean {
+    val token = session?.token?.trim().orEmpty()
+    if (token.isEmpty()) return false
+    if (token.startsWith("local-")) return false
+    val backendToken = session?.backendToken
+    if (!backendToken.isNullOrBlank() && backendToken == token) return false
+    return true
+}
