@@ -12,9 +12,9 @@ import androidx.room.PrimaryKey
  */
 @Entity(tableName = "Usuario")
 data class UsuarioEntity(
-    @PrimaryKey(autoGenerate = true)
+    @PrimaryKey
     @ColumnInfo(name = "numero")
-    val numero: Long = 0,
+    val numero: Long,
     @ColumnInfo(name = "usuario")
     val alias: String,
     @ColumnInfo(name = "fechaAlta")

@@ -41,7 +41,7 @@ BEGIN TRANSACTION;
 --     - 'fechaAlta' es epoch millis (>0).
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS Usuario (
-    numero       INTEGER PRIMARY KEY AUTOINCREMENT,
+    numero       INTEGER PRIMARY KEY,
     usuario      TEXT    NOT NULL CHECK (length(trim(usuario)) BETWEEN 3 AND 50),
     fechaAlta    INTEGER NOT NULL CHECK (fechaAlta > 0),
     monedas      INTEGER NOT NULL DEFAULT 0 CHECK (monedas >= 0),

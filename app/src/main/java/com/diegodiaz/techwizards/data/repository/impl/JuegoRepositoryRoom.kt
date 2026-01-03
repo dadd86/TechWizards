@@ -11,6 +11,7 @@ import com.diegodiaz.techwizards.domain.repository.JuegoRepository
 import com.diegodiaz.techwizards.domain.model.Monedero
 import com.diegodiaz.techwizards.domain.model.Usuario
 import com.diegodiaz.techwizards.domain.model.Partida
+import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
@@ -121,6 +122,10 @@ class JuegoRepositoryRoom(
      * - Solo propaga alias y resultados locales.
      */
     override fun observarHistorial(usuarioId: String, limit: Int): Flow<List<Partida>> {
+        DecentralizedLogger.d(
+            "JuegoRepository",
+            "observarHistorial usuarioId=${redactId(usuarioId)} limit=$limit"
+        )
         return partidaDao.observarHistorial(usuarioId.toLong(), limit)
             .map { lista -> lista.map { it.toDomain() } }
     }
@@ -256,3 +261,6 @@ class JuegoRepositoryRoom(
 
 }
 private const val MONEDAS_INICIALES = 100
+
+private fun redactId(id: String?): String =
+    id?.takeLast(2)?.padStart(4, '*') ?: "***"

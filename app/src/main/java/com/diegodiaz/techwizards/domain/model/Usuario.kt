@@ -3,7 +3,7 @@ package com.diegodiaz.techwizards.domain.model
 /**
  * Representa el jugador local almacenado en la base de datos.
  *
- * @property numero Identificador interno autoincremental de la tabla `Usuario`.
+ * @property numero Identificador interno persistido localmente para la tabla `Usuario`.
  * @property alias Alias público visible por otros jugadores.
  * @property fechaAltaMs Marca de tiempo de registro (epoch millis).
  * @property monedas Saldo actual de monedas virtuales.

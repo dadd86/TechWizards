@@ -8,8 +8,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.Text
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -51,11 +56,12 @@ fun NavGraph(
     authVm: ControladorAuth
 ) {
     val context = LocalContext.current
-    val db = remember { BaseDeDatos.get(context) }
+    val appContext = context.applicationContext
+    val db = remember(appContext) { BaseDeDatos.get(appContext) }
     val usuarioDao = db.usuarioDao()
     val monederoDao = db.monederoDao()
     val partidaDao = db.partidaDao()
-    val repo = remember { JuegoRepositoryRoom(usuarioDao, monederoDao, partidaDao) }
+    val repo = remember(db) { JuegoRepositoryRoom(usuarioDao, monederoDao, partidaDao) }
 
     val scope = rememberCoroutineScope()
 
@@ -63,46 +69,103 @@ fun NavGraph(
     val scoreRepository = remember { ServiceLocator.scoreRepository }
     val sessionManager = remember { ServiceLocator.sessionManager }
     val observarPreferencias = remember { ObservarPreferenciasUseCase(settingsRepository) }
+    val userIdLocalDataSource = remember { ServiceLocator.userIdLocalDataSource }
 
     val victoryService = remember { ServiceLocator.victoryCelebrationService }
 
     val usuarioActual = remember { mutableStateOf<Usuario?>(null) }
     val fallbackUsuarioNumero = remember { mutableStateOf<Long?>(null) }
+    val cargaUsuarioRealizada = remember { mutableStateOf(false) }
+
+    val isUsuarioLoaded = remember { mutableStateOf(false) }
     val authState by authVm.ui.collectAsState()
 
     LaunchedEffect(Unit) {
-        val existente = usuarioDao.obtenerUsuarioPrincipal()
-        usuarioActual.value = existente?.toDomain()
-        if (existente == null) {
-            fallbackUsuarioNumero.value = generarNumeroUsuario()
+        val usuarioPersistidoId = userIdLocalDataSource.obtenerUsuarioId()
+        val usuarioPersistidoNumero = usuarioPersistidoId?.toLongOrNull()
+        val usuarioPersistido = usuarioPersistidoNumero?.let { usuarioDao.getByNumero(it) }
+
+        usuarioActual.value = usuarioPersistido?.toDomain()
+
+        if (usuarioActual.value == null) {
+            val existente = usuarioDao.obtenerUsuarioPrincipal()
+            if (existente != null) {
+                usuarioActual.value = existente.toDomain()
+                userIdLocalDataSource.guardarUsuarioId(existente.numero.toString())
+            } else if (usuarioPersistidoNumero != null) {
+                fallbackUsuarioNumero.value = usuarioPersistidoNumero
+            } else {
+                fallbackUsuarioNumero.value = generarNumeroUsuario()
+            }
+
+            DecentralizedLogger.d(
+                "NavGraph",
+                "Fallback usuario generado id=${redactId(fallbackUsuarioNumero.value?.toString())}"
+            )
+        } else {
+            DecentralizedLogger.d(
+                "NavGraph",
+                "Usuario persistido cargado id=${redactId(existente.numero.toString())}"
+            )
         }
+        isUsuarioLoaded.value = true
+        cargaUsuarioRealizada.value = true
     }
 
-    val usuarioNumeroActual = usuarioActual.value?.numero
-        ?: fallbackUsuarioNumero.value
-        ?: generarNumeroUsuario().also { fallbackUsuarioNumero.value = it }
-    val usuarioId = usuarioNumeroActual.toString()
+    val usuarioNumeroActual = if (isUsuarioLoaded.value) {
+        usuarioActual.value?.numero
+            ?: fallbackUsuarioNumero.value
+            ?: generarNumeroUsuario().also { fallbackUsuarioNumero.value = it }
+    } else {
+        null
+    }
+    val usuarioId = usuarioNumeroActual?.toString()
+    val usuarioIdPersistido = usuarioActual.value?.numero?.toString()
+
+    if (!isUsuarioLoaded.value) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val usuarioNumeroFinal = requireNotNull(usuarioNumeroActual) {
+        "Usuario no inicializado."
+    }
+    val usuarioIdFinal = requireNotNull(usuarioId) {
+        "UsuarioId no inicializado."
+    }
 
     // --------- Instancia de ControladorPartida compartida ---------
-    val partidaFactory = remember {
-        ControladorPartidaFactory(
-            repo = repo,
-            usuarioId = usuarioId,
-            scoreRepository = scoreRepository,
-            observarPreferencias = observarPreferencias,
-            victoryService = victoryService,
-            sessionManager = sessionManager,
-            registrarHistorialRemotoUseCase = ServiceLocator.registrarHistorialRemotoUseCase,
-            firebaseUidProvider = {
-                authState.usuario?.uid ?: usuarioActual.value?.firebaseUid
-            },
-            registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase,
-            resolverTiradaUseCase = ServiceLocator.resolverTiradaUseCase
-        )
+    val controladorPartida: ControladorPartida? = usuarioIdPersistido?.let { usuarioId ->
+        val partidaFactory = remember(usuarioId) {
+            ControladorPartidaFactory(
+                repo = repo,
+                usuarioId = usuarioId,
+                scoreRepository = scoreRepository,
+                observarPreferencias = observarPreferencias,
+                victoryService = victoryService,
+                sessionManager = sessionManager,
+                registrarHistorialRemotoUseCase = ServiceLocator.registrarHistorialRemotoUseCase,
+                firebaseUidProvider = {
+                    authState.usuario?.uid ?: usuarioActual.value?.firebaseUid
+                },
+                registrarUbicacionVictoriaUseCase = ServiceLocator.registrarUbicacionVictoriaUseCase,
+                resolverTiradaUseCase = ServiceLocator.resolverTiradaUseCase
+            )
+        }
+        viewModel(factory = partidaFactory)
     }
-    val controladorPartida: ControladorPartida = viewModel(factory = partidaFactory)
     // ------------------------------------------------------------------------
 
+    LaunchedEffect(usuarioIdPersistido) {
+        if (usuarioIdPersistido != null) {
+            DecentralizedLogger.d(
+                "NavGraph",
+                "ControladorPartida listo usuarioId=${redactId(usuarioIdPersistido)}"
+            )
+        }
+    }
     NavHost(
         navController = navController,
         startDestination = "bienvenida",
@@ -114,6 +177,11 @@ fun NavGraph(
                 nombrePredeterminado = usuarioActual.value?.alias ?: authState.usuario?.displayName,
                 onJugar = { nombre ->
                     scope.launch {
+                        val existenteEnRoom = usuarioDao.obtenerUsuarioPrincipal()?.toDomain()
+                        if (existenteEnRoom == null && authState.cargando) {
+                            return@launch
+                        }
+
                         val session = runCatching {
                             // ✅ ScoreRepository usa autenticarAlias(alias)
                             scoreRepository.autenticarAlias(nombre)
@@ -124,23 +192,32 @@ fun NavGraph(
 
                         sessionManager.setSession(session)
 
-                        val existente = usuarioActual.value
-                        val usuario = Usuario(
-                            numero = existente?.numero ?: usuarioNumeroActual,
-                            alias = nombre,
-                            fechaAltaMs = existente?.fechaAltaMs ?: System.currentTimeMillis(),
-                            monedas = existente?.monedas ?: 100,
-                            ganoUltimaPartida = existente?.ganoUltimaPartida ?: false,
-                            firebaseUid = authState.usuario?.uid ?: existente?.firebaseUid
-                        )
+                        val usuario = if (existenteEnRoom != null) {
+                            existenteEnRoom.copy(
+                                firebaseUid = authState.usuario?.uid ?: existenteEnRoom.firebaseUid
+                            )
+                        } else {
+                            Usuario(
+                                numero = usuarioNumeroActual,
+                                alias = nombre,
+                                fechaAltaMs = System.currentTimeMillis(),
+                                monedas = 100,
+                                ganoUltimaPartida = false,
+                                firebaseUid = authState.usuario?.uid
+                            )
+                        }
 
+                        userIdLocalDataSource.guardarUsuarioId(usuario.numero.toString())
                         repo.inicializarMonedas(usuario, usuario.monedas)
 
-                        val actualizado = usuarioDao
-                            .obtenerUsuarioPrincipal()
-                            ?.toDomain() ?: usuario
+                        val actualizado = usuarioDao.obtenerUsuarioPrincipal()?.toDomain() ?: usuario
 
                         usuarioActual.value = actualizado
+                        fallbackUsuarioNumero.value = null
+                        DecentralizedLogger.d(
+                            "NavGraph",
+                            "Usuario persistido actualizado id=${redactId(actualizado.numero.toString())}"
+                        )
 
                         navController.navigate("menu") {
                             popUpTo("bienvenida") { inclusive = true }
@@ -167,53 +244,71 @@ fun NavGraph(
         composable("menu") {
             val usuario = usuarioActual.value
 
-            PantallaMenu(
-                isDarkTheme = isDarkTheme,
-                onJugar = { navController.navigate("partida") },
-                onHistorial = { navController.navigate("historial") },
-                onRanking = { navController.navigate("ranking") },
-                onAjustes = { navController.navigate("ajustes") },
-                onAyuda = { navController.navigate("ayuda") },
-                //onLobby = { navController.navigate("lobby") },
-                //onChat = { navController.navigate("chat") },
-                //onEventos = { navController.navigate("eventos") },
-                /*onMatch = {
-                    val matchId = "match-${System.currentTimeMillis()}"
-                    val lobbyId = "lobby-${usuario?.numero ?: usuarioNumeroActual}"
-                    navController.navigate("match/$matchId?lobbyId=$lobbyId")
-                },*/
-                //onPremioAdmin = { navController.navigate("premio-admin") },
-                dims = dims,
-                controladorPartida = controladorPartida,
-                usuario = usuario
-            )
+            if (controladorPartida == null) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = "Cargando usuario...")
+                }
+            } else {
+                PantallaMenu(
+                    isDarkTheme = isDarkTheme,
+                    onJugar = { navController.navigate("partida") },
+                    onHistorial = { navController.navigate("historial") },
+                    onRanking = { navController.navigate("ranking") },
+                    onAjustes = { navController.navigate("ajustes") },
+                    onAyuda = { navController.navigate("ayuda") },
+                    //onLobby = { navController.navigate("lobby") },
+                    //onChat = { navController.navigate("chat") },
+                    //onEventos = { navController.navigate("eventos") },
+                    /*onMatch = {
+                        val matchId = "match-${System.currentTimeMillis()}"
+                        val lobbyId = "lobby-${usuario?.numero ?: usuarioNumeroActual}"
+                        navController.navigate("match/$matchId?lobbyId=$lobbyId")
+                    },*/
+                    //onPremioAdmin = { navController.navigate("premio-admin") },
+                    dims = dims,
+                    controladorPartida = controladorPartida,
+                    usuario = usuario
+                )
+            }
         }
 
         composable("partida") {
-            val uiState = controladorPartida.ui.collectAsState().value
+            if (controladorPartida == null) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = "Cargando usuario...")
+                }
+            } else {
+                val uiState = controladorPartida.ui.collectAsState().value
 
-            PantallaPartida(
-                isDarkTheme = isDarkTheme,
-                uiState = uiState,
-                eventos = controladorPartida.eventos,
-                onVolverAlMenu = { navController.navigate("menu") },
-                onElegirNumero = { num -> controladorPartida.elegirNumero(num) },
-                onProgramarCelebracion = { payload ->
-                    controladorPartida.programarCelebracion(payload)
-                },
-                dims = dims
-            )
+                PantallaPartida(
+                    isDarkTheme = isDarkTheme,
+                    uiState = uiState,
+                    eventos = controladorPartida.eventos,
+                    onVolverAlMenu = { navController.navigate("menu") },
+                    onElegirNumero = { num -> controladorPartida.elegirNumero(num) },
+                    onProgramarCelebracion = { payload ->
+                        controladorPartida.programarCelebracion(payload)
+                    },
+                    dims = dims
+                )
+            }
         }
 
         composable("historial") {
-            val historial by controladorPartida.historial.collectAsState()
+            if (controladorPartida == null) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = "Cargando historial...")
+                }
+            } else {
+                val historial by controladorPartida.historial.collectAsState()
 
-            PantallaHistorial(
-                isDarkTheme = isDarkTheme,
-                historial = historial,
-                onVolverAlMenu = { navController.navigate("menu") },
-                dims = dims
-            )
+                PantallaHistorial(
+                    isDarkTheme = isDarkTheme,
+                    historial = historial,
+                    onVolverAlMenu = { navController.navigate("menu") },
+                    dims = dims
+                )
+            }
         }
 
         composable("ranking") {
@@ -335,7 +430,7 @@ fun NavGraph(
             )
 
             val matchState by matchVm.ui.collectAsState()
-            val usuarioNumero = usuarioActual.value?.numero ?: usuarioNumeroActual
+            val usuarioNumero = usuarioActual.value?.numero ?: usuarioNumeroFinal
             val normalizarMatchId: (String) -> String = { codigo ->
                 if (codigo.startsWith("match-")) codigo else "match-$codigo"
             }
@@ -425,7 +520,7 @@ fun NavGraph(
             )
 
             // ✅ Iniciar solo cuando cambie el matchId/lobbyId/usuarioId
-            val usuarioId = usuarioActual.value?.numero ?: usuarioNumeroActual
+            val usuarioId = usuarioActual.value?.numero ?: usuarioNumeroFinal
             LaunchedEffect(matchId, lobbyId, usuarioId) {
                 matchVm.iniciar(matchId = matchId, lobbyId = lobbyId, usuarioId = usuarioId)
             }
@@ -455,3 +550,6 @@ private fun generarNumeroUsuario(): Long {
     val random = Random.nextLong(1_000L, 1_000_000L)
     return (base * 1_000_000L) + random
 }
+
+private fun redactId(id: String?): String =
+    id?.takeLast(2)?.padStart(4, '*') ?: "***"

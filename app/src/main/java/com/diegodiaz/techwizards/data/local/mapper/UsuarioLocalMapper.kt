@@ -18,8 +18,9 @@ fun UsuarioEntity.toDomain(): Usuario =
         firebaseUid = firebaseUid,
     )
 
-fun Usuario.toEntity(): UsuarioEntity =
-    UsuarioEntity(
+fun Usuario.toEntity(): UsuarioEntity {
+    require(numero > 0) { "El numero de usuario debe ser positivo" }
+    return UsuarioEntity(
         numero = numero,
         alias = alias,
         fechaAltaMs = fechaAltaMs,
@@ -27,3 +28,4 @@ fun Usuario.toEntity(): UsuarioEntity =
         ganoUltimaPartida = ganoUltimaPartida,
         firebaseUid = firebaseUid,
     )
+}

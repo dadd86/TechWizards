@@ -24,6 +24,7 @@ import com.diegodiaz.techwizards.data.local.dao.IMatchParticipantDao
 import com.diegodiaz.techwizards.data.local.dao.IMatchScoreDao
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
 import com.diegodiaz.techwizards.data.local.cache.MatchSnapshotLocalDataSource
+import com.diegodiaz.techwizards.data.local.cache.UserIdLocalDataSource
 import com.diegodiaz.techwizards.data.local.mapper.VictoryLocationLocalMapper
 import com.diegodiaz.techwizards.data.remote.lobby.LobbyRealtimeFirebaseDataSource
 import com.diegodiaz.techwizards.data.remote.history.PartidaHistoryFirebaseDataSource
@@ -210,6 +211,10 @@ object ServiceLocator {
 
     val settingsRepository by lazy {
         SettingsRepositoryDataStore(appContext)
+    }
+
+    val userIdLocalDataSource by lazy {
+        UserIdLocalDataSource(settingsRepository.dataStore)
     }
 
     val scoresRepository by lazy {
