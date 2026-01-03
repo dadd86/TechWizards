@@ -116,6 +116,8 @@ class ScoreRepositoryRetrofit(
             isAdmin = backendSession.isAdmin
         )
 
+        sessionManager.setSession(session)
+
         credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
         credentialsStore.guardarFirebaseToken(firebaseToken)
 

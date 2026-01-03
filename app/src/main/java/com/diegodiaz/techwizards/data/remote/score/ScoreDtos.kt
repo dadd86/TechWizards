@@ -20,8 +20,13 @@ data class SessionResponseDto(
     val isAdmin: Boolean = false
 )
 
-fun SessionResponseDto.toDomain(): UserSession =
-    UserSession(token = token, alias = alias, isAdmin = isAdmin)
+fun SessionResponseDto.toDomain(firebaseToken: String): UserSession =
+    UserSession(
+        token = firebaseToken,
+        alias = alias,
+        backendToken = token,
+        isAdmin = isAdmin
+    )
 
 // Respuesta real que devuelve tu /leaderboard/top10
 data class ScoreEntryDto(

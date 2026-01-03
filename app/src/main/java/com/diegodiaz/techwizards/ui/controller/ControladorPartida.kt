@@ -162,6 +162,10 @@ class ControladorPartida(
 
     private suspend fun publicarPuntuacionRemota(partida: Partida) {
         val currentSession = sessionManager.session.value ?: return
+        if (!esSesionFirebaseValida(currentSession)) {
+            DecentralizedLogger.i(TAG, "Puntuación remota omitida por sesión inválida")
+            return
+        }
         runCatching {
             scoreRepository.publicarPuntuacion(currentSession, partida.deltaMonedas)
         }.onFailure { error ->
@@ -189,7 +193,10 @@ class ControladorPartida(
                 Resultado.GANADO -> {
                     val uid = firebaseUidProvider()
                     DecentralizedLogger.i(TAG, "PREMIO: GANADO uidDisponible=${uid != null}")
-                    if (uid.isNullOrBlank()) return
+                    if (uid.isNullOrBlank()) {
+                        DecentralizedLogger.i(TAG, "Premio común omitido: firebaseUid vacío")
+                        return
+                    }
 
                     val claimId = "${uid}_${System.currentTimeMillis()}"
                     DecentralizedLogger.i(TAG, "PREMIO: claimId=$claimId")

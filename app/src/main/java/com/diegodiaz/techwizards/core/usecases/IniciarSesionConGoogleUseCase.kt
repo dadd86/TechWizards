@@ -7,8 +7,8 @@ import com.diegodiaz.techwizards.credenciales.CredentialsStore
 import com.diegodiaz.techwizards.domain.model.AuthUser
 import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.domain.repository.AuthRepository
-import com.diegodiaz.techwizards.data.remote.score.ScoreApi
 import com.diegodiaz.techwizards.data.remote.score.LoginRequest
+import com.diegodiaz.techwizards.data.remote.score.ScoreApi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -17,7 +17,7 @@ class IniciarSesionConGoogleUseCase(
     private val authRepository: AuthRepository,
     private val sessionManager: SessionManager,
     private val credentialsStore: CredentialsStore,
-    private val scoreApi: com.diegodiaz.techwizards.data.remote.score.ScoreApi, // ✅
+    private val scoreApi: ScoreApi,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     suspend operator fun invoke(idToken: String): Result<AuthUser, AgentError> =
@@ -38,7 +38,7 @@ class IniciarSesionConGoogleUseCase(
                             val backendSession = try {
                                 scoreApi.login(
                                     bearerToken = "Bearer $firebaseToken",
-                                    request = com.diegodiaz.techwizards.data.remote.score.LoginRequest(alias = alias)
+                                    request = LoginRequest(alias = alias)
                                 )
                             } catch (e: Exception) {
                                 return@withContext Result.Err(AgentError.Unknown(e))
@@ -65,4 +65,3 @@ class IniciarSesionConGoogleUseCase(
             }
         }
 }
-
