@@ -100,12 +100,13 @@ app.get("/leaderboard/top10", async (_req, res) => {
 
   const snap = await db
     .collection("players")
-    .orderBy("coins", "desc")
+    .orderBy("wins", "desc")
     .limit(10)
     .get();
 
   const items = snap.docs.map((d, idx) => {
     const data = d.data() as any;
+    const wins = Number(data.wins ?? 0);
     return {
       id: data.usuarioNumero?.toString() ?? d.id,
       alias:
@@ -113,6 +114,7 @@ app.get("/leaderboard/top10", async (_req, res) => {
         data.aliasJugador?.trim() ||
         "Jugador",
       score: Number(data.coins ?? 0),
+      wins: Number.isFinite(wins) ? wins : 0,
       position: idx + 1,
       prizeName: null,
       prizeDescription: null,
@@ -129,7 +131,7 @@ app.get("/scores/top10", async (_req, res) => {
 
   const snap = await db
     .collection("players")
-    .orderBy("coins", "desc")
+    .orderBy("wins", "desc")
     .limit(10)
     .get();
 
@@ -142,6 +144,7 @@ app.get("/scores/top10", async (_req, res) => {
         : typeof updatedAt === "number"
           ? new Date(updatedAt).toISOString()
           : null;
+    const wins = Number(data.wins ?? 0);
 
     return {
       userId: data.usuarioNumero?.toString() ?? d.id,
@@ -150,6 +153,7 @@ app.get("/scores/top10", async (_req, res) => {
         data.aliasJugador?.trim() ||
         "Jugador",
       points: Number(data.coins ?? 0),
+      wins: Number.isFinite(wins) ? wins : 0,
       timestamp: updatedAtIso,
     };
   });

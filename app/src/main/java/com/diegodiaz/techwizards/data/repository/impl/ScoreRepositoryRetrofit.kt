@@ -2,8 +2,15 @@ package com.diegodiaz.techwizards.data.repository.impl
 
 import com.diegodiaz.techwizards.core.SessionManager
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
+import com.diegodiaz.techwizards.data.remote.firestore.FirestoreCollectionSelectorDto
+import com.diegodiaz.techwizards.data.remote.firestore.FirestoreFieldReferenceDto
+import com.diegodiaz.techwizards.data.remote.firestore.FirestoreLeaderboardApi
+import com.diegodiaz.techwizards.data.remote.firestore.FirestoreOrderByDto
+import com.diegodiaz.techwizards.data.remote.firestore.FirestoreRunQueryRequestDto
+import com.diegodiaz.techwizards.data.remote.firestore.FirestoreStructuredQueryDto
 import com.diegodiaz.techwizards.data.remote.firestore.FirestorePlayersApi
 import com.diegodiaz.techwizards.data.remote.firestore.winsOrNull
+import com.diegodiaz.techwizards.data.remote.firestore.toLeaderboardEntry
 import com.diegodiaz.techwizards.data.remote.score.LoginRequest
 import com.diegodiaz.techwizards.data.remote.score.ScoreApi
 import com.diegodiaz.techwizards.data.remote.score.ScorePayload
@@ -26,7 +33,8 @@ class ScoreRepositoryRetrofit(
     private val scoreApi: ScoreApi,
     private val credentialsStore: CredentialsStore,
     private val sessionManager: SessionManager,
-    private val firestorePlayersApi: FirestorePlayersApi? = null
+    private val firestorePlayersApi: FirestorePlayersApi? = null,
+    private val firestoreLeaderboardApi: FirestoreLeaderboardApi? = null
 ) : ScoreRepository {
 
     private companion object {
@@ -72,13 +80,11 @@ class ScoreRepositoryRetrofit(
 
     override suspend fun obtenerTopTen(): List<LeaderboardEntry> {
         val bearer = tokenOrNull()?.let { "Bearer $it" }
-        val base = runCatching {
-            scoreApi.fetchTopTen(bearerToken = bearer)
-        }.map { response ->
-            response.items.mapIndexed { index, item ->
+        val base = try {
+            scoreApi.fetchTopTen(bearerToken = bearer).items.mapIndexed { index, item ->
                 item.toDomain(position = index + 1)
             }
-        }.getOrElse { error ->
+        } catch (error: Exception) {
             val httpError = error as? HttpException
 
             val isParsingError = error is JsonDataException ||
@@ -86,15 +92,22 @@ class ScoreRepositoryRetrofit(
                     error is JsonSyntaxException
             if ((httpError != null && httpError.code() in setOf(404, 405)) || isParsingError) {
                 val dtos = scoreApi.fetchTopTenLegacy(bearerToken = bearer)
-                return@getOrElse dtos.mapIndexed { index, dto ->
-                    dto.toDomain().copy(
-                        position = dto.position ?: (index + 1)
-                    )
-                }
+                return completarVictorias(
+                    dtos.mapIndexed { index, dto ->
+                        dto.toDomain().copy(
+                            position = dto.position ?: (index + 1)
+                        )
+                    }
+                )
             }
+            val firestoreFallback = obtenerTopTenDesdeFirestore()
+            if (firestoreFallback.isNotEmpty()) return firestoreFallback
             throw error
         }
-        return completarVictorias(base)
+        val enriquecido = completarVictorias(base)
+        if (enriquecido.isNotEmpty()) return enriquecido
+        val firestoreFallback = obtenerTopTenDesdeFirestore()
+        return if (firestoreFallback.isNotEmpty()) firestoreFallback else enriquecido
     }
 
     override suspend fun publicarPuntuacion(session: UserSession, score: Int) {
@@ -172,6 +185,38 @@ class ScoreRepositoryRetrofit(
             }
         }
     }
+
+    private suspend fun obtenerTopTenDesdeFirestore(): List<LeaderboardEntry> {
+        val api = firestoreLeaderboardApi ?: return emptyList()
+        if (tokenOrNull().isNullOrBlank()) return emptyList()
+        val request = FirestoreRunQueryRequestDto(
+            structuredQuery = FirestoreStructuredQueryDto(
+                from = listOf(FirestoreCollectionSelectorDto(collectionId = "players")),
+                orderBy = listOf(
+                    FirestoreOrderByDto(
+                        field = FirestoreFieldReferenceDto(fieldPath = "wins"),
+                        direction = "DESCENDING"
+                    )
+                ),
+                limit = 10
+            )
+        )
+        return api.obtenerTopTen(request)
+            .mapNotNullIndexed { index, response ->
+                response.toLeaderboardEntry(position = index + 1)
+            }
+    }
+
+    private inline fun <T, R : Any> List<T>.mapNotNullIndexed(
+        transform: (index: Int, value: T) -> R?
+    ): List<R> {
+        val result = ArrayList<R>(size)
+        forEachIndexed { index, value ->
+            transform(index, value)?.let(result::add)
+        }
+        return result
+    }
+
 
     override suspend fun incrementarPremioComun(session: UserSession, delta: Int): CommonPrize {
         val firebaseToken = requireFirebaseToken(session)
