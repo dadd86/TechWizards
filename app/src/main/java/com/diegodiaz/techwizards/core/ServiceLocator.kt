@@ -19,7 +19,7 @@ import com.diegodiaz.techwizards.data.infra.network.RetrofitProvider
 import com.diegodiaz.techwizards.data.local.dao.IPartidaDao
 import com.diegodiaz.techwizards.data.local.dao.IMatchDao
 import com.google.firebase.auth.FirebaseAuth
-
+import com.diegodiaz.techwizards.data.remote.firestore.FirestoreLeaderboardSdkDataSource
 import com.diegodiaz.techwizards.data.local.dao.IMatchParticipantDao
 import com.diegodiaz.techwizards.data.local.dao.IMatchScoreDao
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
@@ -32,8 +32,9 @@ import com.diegodiaz.techwizards.data.remote.match.MatchRealtimeFirebaseDataSour
 import com.diegodiaz.techwizards.data.remote.match.MatchApi
 import com.diegodiaz.techwizards.data.remote.match.MatchRemoteMapper
 import com.diegodiaz.techwizards.data.remote.api.ScoresApi
-import com.diegodiaz.techwizards.data.remote.firestore.FirestorePlayersApi
 import com.diegodiaz.techwizards.data.remote.firestore.FirestoreLeaderboardApi
+
+import com.diegodiaz.techwizards.data.remote.firestore.FirestorePlayersApi
 import android.util.Log
 import com.diegodiaz.techwizards.data.remote.score.LoginRequest
 import kotlinx.coroutines.CoroutineScope
@@ -169,6 +170,10 @@ object ServiceLocator {
         firestoreQueryRetrofit?.create(FirestoreLeaderboardApi::class.java)
     }
 
+    private val firestoreLeaderboardSdkDataSource by lazy {
+        FirestoreLeaderboardSdkDataSource()
+    }
+
 
     private val scoreApi by lazy {
         retrofitScore.create(ScoreApi::class.java)
@@ -255,7 +260,8 @@ object ServiceLocator {
             credentialsStore = credentialsStore,
             sessionManager = sessionManager,
             firestorePlayersApi = firestorePlayersApi,
-            firestoreLeaderboardApi = firestoreLeaderboardApi
+            firestoreLeaderboardApi = firestoreLeaderboardApi,
+            firestoreLeaderboardSdkDataSource = firestoreLeaderboardSdkDataSource
         )
     }
 

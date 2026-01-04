@@ -5,6 +5,7 @@ import com.diegodiaz.techwizards.credenciales.CredentialsStore
 import com.diegodiaz.techwizards.data.remote.firestore.FirestoreCollectionSelectorDto
 import com.diegodiaz.techwizards.data.remote.firestore.FirestoreFieldReferenceDto
 import com.diegodiaz.techwizards.data.remote.firestore.FirestoreLeaderboardApi
+import com.diegodiaz.techwizards.data.remote.firestore.FirestoreLeaderboardSdkDataSource
 import com.diegodiaz.techwizards.data.remote.firestore.FirestoreOrderByDto
 import com.diegodiaz.techwizards.data.remote.firestore.FirestoreRunQueryRequestDto
 import com.diegodiaz.techwizards.data.remote.firestore.FirestoreStructuredQueryDto
@@ -34,7 +35,8 @@ class ScoreRepositoryRetrofit(
     private val credentialsStore: CredentialsStore,
     private val sessionManager: SessionManager,
     private val firestorePlayersApi: FirestorePlayersApi? = null,
-    private val firestoreLeaderboardApi: FirestoreLeaderboardApi? = null
+    private val firestoreLeaderboardApi: FirestoreLeaderboardApi? = null,
+    private val firestoreLeaderboardSdkDataSource: FirestoreLeaderboardSdkDataSource? = null
 ) : ScoreRepository {
 
     private companion object {
@@ -79,6 +81,9 @@ class ScoreRepositoryRetrofit(
 
 
     override suspend fun obtenerTopTen(): List<LeaderboardEntry> {
+        firestoreLeaderboardSdkDataSource?.let { sdkSource ->
+            return sdkSource.obtenerTopTen()
+        }
         val bearer = tokenOrNull()?.let { "Bearer $it" }
         val base = try {
             scoreApi.fetchTopTen(bearerToken = bearer).items.mapIndexed { index, item ->
