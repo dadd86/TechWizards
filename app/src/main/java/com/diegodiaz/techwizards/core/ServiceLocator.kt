@@ -13,6 +13,7 @@ import com.diegodiaz.techwizards.core.usecases.RegistrarHistorialRemotoUseCase
 import com.diegodiaz.techwizards.core.usecases.ResolverTiradaUseCase
 import com.diegodiaz.techwizards.core.usecases.LoginBackendUseCase
 import com.diegodiaz.techwizards.core.usecases.RegistrarUbicacionVictoriaUseCase
+import com.diegodiaz.techwizards.core.usecases.ObservarHistorialRemotoUseCase
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
 import com.diegodiaz.techwizards.credenciales.EncryptedCredentialsStore
 import com.diegodiaz.techwizards.data.infra.network.RetrofitProvider
@@ -348,6 +349,9 @@ object ServiceLocator {
     }
     val registrarHistorialRemotoUseCase by lazy {
         RegistrarHistorialRemotoUseCase(partidaHistoryRepository)
+    }
+    val observarHistorialRemotoUseCase by lazy {
+        ObservarHistorialRemotoUseCase(partidaHistoryRepository)
     }
 
     val victoryCelebrationService by lazy {

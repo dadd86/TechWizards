@@ -32,6 +32,7 @@ import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.ui.controller.AuthState
 import com.diegodiaz.techwizards.ui.controller.ControladorAjustes
 import com.diegodiaz.techwizards.ui.controller.ControladorAuth
+import com.diegodiaz.techwizards.ui.controller.ControladorHistorial
 import com.diegodiaz.techwizards.ui.controller.ControladorMatch
 import com.diegodiaz.techwizards.ui.controller.ControladorMatchOnline
 import com.diegodiaz.techwizards.ui.controller.ControladorLobby
@@ -288,7 +289,17 @@ fun NavGraph(
         }
 
         composable("historial") {
-            val historial by controladorPartida.historial.collectAsState()
+            val historialVm: ControladorHistorial = viewModel(
+                factory = SimpleVmFactory {
+                    ControladorHistorial(
+                        observarHistorialRemotoUseCase = ServiceLocator.observarHistorialRemotoUseCase,
+                        firebaseUidProvider = {
+                            authState.usuario?.uid ?: usuarioActual.value?.firebaseUid
+                        }
+                    )
+                }
+            )
+            val historial by historialVm.historial.collectAsState()
 
             PantallaHistorial(
                 isDarkTheme = isDarkTheme,

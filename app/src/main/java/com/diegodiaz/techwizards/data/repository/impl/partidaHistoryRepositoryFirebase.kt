@@ -11,6 +11,8 @@ import com.diegodiaz.techwizards.data.remote.score.ScoreApi
 import com.diegodiaz.techwizards.data.remote.score.ScorePayload
 import com.diegodiaz.techwizards.domain.model.Partida
 import com.diegodiaz.techwizards.domain.repository.PartidaHistoryRepository
+import com.diegodiaz.techwizards.data.local.entity.Resultado
+import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -80,6 +82,30 @@ class PartidaHistoryRepositoryFirebase(
         }
     }
 
+
+
+    override suspend fun obtenerHistorial(
+        firebaseUid: String,
+        limit: Int,
+    ): Result<List<Partida>, AgentError> = withContext(ioDispatcher) {
+        if (firebaseUid.isBlank()) {
+            return@withContext Result.Err(AgentError.Validation("firebaseUid vacío"))
+        }
+        if (limit !in 1..100) {
+            return@withContext Result.Err(AgentError.Validation("limit fuera de rango"))
+        }
+
+        return@withContext try {
+            val historial = dataSource.obtenerHistorial(firebaseUid, limit)
+                .mapNotNull { it.toDomainOrNull() }
+            Result.Ok(historial)
+        } catch (e: Exception) {
+            DecentralizedLogger.e("HISTORY", "Error leyendo historial remoto", e)
+            Result.Err(AgentError.Unknown(e))
+        }
+    }
+
+
     private suspend fun publicarScoreEnBackend(partida: Partida): Boolean {
         Log.d(
             "SCORE",
@@ -121,4 +147,23 @@ class PartidaHistoryRepositoryFirebase(
         resultado = resultado.name,
         deltaMonedas = deltaMonedas,
     )
+
+    private fun PartidaHistoryDto.toDomainOrNull(): Partida? {
+        val resultadoEnum = runCatching { Resultado.valueOf(resultado) }.getOrNull()
+        if (resultadoEnum == null) {
+            DecentralizedLogger.w("HISTORY", "Resultado inválido remoto=$resultado")
+            return null
+        }
+        if (aliasJugador.isBlank() || fechaMs <= 0) {
+            return null
+        }
+        return Partida(
+            id = 0L,
+            usuarioNumero = usuarioNumero,
+            aliasJugador = aliasJugador,
+            fecha = fechaMs,
+            resultado = resultadoEnum,
+            deltaMonedas = deltaMonedas,
+        )
+    }
 }

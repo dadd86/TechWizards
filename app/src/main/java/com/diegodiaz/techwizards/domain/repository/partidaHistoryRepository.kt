@@ -13,4 +13,18 @@ interface PartidaHistoryRepository {
         firebaseUid: String,
         partida: Partida,
     ): Result<Unit, AgentError>
+
+    /**
+     * Obtiene historial remoto del jugador.
+     *
+     * @param firebaseUid UID autenticado de Firebase.
+     * @param limit Máximo de elementos a recuperar.
+     * @return Resultado con partidas remotas.
+     * @security
+     * - Limita consultas por UID y tamaño.
+     */
+    suspend fun obtenerHistorial(
+        firebaseUid: String,
+        limit: Int,
+    ): Result<List<Partida>, AgentError>
 }
