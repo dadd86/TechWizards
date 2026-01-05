@@ -126,6 +126,31 @@ class JuegoRepositoryRoom(
     }
 
     /**
+     * Reinicia el saldo del monedero de forma explícita.
+     *
+     * @param usuario Perfil local del jugador.
+     * @param saldoNuevo Saldo que debe quedar aplicado en el monedero.
+     * @throws IllegalStateException Room expone errores de integridad.
+     * @security
+     * - Solo actualiza saldo y alias locales; no persiste PII.
+     */
+    override suspend fun reiniciarMonedas(usuario: Usuario, saldoNuevo: Int) {
+        usuarioDao.upsertSuspend(usuario.toEntity())
+        val monedero = monederoDao.getMonederoSimple(usuario.numero)
+        if (monedero == null) {
+            monederoDao.upsertSuspend(
+                MonederoEntity(
+                    id = "wallet_${usuario.numero}",
+                    usuarioNumero = usuario.numero,
+                    saldo = saldoNuevo
+                )
+            )
+        } else {
+            monederoDao.actualizarSaldo(usuario.numero, saldoNuevo)
+        }
+    }
+
+    /**
      * Observa el historial de partidas adjuntando el alias registrado al momento.
      *
      * @param usuarioId Identificador del jugador en texto.

@@ -303,7 +303,7 @@ class ControladorPartida(
 
     fun resetMonedas(usuario: Usuario, nuevoSaldo: Int = 100) {
         viewModelScope.launch {
-            repo.inicializarMonedas(usuario, nuevoSaldo)
+            repo.reiniciarMonedas(usuario, nuevoSaldo)
         }
     }
     private fun esSesionFirebaseValida(session: UserSession): Boolean {
