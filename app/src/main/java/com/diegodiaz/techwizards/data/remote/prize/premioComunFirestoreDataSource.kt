@@ -1,0 +1,150 @@
+package com.diegodiaz.techwizards.data.remote.prize
+
+import com.diegodiaz.techwizards.domain.model.CommonPrize
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.tasks.await
+
+/**
+ * Fuente Firestore para administrar el premio común global.
+ *
+ * @security
+ * - Opera únicamente sobre el documento singleton `/prize/common`.
+ * - Evita registrar identificadores sensibles y depende de reglas de Firestore.
+ */
+class PremioComunFirestoreDataSource(
+    private val firestore: FirebaseFirestore = Firebase.firestore,
+) {
+
+    private val premioDocument = firestore.collection("prize").document("common")
+    private val playersCollection = firestore.collection("players")
+
+    /**
+     * Obtiene el premio común actual.
+     *
+     * @return Premio común con descripción y valor.
+     * @security Solo realiza lectura del documento público del premio.
+     */
+    suspend fun obtenerPremioComun(): CommonPrize {
+        val snapshot = premioDocument.get().await()
+        return snapshot.toCommonPrize()
+    }
+
+    /**
+     * Actualiza el premio común (descripción y valor).
+     *
+     * @param nuevoPremio Datos validados del premio común.
+     * @return Premio común persistido en Firestore.
+     * @security Requiere reglas que permitan escritura autenticada.
+     */
+    suspend fun actualizarPremioComun(nuevoPremio: CommonPrize): CommonPrize {
+        require(nuevoPremio.descripcion.isNotBlank()) { "descripcion vacía" }
+        require(nuevoPremio.valor >= 0) { "valor negativo" }
+
+        premioDocument.set(
+            mapOf(
+                "descripcion" to nuevoPremio.descripcion.trim(),
+                "valor" to nuevoPremio.valor,
+                "updatedAt" to FieldValue.serverTimestamp(),
+            ),
+            SetOptions.merge()
+        ).await()
+
+        return obtenerPremioComun()
+    }
+
+    /**
+     * Incrementa el premio común por una derrota.
+     *
+     * @param delta Incremento positivo.
+     * @return Premio común con el valor actualizado.
+     * @security Operación transaccional y atómica sobre el documento.
+     */
+    suspend fun incrementarPremioComun(delta: Int): CommonPrize {
+        require(delta > 0) { "delta debe ser > 0" }
+        return firestore.runTransaction { tx ->
+            val snapshot = tx.get(premioDocument)
+            val descripcion = snapshot.getString("descripcion")
+                ?.trim()
+                ?.takeIf { it.isNotBlank() }
+                ?: "Premio común"
+            val actual = snapshot.getLong("valor") ?: 0L
+            val nuevoValor = actual + delta
+
+            tx.set(
+                premioDocument,
+                mapOf(
+                    "descripcion" to descripcion,
+                    "valor" to nuevoValor,
+                    "updatedAt" to FieldValue.serverTimestamp(),
+                ),
+                SetOptions.merge()
+            )
+            CommonPrize(descripcion = descripcion, valor = nuevoValor.toInt())
+        }.await()
+    }
+
+    /**
+     * Reclama el premio común y lo resetea a cero.
+     *
+     * @param firebaseUid UID autenticado del jugador.
+     * @param alias Alias visible para registrar el cobro.
+     * @param claimId Identificador de reclamo (auditoría).
+     * @return Valor del premio común cobrado.
+     * @security
+     * - Transacción atómica para evitar cobros concurrentes.
+     * - Solo actualiza el documento del jugador autenticado.
+     */
+    suspend fun reclamarPremioComun(
+        firebaseUid: String,
+        alias: String,
+        claimId: String,
+    ): Int {
+        require(firebaseUid.isNotBlank()) { "firebaseUid vacío" }
+        require(alias.isNotBlank()) { "alias vacío" }
+        require(claimId.isNotBlank()) { "claimId vacío" }
+
+        return firestore.runTransaction { tx ->
+            val snapshot = tx.get(premioDocument)
+            val premioComun = snapshot.getLong("valor") ?: 0L
+            if (premioComun <= 0L) return@runTransaction 0
+
+            tx.set(
+                premioDocument,
+                mapOf(
+                    "valor" to 0,
+                    "updatedAt" to FieldValue.serverTimestamp(),
+                ),
+                SetOptions.merge()
+            )
+
+            val playerDocument = playersCollection.document(firebaseUid)
+            tx.set(
+                playerDocument,
+                mapOf(
+                    "alias" to alias.trim(),
+                    "coins" to FieldValue.increment(premioComun),
+                    "lastPrizeClaimId" to claimId,
+                    "lastPrizeClaimedAt" to FieldValue.serverTimestamp(),
+                    "updatedAt" to FieldValue.serverTimestamp(),
+                ),
+                SetOptions.merge()
+            )
+
+            premioComun.toInt()
+        }.await()
+    }
+
+    private fun com.google.firebase.firestore.DocumentSnapshot.toCommonPrize(): CommonPrize {
+        val descripcion = getString("descripcion")
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+            ?: "Premio común"
+        val valor = getLong("valor")?.toInt() ?: 0
+        val updatedAt = getTimestamp("updatedAt")?.toDate()?.time
+        return CommonPrize(descripcion = descripcion, valor = valor, updatedAt = updatedAt)
+    }
+}

@@ -12,6 +12,8 @@ import com.diegodiaz.techwizards.data.remote.firestore.FirestoreStructuredQueryD
 import com.diegodiaz.techwizards.data.remote.firestore.FirestorePlayersApi
 import com.diegodiaz.techwizards.data.remote.firestore.winsOrNull
 import com.diegodiaz.techwizards.data.remote.firestore.toLeaderboardEntry
+import com.diegodiaz.techwizards.data.remote.prize.PremioComunFirestoreDataSource
+import com.diegodiaz.techwizards.data.remote.firestore.PrizeCommonFirebaseDataSource
 import com.diegodiaz.techwizards.data.remote.score.LoginRequest
 import com.diegodiaz.techwizards.data.remote.score.ScoreApi
 import com.diegodiaz.techwizards.data.remote.score.ScorePayload
@@ -29,6 +31,7 @@ import retrofit2.HttpException
 import com.diegodiaz.techwizards.data.remote.score.PrizeIncrementRequestDto
 import com.diegodiaz.techwizards.data.remote.score.PrizeClaimRequestDto
 import com.diegodiaz.techwizards.data.remote.score.PrizeClaimResponseDto
+import com.google.firebase.auth.FirebaseAuth
 
 
 
@@ -36,6 +39,9 @@ class ScoreRepositoryRetrofit(
     private val scoreApi: ScoreApi,
     private val credentialsStore: CredentialsStore,
     private val sessionManager: SessionManager,
+    private val firebaseAuth: FirebaseAuth,
+    private val prizeCommonDataSource: PrizeCommonFirebaseDataSource,
+    private val premioComunDataSource: PremioComunFirestoreDataSource,
     private val firestorePlayersApi: FirestorePlayersApi? = null,
     private val firestoreLeaderboardApi: FirestoreLeaderboardApi? = null,
     private val firestoreLeaderboardSdkDataSource: FirestoreLeaderboardSdkDataSource? = null
@@ -73,6 +79,12 @@ class ScoreRepositoryRetrofit(
         val parts = token.split('.')
         return parts.size == 3 && parts.all { it.isNotBlank() }
     }
+    private fun requireFirebaseUid(): String {
+        val uid = firebaseAuth.currentUser?.uid?.trim()
+        require(!uid.isNullOrBlank()) { "firebaseUid vacío" }
+        return uid
+    }
+
 
 
     private fun requireFirebaseToken(session: UserSession): String {
@@ -148,19 +160,14 @@ class ScoreRepositoryRetrofit(
     }
 
     override suspend fun obtenerPremioComun(): CommonPrize {
-        val bearer = tokenOrNull()?.let { "Bearer $it" }
-        return scoreApi.fetchCommonPrize(bearerToken = bearer).toDomain()
+        return premioComunDataSource.obtenerPremioComun()
     }
 
     override suspend fun actualizarPremioComun(session: UserSession, nuevoPremio: CommonPrize): CommonPrize {
         val firebaseToken = requireFirebaseToken(session)
         credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
         credentialsStore.guardarFirebaseToken(firebaseToken)
-
-        return scoreApi.updatePrize(
-            bearerToken = "Bearer $firebaseToken",
-            request = nuevoPremio.toRequestDto()
-        ).toDomain()
+        return premioComunDataSource.actualizarPremioComun(nuevoPremio)
     }
 
     override suspend fun autenticarAlias(alias: String): UserSession {
@@ -241,27 +248,25 @@ class ScoreRepositoryRetrofit(
         val firebaseToken = requireFirebaseToken(session)
         credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
         credentialsStore.guardarFirebaseToken(firebaseToken)
-
-        require(delta > 0) { "delta debe ser > 0" }
-
-        return scoreApi.incrementCommonPrize(
-            bearerToken = "Bearer $firebaseToken",
-            request = PrizeIncrementRequestDto(delta = delta)
-        ).toDomain()
+        return premioComunDataSource.incrementarPremioComun(delta)
     }
 
     override suspend fun reclamarPremioComun(session: UserSession, claimId: String): Int {
         val firebaseToken = requireFirebaseToken(session)
         credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
         credentialsStore.guardarFirebaseToken(firebaseToken)
-
-        require(claimId.isNotBlank()) { "claimId vacío" }
-
-        val resp = scoreApi.claimCommonPrize(
-            bearerToken = "Bearer $firebaseToken",
-            request = PrizeClaimRequestDto(claimId = claimId)
+        val uid = requireFirebaseUid()
+        return premioComunDataSource.reclamarPremioComun(
+            firebaseUid = uid,
+            alias = session.alias,
+            claimId = claimId
         )
-        return resp.claimed
+    }
+
+    private fun requireFirebaseUser(): String {
+        val uid = firebaseAuth.currentUser?.uid?.trim()
+        require(!uid.isNullOrBlank()) { "Usuario no autenticado" }
+        return uid
     }
 
 }
