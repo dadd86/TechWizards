@@ -35,6 +35,7 @@ import com.diegodiaz.techwizards.data.remote.match.MatchRemoteMapper
 import com.diegodiaz.techwizards.data.remote.api.ScoresApi
 import com.diegodiaz.techwizards.data.remote.firestore.FirestoreLeaderboardApi
 import com.diegodiaz.techwizards.data.remote.firestore.PrizeCommonFirebaseDataSource
+import com.diegodiaz.techwizards.data.remote.prize.PremioComunFirestoreDataSource
 
 import com.diegodiaz.techwizards.data.remote.firestore.FirestorePlayersApi
 import android.util.Log
@@ -266,6 +267,7 @@ object ServiceLocator {
             sessionManager = sessionManager,
             firebaseAuth = firebaseAuth,
             prizeCommonDataSource = PrizeCommonFirebaseDataSource(),
+            premioComunDataSource = premioComunDataSource,
             firestorePlayersApi = firestorePlayersApi,
             firestoreLeaderboardApi = firestoreLeaderboardApi,
             firestoreLeaderboardSdkDataSource = firestoreLeaderboardSdkDataSource
