@@ -21,6 +21,7 @@ import com.diegodiaz.techwizards.domain.model.CommonPrize
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.domain.repository.ScoreRepository
+import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import com.google.gson.JsonSyntaxException
 import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.JsonEncodingException
@@ -28,6 +29,7 @@ import retrofit2.HttpException
 import com.diegodiaz.techwizards.data.remote.score.PrizeIncrementRequestDto
 import com.diegodiaz.techwizards.data.remote.score.PrizeClaimRequestDto
 import com.diegodiaz.techwizards.data.remote.score.PrizeClaimResponseDto
+
 
 
 class ScoreRepositoryRetrofit(
@@ -81,8 +83,20 @@ class ScoreRepositoryRetrofit(
 
 
     override suspend fun obtenerTopTen(): List<LeaderboardEntry> {
-        firestoreLeaderboardSdkDataSource?.let { sdkSource ->
-            return sdkSource.obtenerTopTen()
+        val sdkSource = firestoreLeaderboardSdkDataSource
+        if (sdkSource != null) {
+            val sdkResult = runCatching { sdkSource.obtenerTopTen() }
+                .onFailure { error ->
+                    DecentralizedLogger.e(
+                        "ScoreRepositoryRetrofit",
+                        "Fallo lectura SDK Firestore, usando fallback remoto",
+                        error
+                    )
+                }
+                .getOrNull()
+            if (!sdkResult.isNullOrEmpty()) {
+                return sdkResult
+            }
         }
         val bearer = tokenOrNull()?.let { "Bearer $it" }
         val base = try {
