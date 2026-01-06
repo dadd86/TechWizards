@@ -34,29 +34,32 @@ class IniciarSesionConGoogleUseCase(
                                 ?: signInResult.value.email
                                 ?: "Jugador"
 
-                            // ✅ 1) Login backend para conseguir backendToken
-                            val backendSession = try {
-                                scoreApi.login(
-                                    bearerToken = "Bearer $firebaseToken",
-                                    request = LoginRequest(alias = alias)
-                                )
-                            } catch (e: Exception) {
-                                return@withContext Result.Err(AgentError.Unknown(e))
-                            }
-
-                            // ✅ 2) Guardar sesión completa (firebaseToken + backendToken)
                             val session = UserSession(
                                 token = firebaseToken,
-                                alias = backendSession.alias,
-                                backendToken = backendSession.token,
-                                isAdmin = backendSession.isAdmin
+                                alias = alias,
+                                backendToken = null,
+                                isAdmin = false
                             )
 
                             sessionManager.setSession(session)
                             credentialsStore.guardarFirebaseToken(session.token)
 
-                            // (si guardas alias en CredentialsStore, OK, pero esta clave tuya parece rara)
-                            // credentialsStore.guardarSesionAlias(session.token, session.alias)
+                            val backendSession = runCatching {
+                                scoreApi.login(
+                                    bearerToken = "Bearer $firebaseToken",
+                                    request = LoginRequest(alias = alias)
+                                )
+                            }.getOrNull()
+
+                            if (backendSession != null) {
+                                sessionManager.setSession(
+                                    session.copy(
+                                        alias = backendSession.alias,
+                                        backendToken = backendSession.token,
+                                        isAdmin = backendSession.isAdmin
+                                    )
+                                )
+                            }
 
                             signInResult
                         }

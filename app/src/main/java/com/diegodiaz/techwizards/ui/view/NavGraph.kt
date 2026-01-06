@@ -188,10 +188,12 @@ fun NavGraph(
                         if (session != null) {
                             sessionManager.setSession(session)
                         } else {
-                            sessionManager.clearSession()
+                            if (!isSesionFirebaseValida(sessionManager.session.value)) {
+                                sessionManager.clearSession()
+                            }
                             Toast.makeText(
                                 context,
-                                "Modo offline: ranking y premios no disponibles",
+                                "Modo offline: ranking remoto no disponible",
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
