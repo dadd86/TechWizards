@@ -14,6 +14,7 @@ import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 data class MatchUiState(
@@ -36,6 +37,7 @@ class ControladorMatch(
 
     init {
         refrescarEstadoOnline()
+        observarPremioComun()
     }
 
     fun crearMatch(
@@ -120,6 +122,24 @@ class ControladorMatch(
                 DecentralizedLogger.e("ControladorMatch", "No se pudo cargar datos online", error)
                 _ui.value = _ui.value.copy(error = "No se pudo cargar ranking online")
             }
+        }
+    }
+
+    private fun observarPremioComun() {
+        viewModelScope.launch {
+            scoreRepository.observarPremioComun()
+                .catch { error ->
+                    DecentralizedLogger.e("ControladorMatch", "Fallo observando premio común", error)
+                }
+                .collect { premio ->
+                    val topTen = _ui.value.topTen
+                    val progreso = calcularProgresoPremio(premio, topTen)
+                    _ui.value = _ui.value.copy(
+                        premioComun = premio,
+                        progresoPremio = progreso,
+                        actualizadoEnMs = System.currentTimeMillis()
+                    )
+                }
         }
     }
 

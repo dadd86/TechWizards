@@ -118,12 +118,16 @@ class PrizeCommonFirebaseDataSource(
             val historyRef = playerRef.collection("history").document(claimId)
 
             val premio = (tx.get(prizeRef).getLong("valor") ?: 0L).toInt()
+            if (premio <= 0) return@runTransaction 0
 
             tx.set(
                 prizeRef,
                 mapOf(
                     "valor" to 0,
-                    "updatedAt" to FieldValue.serverTimestamp()
+                    "updatedAt" to FieldValue.serverTimestamp(),
+                    "lastWinnerUid" to firebaseUid,
+                    "lastClaimId" to claimId,
+                    "lastClaimAt" to FieldValue.serverTimestamp()
                 ),
                 SetOptions.merge()
             )

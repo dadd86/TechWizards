@@ -161,11 +161,31 @@ class ControladorMatchOnline(
         }
 
         viewModelScope.launch { cargarTopYpremio() }
+        observarPremioComun()
         iniciarEscuchaLobby(lobbyId)
 
         // Pre-carga el jugador local en la UI si viene desde un lobby.
         if (usuarioId != null) {
             agregarParticipanteLocal(matchId, usuarioId)
+        }
+    }
+
+    private fun observarPremioComun() {
+        viewModelScope.launch {
+            scoreRepository.observarPremioComun()
+                .catch { error ->
+                    _ui.value = _ui.value.copy(
+                        error = errorToUiMessage(error)
+                    )
+                }
+                .collect { premio ->
+                    val topTen = _ui.value.topTen
+                    val progreso = calcularProgresoPremio(premio, topTen)
+                    _ui.value = _ui.value.copy(
+                        premioComun = premio,
+                        progresoPremio = progreso
+                    )
+                }
         }
     }
 
@@ -258,7 +278,11 @@ class ControladorMatchOnline(
         try {
             val top = scoreRepository.obtenerTopTen()
             val premio = scoreRepository.obtenerPremioComun()
-            _ui.value = _ui.value.copy(topTen = top, premioComun = premio)
+            _ui.value = _ui.value.copy(
+                topTen = top,
+                premioComun = premio,
+                progresoPremio = calcularProgresoPremio(premio, top)
+            )
         } catch (error: Exception) {
             _ui.value = _ui.value.copy(error = errorToUiMessage(error))
         }
@@ -362,6 +386,16 @@ class ControladorMatchOnline(
             cargando = false,
             buscandoRival = _ui.value.buscandoRival && !remotoListo
         )
+    }
+
+    private fun calcularProgresoPremio(
+        premio: CommonPrize?,
+        topTen: List<LeaderboardEntry>
+    ): Float {
+        val objetivo = premio?.valor ?: return 0f
+        if (objetivo <= 0) return 0f
+        val avance = topTen.firstOrNull()?.score ?: 0
+        return (avance.toFloat() / objetivo).coerceIn(0f, 1f)
     }
 }
 private fun errorToUiMessage(error: Any?): String {

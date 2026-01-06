@@ -32,6 +32,7 @@ import com.diegodiaz.techwizards.data.remote.score.PrizeIncrementRequestDto
 import com.diegodiaz.techwizards.data.remote.score.PrizeClaimRequestDto
 import com.diegodiaz.techwizards.data.remote.score.PrizeClaimResponseDto
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.Flow
 
 
 
@@ -162,6 +163,11 @@ class ScoreRepositoryRetrofit(
     override suspend fun obtenerPremioComun(): CommonPrize {
         return premioComunDataSource.obtenerPremioComun()
     }
+
+    override fun observarPremioComun(): Flow<CommonPrize> {
+        return premioComunDataSource.observarPremioComun()
+    }
+
 
     override suspend fun actualizarPremioComun(session: UserSession, nuevoPremio: CommonPrize): CommonPrize {
         val firebaseToken = requireFirebaseToken(session)

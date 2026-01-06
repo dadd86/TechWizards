@@ -6,6 +6,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -19,6 +22,10 @@ class PremioComunFirestoreDataSource(
     private val firestore: FirebaseFirestore = Firebase.firestore,
 ) {
 
+    private companion object {
+        private const val DEFAULT_DESCRIPTION = "Premio común"
+    }
+
     private val premioDocument = firestore.collection("prize").document("common")
     private val playersCollection = firestore.collection("players")
 
@@ -31,6 +38,28 @@ class PremioComunFirestoreDataSource(
     suspend fun obtenerPremioComun(): CommonPrize {
         val snapshot = premioDocument.get().await()
         return snapshot.toCommonPrize()
+    }
+
+    /**
+     * Observa el premio común en tiempo real.
+     *
+     * @return Flujo con el premio común actualizado.
+     * @security Solo escucha el documento público del premio; no expone datos sensibles.
+     */
+    fun observarPremioComun(): Flow<CommonPrize> = callbackFlow {
+        val listener = premioDocument.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
+                return@addSnapshotListener
+            }
+            val premio = snapshot?.toCommonPrize() ?: CommonPrize(
+                descripcion = DEFAULT_DESCRIPTION,
+                valor = 0,
+                updatedAt = null
+            )
+            trySend(premio).isSuccess
+        }
+        awaitClose { listener.remove() }
     }
 
     /**
@@ -109,14 +138,23 @@ class PremioComunFirestoreDataSource(
 
         return firestore.runTransaction { tx ->
             val snapshot = tx.get(premioDocument)
+            val descripcion = snapshot.getString("descripcion")
+                ?.trim()
+                ?.takeIf { it.isNotBlank() }
+                ?: DEFAULT_DESCRIPTION
             val premioComun = snapshot.getLong("valor") ?: 0L
             if (premioComun <= 0L) return@runTransaction 0
 
             tx.set(
                 premioDocument,
                 mapOf(
+                    "descripcion" to descripcion,
                     "valor" to 0,
                     "updatedAt" to FieldValue.serverTimestamp(),
+                    "lastWinnerUid" to firebaseUid,
+                    "lastWinnerAlias" to alias.trim(),
+                    "lastClaimId" to claimId,
+                    "lastClaimAt" to FieldValue.serverTimestamp(),
                 ),
                 SetOptions.merge()
             )
@@ -142,7 +180,7 @@ class PremioComunFirestoreDataSource(
         val descripcion = getString("descripcion")
             ?.trim()
             ?.takeIf { it.isNotBlank() }
-            ?: "Premio común"
+            ?: DEFAULT_DESCRIPTION
         val valor = getLong("valor")?.toInt() ?: 0
         val updatedAt = getTimestamp("updatedAt")?.toDate()?.time
         return CommonPrize(descripcion = descripcion, valor = valor, updatedAt = updatedAt)

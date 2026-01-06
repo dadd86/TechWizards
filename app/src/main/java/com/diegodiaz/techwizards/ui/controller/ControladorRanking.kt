@@ -9,6 +9,7 @@ import com.diegodiaz.techwizards.domain.repository.ScoreRepository
 import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 sealed interface RankingUiState {
@@ -42,6 +43,7 @@ class ControladorRanking(
 
     init {
         refrescarTodo()
+        observarPremioComun()
     }
 
     fun refrescarTodo() {
@@ -139,6 +141,29 @@ class ControladorRanking(
                     mensajeError = mensaje
                 ) ?: RankingUiState.Error(mensaje)
             }
+        }
+    }
+
+    private fun observarPremioComun() {
+        viewModelScope.launch {
+            scoreRepository.observarPremioComun()
+                .catch { error ->
+                    DecentralizedLogger.e(
+                        "ControladorRanking",
+                        "No se pudo observar premio común",
+                        error
+                    )
+                }
+                .collect { premio ->
+                    val estadoActual = _uiState.value
+                    if (estadoActual is RankingUiState.Exito) {
+                        _uiState.value = estadoActual.copy(
+                            premio = premio,
+                            actualizadoEnMs = System.currentTimeMillis(),
+                            mensajeError = null
+                        )
+                    }
+                }
         }
     }
 }
