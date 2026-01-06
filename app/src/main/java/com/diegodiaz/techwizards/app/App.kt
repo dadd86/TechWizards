@@ -81,6 +81,7 @@ class App : Application() {
                     throwable
                 )
             } finally {
+                DecentralizedLogger.d("App", "LocaleStartupState marcado como listo")
                 LocaleStartupState.markReady()
                 }
             }
