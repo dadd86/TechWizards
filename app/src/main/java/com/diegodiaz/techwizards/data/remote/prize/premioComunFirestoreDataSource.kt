@@ -24,6 +24,8 @@ class PremioComunFirestoreDataSource(
 
     private companion object {
         private const val DEFAULT_DESCRIPTION = "Premio común"
+        private const val LEGACY_DESCRIPTION_FIELD = "description"
+        private const val LEGACY_VALUE_FIELD = "value"
     }
 
     private val premioDocument = firestore.collection("prize").document("common")
@@ -78,6 +80,8 @@ class PremioComunFirestoreDataSource(
                 "descripcion" to nuevoPremio.descripcion.trim(),
                 "valor" to nuevoPremio.valor,
                 "updatedAt" to FieldValue.serverTimestamp(),
+                LEGACY_DESCRIPTION_FIELD to FieldValue.delete(),
+                LEGACY_VALUE_FIELD to FieldValue.delete(),
             ),
             SetOptions.merge()
         ).await()
@@ -96,11 +100,8 @@ class PremioComunFirestoreDataSource(
         require(delta > 0) { "delta debe ser > 0" }
         return firestore.runTransaction { tx ->
             val snapshot = tx.get(premioDocument)
-            val descripcion = snapshot.getString("descripcion")
-                ?.trim()
-                ?.takeIf { it.isNotBlank() }
-                ?: "Premio común"
-            val actual = snapshot.getLong("valor") ?: 0L
+            val descripcion = snapshot.descripcionNormalizada()
+            val actual = snapshot.valorNormalizado()
             val nuevoValor = actual + delta
 
             tx.set(
@@ -109,6 +110,8 @@ class PremioComunFirestoreDataSource(
                     "descripcion" to descripcion,
                     "valor" to nuevoValor,
                     "updatedAt" to FieldValue.serverTimestamp(),
+                    LEGACY_DESCRIPTION_FIELD to FieldValue.delete(),
+                    LEGACY_VALUE_FIELD to FieldValue.delete(),
                 ),
                 SetOptions.merge()
             )
@@ -138,11 +141,8 @@ class PremioComunFirestoreDataSource(
 
         return firestore.runTransaction { tx ->
             val snapshot = tx.get(premioDocument)
-            val descripcion = snapshot.getString("descripcion")
-                ?.trim()
-                ?.takeIf { it.isNotBlank() }
-                ?: DEFAULT_DESCRIPTION
-            val premioComun = snapshot.getLong("valor") ?: 0L
+            val descripcion = snapshot.descripcionNormalizada()
+            val premioComun = snapshot.valorNormalizado()
             if (premioComun <= 0L) return@runTransaction 0
 
             tx.set(
@@ -155,6 +155,8 @@ class PremioComunFirestoreDataSource(
                     "lastWinnerAlias" to alias.trim(),
                     "lastClaimId" to claimId,
                     "lastClaimAt" to FieldValue.serverTimestamp(),
+                    LEGACY_DESCRIPTION_FIELD to FieldValue.delete(),
+                    LEGACY_VALUE_FIELD to FieldValue.delete(),
                 ),
                 SetOptions.merge()
             )
@@ -177,12 +179,24 @@ class PremioComunFirestoreDataSource(
     }
 
     private fun com.google.firebase.firestore.DocumentSnapshot.toCommonPrize(): CommonPrize {
-        val descripcion = getString("descripcion")
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
-            ?: DEFAULT_DESCRIPTION
-        val valor = getLong("valor")?.toInt() ?: 0
+        val descripcion = descripcionNormalizada()
+        val valor = valorNormalizado().toInt()
         val updatedAt = getTimestamp("updatedAt")?.toDate()?.time
         return CommonPrize(descripcion = descripcion, valor = valor, updatedAt = updatedAt)
+    }
+
+    private fun com.google.firebase.firestore.DocumentSnapshot.descripcionNormalizada(): String {
+        val descripcionActual = getString("descripcion")
+        val descripcionLegacy = getString(LEGACY_DESCRIPTION_FIELD)
+        return listOf(descripcionActual, descripcionLegacy)
+            .firstOrNull { !it.isNullOrBlank() }
+            ?.trim()
+            ?: DEFAULT_DESCRIPTION
+    }
+
+    private fun com.google.firebase.firestore.DocumentSnapshot.valorNormalizado(): Long {
+        return getLong("valor")
+            ?: getLong(LEGACY_VALUE_FIELD)
+            ?: 0L
     }
 }
