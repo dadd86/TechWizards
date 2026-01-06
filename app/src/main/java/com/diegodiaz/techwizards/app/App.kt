@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 /**
  * Punto de entrada de la aplicación responsable de inicializar el *Service Locator*
@@ -48,29 +49,38 @@ class App : Application() {
      */
     private fun aplicarIdiomaPreferido() {
         appScope.launch {
-            val languageTag = withContext(Dispatchers.IO) {
-                when (val prefs = ServiceLocator.settingsRepository.obtenerPreferencias()) {
-                    is Result.Ok -> prefs.value.selectedLanguageTag
-                    is Result.Err -> gameSettingsDefault.selectedLanguageTag
-                }
-            }
+            try {
+                withTimeout(2_000) {
+                    val languageTag = withContext(Dispatchers.IO) {
+                        when (val prefs = ServiceLocator.settingsRepository.obtenerPreferencias()) {
+                            is Result.Ok -> prefs.value.selectedLanguageTag
+                            is Result.Err -> gameSettingsDefault.selectedLanguageTag
+                        }
+                    }
 
-            val sanitizedTag = sanitizeLanguageTag(languageTag)
-            val currentTag = AppCompatDelegate.getApplicationLocales().toLanguageTags()
-            if (sanitizedTag.isBlank() || currentTag == sanitizedTag) {
-                LocaleStartupState.markReady()
-                return@launch
-            }
+                    val sanitizedTag = sanitizeLanguageTag(languageTag)
+                    val currentTag = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+                    if (sanitizedTag.isBlank() || currentTag == sanitizedTag) {
+                        return@withTimeout
+                    }
 
-            withContext(Dispatchers.Main) {
-                val localeList = LocaleListCompat.forLanguageTags(sanitizedTag)
-                if (localeList.isEmpty) {
-                    LocaleStartupState.markReady()
-                    return@withContext
+                    withContext(Dispatchers.Main) {
+                        val localeList = LocaleListCompat.forLanguageTags(sanitizedTag)
+                        if (localeList.isEmpty) {
+                            return@withContext
+                        }
+                        if (AppCompatDelegate.getApplicationLocales() != localeList) {
+                            AppCompatDelegate.setApplicationLocales(localeList)
+                        }
+                    }
                 }
-                if (AppCompatDelegate.getApplicationLocales() != localeList) {
-                    AppCompatDelegate.setApplicationLocales(localeList)
-                }
+            } catch (throwable: Throwable) {
+                DecentralizedLogger.e(
+                    "App",
+                    "Error al inicializar el locale preferido",
+                    throwable
+                )
+            } finally {
                 LocaleStartupState.markReady()
                 }
             }
