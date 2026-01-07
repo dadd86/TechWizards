@@ -202,12 +202,6 @@ object ServiceLocator {
         PartidaHistoryFirebaseDataSource()
     }
 
-    private val premioComunDataSource by lazy {
-        PremioComunBackendDataSource(scoreApi)
-        PremioComunFirestoreDataSource()
-    }
-
-
     // --------------------------------------------------
     // Repositories
     // --------------------------------------------------
@@ -267,7 +261,7 @@ object ServiceLocator {
             credentialsStore = credentialsStore,
             sessionManager = sessionManager,
             firebaseAuth = firebaseAuth,
-            premioComunDataSource = premioComunDataSource,
+            premioComunBackendDataSource = PremioComunBackendDataSource(scoreApi),
             firestorePlayersApi = firestorePlayersApi,
             firestoreLeaderboardApi = firestoreLeaderboardApi,
             firestoreLeaderboardSdkDataSource = firestoreLeaderboardSdkDataSource

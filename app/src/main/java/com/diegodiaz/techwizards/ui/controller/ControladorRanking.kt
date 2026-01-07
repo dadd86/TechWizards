@@ -178,6 +178,7 @@ class ControladorRanking(
                     )
                 }
                 .collect { premio ->
+                    DecentralizedLogger.d("ControladorRanking", "Premio observado: ${premio.descripcion} = ${premio.valor}")
                     val estadoActual = _uiState.value
                     if (estadoActual is RankingUiState.Exito) {
                         _uiState.value = estadoActual.copy(
