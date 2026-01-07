@@ -265,7 +265,6 @@ object ServiceLocator {
             scoreApi = scoreApi,
             credentialsStore = credentialsStore,
             sessionManager = sessionManager,
-            firebaseAuth = firebaseAuth,
             premioComunFirestoreDataSource = premioComunFirestoreDataSource,
             firestorePlayersApi = firestorePlayersApi,
             firestoreLeaderboardApi = firestoreLeaderboardApi,

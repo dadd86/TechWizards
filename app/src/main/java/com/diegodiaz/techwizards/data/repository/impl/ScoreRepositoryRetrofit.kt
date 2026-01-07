@@ -26,7 +26,6 @@ import com.google.gson.JsonSyntaxException
 import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.JsonEncodingException
 import retrofit2.HttpException
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.Flow
 
 
@@ -35,7 +34,6 @@ class ScoreRepositoryRetrofit(
     private val scoreApi: ScoreApi,
     private val credentialsStore: CredentialsStore,
     private val sessionManager: SessionManager,
-    private val firebaseAuth: FirebaseAuth,
     private val premioComunFirestoreDataSource: PremioComunFirestoreDataSource,
     private val firestorePlayersApi: FirestorePlayersApi? = null,
     private val firestoreLeaderboardApi: FirestoreLeaderboardApi? = null,
@@ -74,10 +72,11 @@ class ScoreRepositoryRetrofit(
         val parts = token.split('.')
         return parts.size == 3 && parts.all { it.isNotBlank() }
     }
-    private fun requireFirebaseUid(): String {
-        val uid = firebaseAuth.currentUser?.uid?.trim()
-        require(!uid.isNullOrBlank()) { "firebaseUid vacío" }
-        return uid
+    private fun cacheFirebaseSession(session: UserSession) {
+        val token = session.token.trim()
+        if (!isFirebaseToken(token, session.backendToken)) return
+        credentialsStore.guardarSesionAlias(token, session.alias)
+        credentialsStore.guardarFirebaseToken(token)
     }
 
 
@@ -164,10 +163,7 @@ class ScoreRepositoryRetrofit(
 
 
     override suspend fun actualizarPremioComun(session: UserSession, nuevoPremio: CommonPrize): CommonPrize {
-        val firebaseToken = requireFirebaseToken(session)
-        credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
-        credentialsStore.guardarFirebaseToken(firebaseToken)
-        requireFirebaseUid()
+        cacheFirebaseSession(session)
         return premioComunFirestoreDataSource.actualizarPremioComun(nuevoPremio)
     }
 
@@ -246,19 +242,13 @@ class ScoreRepositoryRetrofit(
 
 
     override suspend fun incrementarPremioComun(session: UserSession, delta: Int): CommonPrize {
-        val firebaseToken = requireFirebaseToken(session)
-        credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
-        credentialsStore.guardarFirebaseToken(firebaseToken)
-        requireFirebaseUid()
+        cacheFirebaseSession(session)
         return premioComunFirestoreDataSource.incrementarPremioComun(delta)
     }
 
 
     override suspend fun reclamarPremioComun(session: UserSession, claimId: String): Int {
-        val firebaseToken = requireFirebaseToken(session)
-        credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
-        credentialsStore.guardarFirebaseToken(firebaseToken)
-        requireFirebaseUid()
+        cacheFirebaseSession(session)
         return premioComunFirestoreDataSource.reclamarPremioComun(claimId)
     }
 
