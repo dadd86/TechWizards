@@ -112,7 +112,7 @@ class ControladorPartida(
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
     val eventos: SharedFlow<JuegoUiEvent> = _eventos
-    private var ultimoClaimIdAplicado: String? = null
+    //private var ultimoClaimIdAplicado: String? = null
 
     fun lanzar() {
         viewModelScope.launch {
@@ -202,19 +202,20 @@ class ControladorPartida(
                         DecentralizedLogger.i(TAG, "PREMIO: sesión Firebase inválida para reclamar")
                         return
                     }
+                    val claimId = "${uid}_${System.currentTimeMillis()}"
 
-                    val claimId = "${uid}_${partida.createdAtMsOrFallback()}"
+                    //val claimId = "${uid}_${partida.createdAtMsOrFallback()}"
                     DecentralizedLogger.i(TAG, "PREMIO: claimId=${redactId(claimId)}")
 
                     val claimed = scoreRepository.reclamarPremioComun(currentSession, claimId)
-
-                    if (claimed > 0 && ultimoClaimIdAplicado != claimId) {
+                    if (claimed > 0) {
+                    //if (claimed > 0 && ultimoClaimIdAplicado != claimId) {
                         repo.sumarMonedas(usuarioId, claimed)
-                        ultimoClaimIdAplicado = claimId
+                        //ultimoClaimIdAplicado = claimId
                         // 👈 suma al monedero local
                         _eventos.tryEmit(JuegoUiEvent.PremioComunReclamado(claimed))
-                    } else if (claimed > 0) {
-                        DecentralizedLogger.i(TAG, "PREMIO: claimId ya aplicado localmente")
+                    //} else if (claimed > 0) {
+                       // DecentralizedLogger.i(TAG, "PREMIO: claimId ya aplicado localmente")
                     }
                 }
             }

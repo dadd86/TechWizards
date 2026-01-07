@@ -35,7 +35,6 @@ import com.diegodiaz.techwizards.data.remote.match.MatchRemoteMapper
 import com.diegodiaz.techwizards.data.remote.api.ScoresApi
 import com.diegodiaz.techwizards.data.remote.firestore.FirestoreLeaderboardApi
 import com.diegodiaz.techwizards.data.remote.firestore.PrizeCommonFirebaseDataSource
-import com.diegodiaz.techwizards.data.remote.prize.PremioComunFirestoreDataSource
 import com.diegodiaz.techwizards.data.remote.prize.PremioComunBackendDataSource
 
 import com.diegodiaz.techwizards.data.remote.firestore.FirestorePlayersApi
@@ -204,7 +203,6 @@ object ServiceLocator {
     }
 
     private val premioComunDataSource by lazy {
-        PremioComunFirestoreDataSource()
         PremioComunBackendDataSource(scoreApi)
     }
 
@@ -268,7 +266,6 @@ object ServiceLocator {
             credentialsStore = credentialsStore,
             sessionManager = sessionManager,
             firebaseAuth = firebaseAuth,
-            prizeCommonDataSource = PrizeCommonFirebaseDataSource(),
             premioComunDataSource = premioComunDataSource,
             firestorePlayersApi = firestorePlayersApi,
             firestoreLeaderboardApi = firestoreLeaderboardApi,

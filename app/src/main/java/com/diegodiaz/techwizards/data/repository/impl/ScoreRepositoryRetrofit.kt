@@ -12,14 +12,11 @@ import com.diegodiaz.techwizards.data.remote.firestore.FirestoreStructuredQueryD
 import com.diegodiaz.techwizards.data.remote.firestore.FirestorePlayersApi
 import com.diegodiaz.techwizards.data.remote.firestore.winsOrNull
 import com.diegodiaz.techwizards.data.remote.firestore.toLeaderboardEntry
-import com.diegodiaz.techwizards.data.remote.prize.PremioComunFirestoreDataSource
 import com.diegodiaz.techwizards.data.remote.prize.PremioComunBackendDataSource
-import com.diegodiaz.techwizards.data.remote.firestore.PrizeCommonFirebaseDataSource
 import com.diegodiaz.techwizards.data.remote.score.LoginRequest
 import com.diegodiaz.techwizards.data.remote.score.ScoreApi
 import com.diegodiaz.techwizards.data.remote.score.ScorePayload
 import com.diegodiaz.techwizards.data.remote.score.toDomain
-import com.diegodiaz.techwizards.data.remote.score.toRequestDto
 import com.diegodiaz.techwizards.domain.model.CommonPrize
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.domain.model.UserSession
@@ -29,9 +26,6 @@ import com.google.gson.JsonSyntaxException
 import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.JsonEncodingException
 import retrofit2.HttpException
-import com.diegodiaz.techwizards.data.remote.score.PrizeIncrementRequestDto
-import com.diegodiaz.techwizards.data.remote.score.PrizeClaimRequestDto
-import com.diegodiaz.techwizards.data.remote.score.PrizeClaimResponseDto
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.Flow
 
@@ -42,7 +36,6 @@ class ScoreRepositoryRetrofit(
     private val credentialsStore: CredentialsStore,
     private val sessionManager: SessionManager,
     private val firebaseAuth: FirebaseAuth,
-    private val prizeCommonDataSource: PrizeCommonFirebaseDataSource,
     private val premioComunDataSource: PremioComunBackendDataSource,
     private val firestorePlayersApi: FirestorePlayersApi? = null,
     private val firestoreLeaderboardApi: FirestoreLeaderboardApi? = null,
@@ -265,7 +258,7 @@ class ScoreRepositoryRetrofit(
         val firebaseToken = requireFirebaseToken(session)
         credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
         credentialsStore.guardarFirebaseToken(firebaseToken)
-        val uid = requireFirebaseUid()
+        requireFirebaseUid()
         return premioComunDataSource.reclamarPremioComun(
             bearerToken = "Bearer $firebaseToken",
             claimId = claimId
