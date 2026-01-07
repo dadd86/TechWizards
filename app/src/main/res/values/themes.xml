@@ -2,4 +2,10 @@
 <resources>
     <!-- Tema base para Compose (Material 3). Sin ActionBar. -->
     <style name="Theme.TechWizards" parent="Theme.Material3.DayNight.NoActionBar" />
+    <!-- Tema de SplashScreen para evitar parpadeos al aplicar locale. -->
+    <style name="Theme.TechWizards.Splash" parent="Theme.SplashScreen">
+        <item name="postSplashScreenTheme">@style/Theme.TechWizards</item>
+        <item name="windowSplashScreenBackground">@android:color/white</item>
+    </style>
+
 </resources>

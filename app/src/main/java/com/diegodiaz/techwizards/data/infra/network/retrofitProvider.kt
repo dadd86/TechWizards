@@ -3,6 +3,7 @@ package com.diegodiaz.techwizards.data.infra.network
 import com.diegodiaz.techwizards.BuildConfig
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
 import com.diegodiaz.techwizards.core.SessionManager
+import com.google.gson.GsonBuilder
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.Interceptor
@@ -35,20 +36,23 @@ object RetrofitProvider {
     ) : Interceptor {
         override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
             val originalRequest: Request = chain.request()
-            val token = tokenProvider()
 
-            if (token.isNullOrBlank()) {
-                // Sin token => petición tal cual
+            // ✅ Si ya trae Authorization (por @Header en Retrofit), no lo toques
+            if (originalRequest.header("Authorization") != null) {
                 return chain.proceed(originalRequest)
             }
 
-               val newRequest: Request = originalRequest.newBuilder()
+            val token = tokenProvider()
+            if (token.isNullOrBlank()) return chain.proceed(originalRequest)
+
+            val newRequest: Request = originalRequest.newBuilder()
                 .header("Authorization", "Bearer $token")
                 .build()
 
             return chain.proceed(newRequest)
         }
     }
+
     /**
      * Interceptor que añade la cabecera Authorization leyendo desde [SessionManager].
      *
@@ -59,21 +63,24 @@ object RetrofitProvider {
         private val sessionManager: SessionManager,
     ) : Interceptor {
         override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
-            val session = sessionManager.session.value
-            val token = session?.token
+            val original = chain.request()
 
-            if (token.isNullOrBlank()) {
-                return chain.proceed(chain.request())
+            // ✅ Si ya trae Authorization (por @Header en Retrofit), no lo toques
+            if (original.header("Authorization") != null) {
+                return chain.proceed(original)
             }
 
-            val newRequest = chain.request()
-                .newBuilder()
+            val token = sessionManager.session.value?.token
+            if (token.isNullOrBlank()) return chain.proceed(original)
+
+            val newRequest = original.newBuilder()
                 .header("Authorization", "Bearer $token")
                 .build()
 
             return chain.proceed(newRequest)
         }
     }
+
 
     private fun createLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {
@@ -132,7 +139,13 @@ object RetrofitProvider {
         val tokenProvider = { credentialsStore.obtenerFirebaseToken() }
 
         val converter = when (serializer.lowercase()) {
-            "gson" -> retrofit2.converter.gson.GsonConverterFactory.create()
+            "gson" -> {
+                val gson = GsonBuilder()
+                    .serializeNulls()
+                    .setLenient()
+                    .create()
+                retrofit2.converter.gson.GsonConverterFactory.create(gson)
+            }
             else -> MoshiConverterFactory.create(moshi) // ✅ y aquí
         }
 

@@ -29,6 +29,8 @@ import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.ui.controller.ControladorRanking
 import com.diegodiaz.techwizards.ui.controller.RankingUiState
 import com.diegodiaz.techwizards.ui.responsive.UiDims
+import androidx.compose.ui.res.stringResource
+import com.diegodiaz.techwizards.R
 
 /**
  * Pantalla para visualizar el top ten y el premio común con estados de carga.
@@ -90,68 +92,72 @@ fun PantallaRanking(
             }
 
             is RankingUiState.Exito -> {
-                if (ui.topTen.isEmpty()) {
-                    Text(text = "Sin datos de ranking todavía")
-                } else {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(dims.spaceXs),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(dims.spaceXs),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (ui.topTen.isEmpty()) {
+                        item { Text(text = "Sin datos de ranking todavía") }
+                    } else {
                         itemsIndexed(ui.topTen) { index, entry ->
                             EntradaRanking(
-                                posicion = index + 1,
+                                posicion = entry.position ?: (index + 1),
                                 entry = entry,
                                 dims = dims
                             )
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(dims.spaceSm))
-
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(dims.spaceSm),
-                        verticalArrangement = Arrangement.spacedBy(dims.spaceXs)
-                    ) {
-                        Text(
-                            text = "Premio común",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(text = ui.premio?.descripcion ?: "Sin premio publicado")
-                        Text(text = "Valor: ${ui.premio?.valor ?: 0}")
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(dims.spaceXs)
-                        ) {
-                            Button(onClick = controlador::refrescarPremio) {
-                                Text("Refrescar premio")
-                            }
-                            Button(
-                                onClick = controlador::refrescarTodo
-                            ) { Text("Actualizar ranking") }
-                        }
-
-                        if (ui.puedeActualizarPremio) {
-                            OutlinedTextField(
-                                value = descripcionPremio.value,
-                                onValueChange = { descripcionPremio.value = it },
-                                label = { Text("Descripción") },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            OutlinedTextField(
-                                value = valorPremio.value,
-                                onValueChange = { valorPremio.value = it },
-                                label = { Text("Valor") },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            Button(
-                                onClick = {
-                                    val valor = valorPremio.value.toIntOrNull() ?: 0
-                                    controlador.actualizarPremio(descripcionPremio.value, valor)
-                                }
+                    item {
+                        Spacer(modifier = Modifier.height(dims.spaceSm))
+                    }
+                    item {
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Column(
+                                modifier = Modifier.padding(dims.spaceSm),
+                                verticalArrangement = Arrangement.spacedBy(dims.spaceXs)
                             ) {
-                                Text("Guardar premio")
+                                Text(
+                                    text = "Premio común",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(text = ui.premio?.descripcion ?: "Sin premio publicado")
+                                Text(text = "Valor: ${ui.premio?.valor ?: 0}")
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(dims.spaceXs)
+                                ) {
+                                    Button(onClick = controlador::refrescarPremio) {
+                                        Text("Refrescar premio")
+                                    }
+                                    Button(
+                                        onClick = controlador::refrescarTodo
+                                    ) { Text("Actualizar ranking") }
+                                }
+
+                                if (ui.puedeActualizarPremio) {
+                                    OutlinedTextField(
+                                        value = descripcionPremio.value,
+                                        onValueChange = { descripcionPremio.value = it },
+                                        label = { Text("Descripción") },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                    OutlinedTextField(
+                                        value = valorPremio.value,
+                                        onValueChange = { valorPremio.value = it },
+                                        label = { Text("Valor") },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                    Button(
+                                        onClick = {
+                                            val valor = valorPremio.value.toIntOrNull() ?: 0
+                                            controlador.actualizarPremio(descripcionPremio.value, valor)
+                                        }
+                                    ) {
+                                        Text("Guardar premio")
+                                    }
+                                }
+
                             }
                         }
                     }
@@ -171,8 +177,13 @@ private fun EntradaRanking(posicion: Int, entry: LeaderboardEntry, dims: UiDims)
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "#$posicion ${entry.alias}")
-            Text(text = "${entry.score} coins", fontWeight = FontWeight.SemiBold)
+            Column(verticalArrangement = Arrangement.spacedBy(dims.spaceXs)) {
+                Text(text = "#$posicion ${entry.alias}")
+                entry.wins?.let { wins ->
+                    Text(text = stringResource(id = R.string.ranking_wins, wins))
+                }
+            }
+            // Text(text = "${entry.score} pts", fontWeight = FontWeight.SemiBold)
         }
     }
 }

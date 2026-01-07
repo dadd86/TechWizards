@@ -2,6 +2,7 @@ package com.diegodiaz.techwizards.data.remote.history
 
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
@@ -54,7 +55,6 @@ class PartidaHistoryFirebaseDataSource(
                 mapOf(
                     "usuarioNumero" to partida.usuarioNumero,
                     "alias" to partida.aliasJugador,
-                    "coins" to FieldValue.increment(partida.deltaMonedas.toLong()),
                     "wins" to FieldValue.increment(if (victoria) 1L else 0L),
                     "losses" to FieldValue.increment(if (derrota) 1L else 0L),
                     "updatedAt" to FieldValue.serverTimestamp(),
@@ -62,6 +62,42 @@ class PartidaHistoryFirebaseDataSource(
                 com.google.firebase.firestore.SetOptions.merge()
             )
         }.await()
+    }
+
+    /**
+     * Recupera el historial remoto ordenado por fecha descendente.
+     *
+     * @param firebaseUid UID autenticado de Firebase.
+     * @param limit Máximo de elementos a recuperar.
+     * @return Lista de partidas remotas.
+     * @throws Exception Si la consulta remota falla.
+     * @security
+     * - Solo consulta el historial del UID autenticado.
+     * - No retorna datos sensibles fuera del scope del jugador.
+     */
+    suspend fun obtenerHistorial(firebaseUid: String, limit: Int): List<PartidaHistoryDto> {
+        require(firebaseUid.isNotBlank()) { "firebaseUid vacío" }
+        require(limit in 1..100) { "limit fuera de rango" }
+        val snapshot = historyCollection(firebaseUid)
+            .orderBy("fechaMs", Query.Direction.DESCENDING)
+            .limit(limit.toLong())
+            .get()
+            .await()
+
+        return snapshot.documents.mapNotNull { doc ->
+            val usuarioNumero = doc.getLong("usuarioNumero") ?: return@mapNotNull null
+            val aliasJugador = doc.getString("aliasJugador") ?: return@mapNotNull null
+            val fechaMs = doc.getLong("fechaMs") ?: return@mapNotNull null
+            val resultado = doc.getString("resultado") ?: return@mapNotNull null
+            val deltaMonedas = doc.getLong("deltaMonedas")?.toInt() ?: 0
+            PartidaHistoryDto(
+                usuarioNumero = usuarioNumero,
+                aliasJugador = aliasJugador,
+                fechaMs = fechaMs,
+                resultado = resultado,
+                deltaMonedas = deltaMonedas,
+            )
+        }
     }
 
     private fun historyCollection(firebaseUid: String) =

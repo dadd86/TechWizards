@@ -51,7 +51,7 @@ import com.diegodiaz.techwizards.data.local.EnumConverters
  * - Ejecuta migraciones incrementales para evitar pérdidas de datos.
  */
 @Database(
-    version = 3, // Incrementa para registrar ubicaciones de victoria.
+    version = 4, // Incrementa para ajustar PK manual en Usuario.
     exportSchema = true,
     entities = [
         // Básicas P1
@@ -366,6 +366,34 @@ abstract class BaseDeDatos : RoomDatabase() {
 
                 }
         }
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("PRAGMA foreign_keys=OFF")
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `Usuario_new` (
+                        `numero` INTEGER NOT NULL,
+                        `usuario` TEXT NOT NULL,
+                        `fechaAlta` INTEGER NOT NULL,
+                        `monedas` INTEGER NOT NULL,
+                        `gano` INTEGER NOT NULL,
+                        `firebaseUid` TEXT,
+                        PRIMARY KEY(`numero`)
+                    )
+                    """.trimIndent()
+                )
+                database.execSQL(
+                    """
+                    INSERT INTO `Usuario_new` (`numero`, `usuario`, `fechaAlta`, `monedas`, `gano`, `firebaseUid`)
+                    SELECT `numero`, `usuario`, `fechaAlta`, `monedas`, `gano`, `firebaseUid`
+                    FROM `Usuario`
+                    """.trimIndent()
+                )
+                database.execSQL("DROP TABLE `Usuario`")
+                database.execSQL("ALTER TABLE `Usuario_new` RENAME TO `Usuario`")
+                database.execSQL("PRAGMA foreign_keys=ON")
+            }
+        }
 
         fun get(ctx: Context): BaseDeDatos =
             inst ?: synchronized(this) {
@@ -375,11 +403,9 @@ abstract class BaseDeDatos : RoomDatabase() {
                     "techwizards.db"
                 )
                     .addCallback(RoomCallbackPragmas())
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build()
                     .also { inst = it }
             }
     }
 }
-
-

@@ -3,77 +3,104 @@ package com.diegodiaz.techwizards.data.remote.score
 import com.diegodiaz.techwizards.domain.model.CommonPrize
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.domain.model.UserSession
-import com.squareup.moshi.Json
-
-data class ScoreEntryDto(
-    val id: String? = null,
-    val alias: String,
-    val coins: Int,
-    val position: Int? = null,
-    val prizeName: String? = null,
-    val prizeDescription: String? = null
-)
 
 data class ScorePayload(
     val alias: String,
-    val score: Int
-)
-
-data class PrizeDto(
-    @Json(name = "descripcion")
-    val descripcion: String,
-    @Json(name = "valor")
-    val valor: Int,
-    @Json(name = "updatedAt")
-    val updatedAt: Long? = null
-)
-
-data class PrizeRequestDto(
-    @Json(name = "descripcion")
-    val descripcion: String,
-    @Json(name = "valor")
-    val valor: Int
+    val deltaMonedas: Int
 )
 
 data class LoginRequest(
     val alias: String
 )
 
+// Respuesta real que devuelve tu /login
 data class SessionResponseDto(
     val token: String,
     val alias: String,
-    val isAdmin: Boolean? = null
+    val isAdmin: Boolean = false
 )
 
-fun ScoreEntryDto.toDomain(overridePosition: Int? = null) = LeaderboardEntry(
-    id = id,
-    alias = alias,
-    score = coins,
-    position = overridePosition ?: position,
-    prizeName = prizeName,
-    prizeDescription = prizeDescription
+fun SessionResponseDto.toDomain(firebaseToken: String): UserSession =
+    UserSession(
+        token = firebaseToken,
+        alias = alias,
+        backendToken = token,
+        isAdmin = isAdmin
+    )
+
+// Respuesta real que devuelve tu /leaderboard/top10
+data class ScoreEntryDto(
+    val id: String? = null,
+    val alias: String = "Jugador",
+    val score: Int = 0,
+    val position: Int = 0,
+    val wins: Int? = null,
+    val prizeName: String? = null,
+    val prizeDescription: String? = null
 )
 
-fun PrizeDto.toDomain() = CommonPrize(
-    descripcion = descripcion,
-    valor = valor,
-    updatedAt = updatedAt
+fun ScoreEntryDto.toDomain(): LeaderboardEntry =
+    LeaderboardEntry(
+        id = id,
+        alias = alias,
+        score = score,
+        position = position,
+        wins = wins,
+        prizeName = prizeName,
+        prizeDescription = prizeDescription
+    )
+data class ScoreTopTenResponseDto(
+    val items: List<ScoreTopTenItemDto> = emptyList()
 )
 
-fun CommonPrize.toDto() = PrizeDto(
-    descripcion = descripcion,
-    valor = valor,
-    updatedAt = updatedAt
+data class ScoreTopTenItemDto(
+    val userId: String? = null,
+    val userName: String = "Jugador",
+    val points: Int = 0,
+    val timestamp: String? = null,
+    val wins: Int? = null
 )
 
-fun CommonPrize.toRequestDto() = PrizeRequestDto(
-    descripcion = descripcion,
-    valor = valor
+fun ScoreTopTenItemDto.toDomain(position: Int): LeaderboardEntry =
+    LeaderboardEntry(
+        id = userId,
+        alias = userName,
+        score = points,
+        position = position,
+        wins = wins,
+        prizeName = null,
+        prizeDescription = null
+    )
+data class PrizeCommonDto(
+    val descripcion: String,
+    val valor: Int,
+    val updatedAt: Long? = null
 )
 
-fun SessionResponseDto.toDomain() = UserSession(
-    token = token,
-    alias = alias,
-    isAdmin = isAdmin ?: false
+fun PrizeCommonDto.toDomain(): CommonPrize =
+    CommonPrize(descripcion = descripcion, valor = valor)
+
+data class PrizeUpdateRequestDto(
+    val descripcion: String,
+    val valor: Int
 )
+
+fun CommonPrize.toRequestDto(): PrizeUpdateRequestDto =
+    PrizeUpdateRequestDto(descripcion = descripcion, valor = valor)
+
+data class PrizeIncrementRequestDto(
+    val delta: Int
+)
+
+data class PrizeClaimRequestDto(
+    val claimId: String
+)
+
+data class PrizeClaimResponseDto(
+    val descripcion: String,
+    val claimed: Int,
+    val alreadyClaimed: Boolean
+)
+
+
 

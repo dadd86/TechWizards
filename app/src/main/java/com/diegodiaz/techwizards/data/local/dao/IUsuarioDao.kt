@@ -27,6 +27,29 @@ interface IUsuarioDao {
     @Query("SELECT * FROM Usuario WHERE numero = :numero LIMIT 1")
     suspend fun getByNumero(numero: Long): UsuarioEntity?
 
+    /**
+     * Obtiene el usuario enlazado al UID de Firebase (si existe).
+     *
+     * @param firebaseUid UID asociado al usuario autenticado.
+     * @return Usuario encontrado o `null` si no hay coincidencia.
+     * @security
+     * - No expone PII; se usa solo para resolver IDs locales.
+     */
+    @Query("SELECT * FROM Usuario WHERE firebaseUid = :firebaseUid LIMIT 1")
+    suspend fun getByFirebaseUid(firebaseUid: String): UsuarioEntity?
+
+    /**
+     * Variante RxJava para resolver usuarios por UID de Firebase.
+     *
+     * @param firebaseUid UID asociado al usuario autenticado.
+     * @return [Maybe] con el usuario si existe.
+     * @security
+     * - Evita exponer datos sensibles; solo IDs y alias locales.
+     */
+    @Query("SELECT * FROM Usuario WHERE firebaseUid = :firebaseUid LIMIT 1")
+    fun getByFirebaseUidRx(firebaseUid: String): Maybe<UsuarioEntity>
+
+
     @Query("UPDATE Usuario SET monedas = :nuevoSaldo WHERE numero = :numero")
     suspend fun actualizarSaldo(numero: Long, nuevoSaldo: Int): Int
 

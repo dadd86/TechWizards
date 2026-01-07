@@ -11,16 +11,21 @@ import com.diegodiaz.techwizards.core.usecases.ObtenerUsuarioAutenticadoUseCase
 import com.diegodiaz.techwizards.core.usecases.ActualizarPremioComunUseCase
 import com.diegodiaz.techwizards.core.usecases.RegistrarHistorialRemotoUseCase
 import com.diegodiaz.techwizards.core.usecases.ResolverTiradaUseCase
+import com.diegodiaz.techwizards.core.usecases.LoginBackendUseCase
 import com.diegodiaz.techwizards.core.usecases.RegistrarUbicacionVictoriaUseCase
+import com.diegodiaz.techwizards.core.usecases.ObservarHistorialRemotoUseCase
 import com.diegodiaz.techwizards.credenciales.CredentialsStore
 import com.diegodiaz.techwizards.credenciales.EncryptedCredentialsStore
 import com.diegodiaz.techwizards.data.infra.network.RetrofitProvider
 import com.diegodiaz.techwizards.data.local.dao.IPartidaDao
 import com.diegodiaz.techwizards.data.local.dao.IMatchDao
+import com.google.firebase.auth.FirebaseAuth
+import com.diegodiaz.techwizards.data.remote.firestore.FirestoreLeaderboardSdkDataSource
 import com.diegodiaz.techwizards.data.local.dao.IMatchParticipantDao
 import com.diegodiaz.techwizards.data.local.dao.IMatchScoreDao
 import com.diegodiaz.techwizards.data.local.db.BaseDeDatos
 import com.diegodiaz.techwizards.data.local.cache.MatchSnapshotLocalDataSource
+import com.diegodiaz.techwizards.data.local.cache.UserIdLocalDataSource
 import com.diegodiaz.techwizards.data.local.mapper.VictoryLocationLocalMapper
 import com.diegodiaz.techwizards.data.remote.lobby.LobbyRealtimeFirebaseDataSource
 import com.diegodiaz.techwizards.data.remote.history.PartidaHistoryFirebaseDataSource
@@ -28,6 +33,18 @@ import com.diegodiaz.techwizards.data.remote.match.MatchRealtimeFirebaseDataSour
 import com.diegodiaz.techwizards.data.remote.match.MatchApi
 import com.diegodiaz.techwizards.data.remote.match.MatchRemoteMapper
 import com.diegodiaz.techwizards.data.remote.api.ScoresApi
+import com.diegodiaz.techwizards.data.remote.firestore.FirestoreLeaderboardApi
+import com.diegodiaz.techwizards.data.remote.prize.PremioComunFirestoreDataSource
+import com.diegodiaz.techwizards.data.remote.prize.PremioComunBackendDataSource
+
+import com.diegodiaz.techwizards.data.remote.firestore.FirestorePlayersApi
+import android.util.Log
+import com.diegodiaz.techwizards.data.remote.score.LoginRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.diegodiaz.techwizards.data.remote.mapper.ScoreRemoteMapper
 import com.diegodiaz.techwizards.data.remote.score.ScoreApi
 import com.diegodiaz.techwizards.data.repository.impl.*
@@ -36,9 +53,7 @@ import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.domain.repository.AuthRepository
 import com.diegodiaz.techwizards.domain.repository.PartidaHistoryRepository
 import com.diegodiaz.techwizards.integration.victory.WorkManagerVictoryCelebrationService
-import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import com.google.firebase.FirebaseApp
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
@@ -114,6 +129,54 @@ object ServiceLocator {
             sessionManager = sessionManager
         )
     }
+    private val firestoreBaseUrl by lazy {
+        FirebaseApp.getInstance().options.projectId?.let { projectId ->
+            "https://firestore.googleapis.com/v1/projects/$projectId/databases/(default)/documents/"
+        }
+    }
+
+    private val firestoreQueryBaseUrl by lazy {
+        FirebaseApp.getInstance().options.projectId?.let { projectId ->
+            "https://firestore.googleapis.com/v1/projects/$projectId/databases/(default)/"
+        }
+    }
+
+
+    private val firestoreRetrofit by lazy {
+        firestoreBaseUrl?.let { baseUrl ->
+            RetrofitProvider.retrofit(
+                credentialsStore = credentialsStore,
+                baseUrl = baseUrl,
+                serializer = BuildConfig.API_SERIALIZER,
+                sessionManager = sessionManager
+            )
+        }
+    }
+
+    private val firestoreQueryRetrofit by lazy {
+        firestoreQueryBaseUrl?.let { baseUrl ->
+            RetrofitProvider.retrofit(
+                credentialsStore = credentialsStore,
+                baseUrl = baseUrl,
+                serializer = BuildConfig.API_SERIALIZER,
+                sessionManager = sessionManager
+            )
+        }
+    }
+
+
+    private val firestorePlayersApi by lazy {
+        firestoreRetrofit?.create(FirestorePlayersApi::class.java)
+    }
+
+    private val firestoreLeaderboardApi by lazy {
+        firestoreQueryRetrofit?.create(FirestoreLeaderboardApi::class.java)
+    }
+
+    private val firestoreLeaderboardSdkDataSource by lazy {
+        FirestoreLeaderboardSdkDataSource()
+    }
+
 
     private val scoreApi by lazy {
         retrofitScore.create(ScoreApi::class.java)
@@ -139,6 +202,10 @@ object ServiceLocator {
         PartidaHistoryFirebaseDataSource()
     }
 
+    private val premioComunDataSource by lazy {
+        PremioComunBackendDataSource(scoreApi)
+        PremioComunFirestoreDataSource()
+    }
 
 
     // --------------------------------------------------
@@ -182,6 +249,10 @@ object ServiceLocator {
         SettingsRepositoryDataStore(appContext)
     }
 
+    val userIdLocalDataSource by lazy {
+        UserIdLocalDataSource(settingsRepository.dataStore)
+    }
+
     val scoresRepository by lazy {
         ScoresRepositoryRemote(
             scoresApi = scoresApi,
@@ -194,16 +265,35 @@ object ServiceLocator {
         ScoreRepositoryRetrofit(
             scoreApi = scoreApi,
             credentialsStore = credentialsStore,
-            sessionManager = sessionManager
+            sessionManager = sessionManager,
+            firebaseAuth = firebaseAuth,
+            premioComunDataSource = premioComunDataSource,
+            firestorePlayersApi = firestorePlayersApi,
+            firestoreLeaderboardApi = firestoreLeaderboardApi,
+            firestoreLeaderboardSdkDataSource = firestoreLeaderboardSdkDataSource
         )
     }
 
     private val partidaHistoryRepository: PartidaHistoryRepository by lazy {
-        PartidaHistoryRepositoryFirebase(partidaHistoryDataSource)
+        PartidaHistoryRepositoryFirebase(
+            dataSource = partidaHistoryDataSource,
+            scoreApi = scoreApi,
+            sessionManager = sessionManager,
+            loginBackendUseCase = loginBackendUseCase //
+        )
     }
     val actualizarPremioComunUseCase by lazy {
         ActualizarPremioComunUseCase(scoreRepository, sessionManager)
     }
+
+    val loginBackendUseCase by lazy {
+        LoginBackendUseCase(
+            firebaseAuth = FirebaseAuth.getInstance(),
+            scoreApi = scoreApi,
+            sessionManager = sessionManager
+        )
+    }
+
 
     val victoryRepository by lazy {
         VictoryRepositoryRoom(
@@ -231,9 +321,13 @@ object ServiceLocator {
         IniciarSesionConGoogleUseCase(
             authRepository = authRepository,
             sessionManager = sessionManager,
-            credentialsStore = credentialsStore
+            credentialsStore = credentialsStore,
+            scoreApi = scoreApi // ✅
         )
     }
+
+
+
 
     val cerrarSesionUseCase by lazy {
         CerrarSesionUseCase(
@@ -264,6 +358,9 @@ object ServiceLocator {
     val registrarHistorialRemotoUseCase by lazy {
         RegistrarHistorialRemotoUseCase(partidaHistoryRepository)
     }
+    val observarHistorialRemotoUseCase by lazy {
+        ObservarHistorialRemotoUseCase(partidaHistoryRepository)
+    }
 
     val victoryCelebrationService by lazy {
         WorkManagerVictoryCelebrationService(appContext)
@@ -284,6 +381,8 @@ object ServiceLocator {
     }
 
 
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     private fun registrarListenerFirebaseToken() {
         firebaseAuth.addIdTokenListener(object : FirebaseAuth.IdTokenListener {
             override fun onIdTokenChanged(auth: FirebaseAuth) {
@@ -293,13 +392,56 @@ object ServiceLocator {
                     sessionManager.clearSession()
                     return
                 }
+
                 user.getIdToken(false)
                     .addOnSuccessListener { result ->
-                        credentialsStore.guardarFirebaseToken(result.token)
-                        val token = result.token
-                        if (!token.isNullOrBlank()) {
-                            val alias = user.displayName ?: user.email ?: "Jugador"
-                            sessionManager.setSession(UserSession(token = token, alias = alias))
+                        val firebaseToken = result.token
+                        credentialsStore.guardarFirebaseToken(firebaseToken)
+
+                        if (firebaseToken.isNullOrBlank()) return@addOnSuccessListener
+
+                        val alias = user.displayName ?: user.email ?: "Jugador"
+
+                        // 1) Conserva backendToken si ya existía
+                        val currentSession = sessionManager.session.value
+                        sessionManager.setSession(
+                            UserSession(
+                                token = firebaseToken,
+                                alias = alias,
+                                backendToken = currentSession?.backendToken,
+                                isAdmin = currentSession?.isAdmin ?: false
+                            )
+                        )
+
+                        // 2) ✅ Si aún NO tenemos backendToken, hacemos /login al backend
+                        if (currentSession?.backendToken.isNullOrBlank()) {
+                            serviceScope.launch {
+                                try {
+                                    Log.d("BACKEND", "Haciendo POST /login...")
+
+                                    val resp = scoreApi.login(
+                                        bearerToken = "Bearer $firebaseToken",
+                                        request = LoginRequest(alias = alias)
+                                    )
+
+                                    Log.d("BACKEND", "Login OK, backendToken recibido")
+
+                                    // Guardar backendToken en SessionManager
+                                    withContext(Dispatchers.Main) {
+                                        val latest = sessionManager.session.value
+                                        sessionManager.setSession(
+                                            UserSession(
+                                                token = firebaseToken,
+                                                alias = resp.alias,
+                                                backendToken = resp.token,
+                                                isAdmin = resp.isAdmin
+                                            )
+                                        )
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e("BACKEND", "Fallo en /login", e)
+                                }
+                            }
                         }
                     }
                     .addOnFailureListener {
@@ -309,4 +451,6 @@ object ServiceLocator {
             }
         })
     }
+
+
 }

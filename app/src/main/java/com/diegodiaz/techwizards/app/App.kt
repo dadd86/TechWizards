@@ -10,7 +10,12 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.diegodiaz.techwizards.core.common.Result
 import com.diegodiaz.techwizards.domain.model.gameSettingsDefault
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 /**
  * Punto de entrada de la aplicación responsable de inicializar el *Service Locator*
@@ -20,6 +25,7 @@ import kotlinx.coroutines.runBlocking
  * - Registra enmascaramiento para identificadores extensos y evita PII en los sinks.
  */
 class App : Application() {
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     /**
      * Inicializa repositorios y sinks de logging al arrancar la app.
      *
@@ -42,10 +48,51 @@ class App : Application() {
      * en preferencias. Si no existe, fuerza español como idioma principal.
      */
     private fun aplicarIdiomaPreferido() {
-        val languageTag = when (val prefs = runBlocking { ServiceLocator.settingsRepository.obtenerPreferencias() }) {
-            is Result.Ok -> prefs.value.selectedLanguageTag
-            is Result.Err -> gameSettingsDefault.selectedLanguageTag
+        appScope.launch {
+            try {
+                withTimeout(2_000) {
+                    val languageTag = withContext(Dispatchers.IO) {
+                        when (val prefs = ServiceLocator.settingsRepository.obtenerPreferencias()) {
+                            is Result.Ok -> prefs.value.selectedLanguageTag
+                            is Result.Err -> gameSettingsDefault.selectedLanguageTag
+                        }
+                    }
+
+                    val sanitizedTag = sanitizeLanguageTag(languageTag)
+                    val currentTag = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+                    if (sanitizedTag.isBlank() || currentTag == sanitizedTag) {
+                        return@withTimeout
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        val localeList = LocaleListCompat.forLanguageTags(sanitizedTag)
+                        if (localeList.isEmpty) {
+                            return@withContext
+                        }
+                        if (AppCompatDelegate.getApplicationLocales() != localeList) {
+                            AppCompatDelegate.setApplicationLocales(localeList)
+                        }
+                    }
+                }
+            } catch (throwable: Throwable) {
+                DecentralizedLogger.e(
+                    "App",
+                    "Error al inicializar el locale preferido",
+                    throwable
+                )
+            } finally {
+                DecentralizedLogger.d("App", "LocaleStartupState marcado como listo")
+                LocaleStartupState.markReady()
+                }
+            }
         }
-        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(languageTag))
+    }
+private fun sanitizeLanguageTag(languageTag: String): String {
+    if (languageTag.isBlank()) return gameSettingsDefault.selectedLanguageTag
+    val localeList = LocaleListCompat.forLanguageTags(languageTag)
+    return if (localeList.isEmpty) {
+        gameSettingsDefault.selectedLanguageTag
+    } else {
+        languageTag
     }
 }

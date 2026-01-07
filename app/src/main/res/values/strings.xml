@@ -64,6 +64,7 @@
     <string name="history_empty">Sin partidas todavía</string>
     <string name="history_win">Ganó</string>
     <string name="history_loss">Perdió</string>
+    <string name="ranking_wins">Victorias: %1$d</string>
     <string name="language_es_label">Español</string>
     <string name="language_en_label">English</string>
     <string name="language_de_label">Deutsch</string>

@@ -3,7 +3,6 @@ package com.diegodiaz.techwizards.ui.controller
 import androidx.lifecycle.ViewModel
 import com.diegodiaz.techwizards.domain.model.*
 import androidx.lifecycle.viewModelScope
-import com.diegodiaz.techwizards.core.SessionManager
 import com.diegodiaz.techwizards.domain.model.CommonPrize
 import com.diegodiaz.techwizards.domain.model.LeaderboardEntry
 import com.diegodiaz.techwizards.domain.model.Match
@@ -15,6 +14,7 @@ import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 data class MatchUiState(
@@ -29,8 +29,7 @@ data class MatchUiState(
 )
 
 class ControladorMatch(
-    private val scoreRepository: ScoreRepository,
-    private val sessionManager: SessionManager
+    private val scoreRepository: ScoreRepository
 ) : ViewModel() {
 
     private val _ui = MutableStateFlow(MatchUiState())
@@ -38,6 +37,7 @@ class ControladorMatch(
 
     init {
         refrescarEstadoOnline()
+        observarPremioComun()
     }
 
     fun crearMatch(
@@ -104,11 +104,6 @@ class ControladorMatch(
 
     fun refrescarEstadoOnline() {
         viewModelScope.launch {
-            val session = sessionManager.session.value
-            if (session == null) {
-                _ui.value = _ui.value.copy(error = "Inicia sesión para ver el top ten")
-                return@launch
-            }
             runCatching {
                 val topTen = scoreRepository.obtenerTopTen()
                 val premio = scoreRepository.obtenerPremioComun()
@@ -127,6 +122,24 @@ class ControladorMatch(
                 DecentralizedLogger.e("ControladorMatch", "No se pudo cargar datos online", error)
                 _ui.value = _ui.value.copy(error = "No se pudo cargar ranking online")
             }
+        }
+    }
+
+    private fun observarPremioComun() {
+        viewModelScope.launch {
+            scoreRepository.observarPremioComun()
+                .catch { error ->
+                    DecentralizedLogger.e("ControladorMatch", "Fallo observando premio común", error)
+                }
+                .collect { premio ->
+                    val topTen = _ui.value.topTen
+                    val progreso = calcularProgresoPremio(premio, topTen)
+                    _ui.value = _ui.value.copy(
+                        premioComun = premio,
+                        progresoPremio = progreso,
+                        actualizadoEnMs = System.currentTimeMillis()
+                    )
+                }
         }
     }
 

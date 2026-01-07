@@ -11,10 +11,13 @@ import com.diegodiaz.techwizards.domain.repository.JuegoRepository
 import com.diegodiaz.techwizards.domain.model.Monedero
 import com.diegodiaz.techwizards.domain.model.Usuario
 import com.diegodiaz.techwizards.domain.model.Partida
+import com.diegodiaz.techwizards.util.logging.DecentralizedLogger
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.reactive.asFlow
 
@@ -43,7 +46,9 @@ class JuegoRepositoryRoom(
      * - Solo expone saldo numérico asociado a IDs locales.
      */
     override fun observeSaldoRx(usuarioId: String): Flowable<Monedero> =
-        monederoDao.observeSaldo(usuarioId.toLong()).map { it.toDomain() }
+        resolveUsuarioNumeroRx(usuarioId)
+            .flatMapPublisher { monederoDao.observeSaldo(it) }
+            .map { it.toDomain() }
 
     /**
      * Carga el usuario usando la API RxJava.
@@ -55,7 +60,7 @@ class JuegoRepositoryRoom(
      * - Mantiene los campos limitados al esquema local.
      */
     override fun cargarUsuarioRx(usuarioId: String): Maybe<Usuario> =
-        usuarioDao.getByNumeroRx(usuarioId.toLong()).map { it.toDomain() }
+        resolveUsuarioEntityRx(usuarioId).map { it.toDomain() }
 
     /**
      * Inicializa el usuario y el monedero usando RxJava.
@@ -90,7 +95,17 @@ class JuegoRepositoryRoom(
      * - Solo expone montos y alias locales.
      */
     override fun observarSaldo(usuarioId: String): Flow<Monedero> =
-        monederoDao.observeSaldo(usuarioId.toLong()).asFlow().map { it.toDomain() }
+        flow {
+            val usuarioNumero = resolveUsuarioNumero(usuarioId)
+            if (usuarioNumero == null) {
+                DecentralizedLogger.w(
+                    "JuegoRepository",
+                    "observarSaldo sin usuario local para ${redactId(usuarioId)}"
+                )
+                return@flow
+            }
+            emitAll(monederoDao.observeSaldo(usuarioNumero).asFlow().map { it.toDomain() })
+        }
 
     /**
      * Garantiza que exista el usuario y su monedero antes de iniciar la sesión de juego.
@@ -105,9 +120,34 @@ class JuegoRepositoryRoom(
             MonederoEntity(
                 id = "wallet_${usuario.numero}",
                 usuarioNumero = usuario.numero,
-                saldo = monedasIniciales
+                saldo = saldoActual
             )
         )
+    }
+
+    /**
+     * Reinicia el saldo del monedero de forma explícita.
+     *
+     * @param usuario Perfil local del jugador.
+     * @param saldoNuevo Saldo que debe quedar aplicado en el monedero.
+     * @throws IllegalStateException Room expone errores de integridad.
+     * @security
+     * - Solo actualiza saldo y alias locales; no persiste PII.
+     */
+    override suspend fun reiniciarMonedas(usuario: Usuario, saldoNuevo: Int) {
+        usuarioDao.upsertSuspend(usuario.toEntity())
+        val monedero = monederoDao.getMonederoSimple(usuario.numero)
+        if (monedero == null) {
+            monederoDao.upsertSuspend(
+                MonederoEntity(
+                    id = "wallet_${usuario.numero}",
+                    usuarioNumero = usuario.numero,
+                    saldo = saldoNuevo
+                )
+            )
+        } else {
+            monederoDao.actualizarSaldo(usuario.numero, saldoNuevo)
+        }
     }
 
     /**
@@ -121,8 +161,25 @@ class JuegoRepositoryRoom(
      * - Solo propaga alias y resultados locales.
      */
     override fun observarHistorial(usuarioId: String, limit: Int): Flow<List<Partida>> {
-        return partidaDao.observarHistorial(usuarioId.toLong(), limit)
-            .map { lista -> lista.map { it.toDomain() } }
+        DecentralizedLogger.d(
+            "JuegoRepository",
+            "observarHistorial usuarioId=${redactId(usuarioId)} limit=$limit"
+        )
+        return flow {
+            val usuarioNumero = resolveUsuarioNumero(usuarioId)
+            if (usuarioNumero == null) {
+                DecentralizedLogger.w(
+                    "JuegoRepository",
+                    "Historial sin usuario local para ${redactId(usuarioId)}"
+                )
+                emit(emptyList())
+                return@flow
+            }
+            emitAll(
+                partidaDao.observarHistorial(usuarioNumero, limit)
+                    .map { lista -> lista.map { it.toDomain() } }
+            )
+        }
     }
 
     /**
@@ -135,7 +192,17 @@ class JuegoRepositoryRoom(
      * - Solo maneja saldo y referencias locales.
      */
     override fun observarMonedero(usuarioId: String): Flow<Monedero> {
-        return monederoDao.observeSaldo(usuarioId.toLong()).asFlow().map { it.toDomain() }
+        return flow {
+            val usuarioNumero = resolveUsuarioNumero(usuarioId)
+            if (usuarioNumero == null) {
+                DecentralizedLogger.w(
+                    "JuegoRepository",
+                    "Monedero sin usuario local para ${redactId(usuarioId)}"
+                )
+                return@flow
+            }
+            emitAll(monederoDao.observeSaldo(usuarioNumero).asFlow().map { it.toDomain() })
+        }
     }
 
     /**
@@ -148,7 +215,8 @@ class JuegoRepositoryRoom(
      * - Solo persiste alias y resultados, en línea con el esquema local.
      */
     override suspend fun lanzarDado(usuarioId: String): Partida {
-        val usuarioNumero = usuarioId.toLong()
+        val usuarioNumero = resolveUsuarioNumero(usuarioId)
+            ?: error("Usuario inexistente para lanzarDado")
         val monedero = monederoDao.getMonederoSimple(usuarioNumero)
         val saldoInicial = monedero?.saldo ?: MONEDAS_INICIALES
         if (monedero == null) {
@@ -209,7 +277,8 @@ class JuegoRepositoryRoom(
         cambioMonedas: Int,
         fechaMs: Long,
     ): Partida {
-        val usuarioNumero = usuarioId.toLong()
+        val usuarioNumero = resolveUsuarioNumero(usuarioId)
+            ?: error("Usuario inexistente para registrar resultado remoto")
         val usuario = usuarioDao.getByNumero(usuarioNumero)
             ?: error("Usuario inexistente para registrar partida remota")
         val saldoActual = monederoDao.getMonederoSimple(usuarioNumero)?.saldo ?: 0
@@ -229,6 +298,55 @@ class JuegoRepositoryRoom(
         return partidaEntity.copy(id = partidaId).toDomain(usuario.alias)
     }
 
+    override suspend fun sumarMonedas(usuarioId: String, delta: Int) {
+        require(delta != 0) { "delta no puede ser 0" }
 
+        val usuarioNumero = resolveUsuarioNumero(usuarioId)
+            ?: error("Usuario inexistente para sumar monedas")
+        val monedero = monederoDao.getMonederoSimple(usuarioNumero)
+
+        val saldoActual = monedero?.saldo ?: MONEDAS_INICIALES
+        val nuevoSaldo = maxOf(saldoActual + delta, 0)
+
+        // Si no existía monedero, lo creamos
+        if (monedero == null) {
+            monederoDao.upsertSuspend(
+                MonederoEntity(
+                    id = "wallet_$usuarioNumero",
+                    usuarioNumero = usuarioNumero,
+                    saldo = nuevoSaldo
+                )
+            )
+        } else {
+            monederoDao.actualizarSaldo(usuarioNumero, nuevoSaldo)
+        }
+    }
+
+    private suspend fun resolveUsuarioNumero(usuarioId: String): Long? {
+        val numero = usuarioId.toLongOrNull()
+        if (numero != null) return numero
+        return usuarioDao.getByFirebaseUid(usuarioId)?.numero
+    }
+
+    private fun resolveUsuarioNumeroRx(usuarioId: String): Maybe<Long> {
+        val numero = usuarioId.toLongOrNull()
+        return if (numero != null) {
+            Maybe.just(numero)
+        } else {
+            usuarioDao.getByFirebaseUidRx(usuarioId).map { it.numero }
+        }
+    }
+
+    private fun resolveUsuarioEntityRx(usuarioId: String): Maybe<UsuarioEntity> {
+        val numero = usuarioId.toLongOrNull()
+        return if (numero != null) {
+            usuarioDao.getByNumeroRx(numero)
+        } else {
+            usuarioDao.getByFirebaseUidRx(usuarioId)
+        }
+    }
 }
 private const val MONEDAS_INICIALES = 100
+
+private fun redactId(id: String?): String =
+    id?.takeLast(2)?.padStart(4, '*') ?: "***"

@@ -1,11 +1,10 @@
-package com.diegodiaz.techwizards.domain.model
+package com.diegodiaz.techwizards.data.remote.dto
 
-data class LeaderboardEntry(
+data class LeaderboardRemoteDto(
     val id: String? = null,
     val alias: String,
     val score: Int,
     val position: Int? = null,
-    val wins: Int? = null,
     val prizeName: String? = null,
     val prizeDescription: String? = null
 )

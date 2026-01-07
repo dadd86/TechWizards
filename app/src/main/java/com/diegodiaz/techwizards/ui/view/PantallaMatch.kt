@@ -334,6 +334,7 @@ private fun ResultadoDado(uiState: MatchOnlineUiState, dims: UiDims) {
 private fun MatchCard(
     nombre: String,
     puntos: Int,
+    victorias: Int? = null,
     caraElegida: Int? = null,
     lanzamiento: Int? = null,
     dims: UiDims
@@ -362,6 +363,12 @@ private fun MatchCard(
                     text = stringResource(id = R.string.match_points, puntos),
                     fontSize = dims.bodySp
                 )
+                victorias?.let { wins ->
+                    Text(
+                        text = stringResource(id = R.string.ranking_wins, wins),
+                        fontSize = dims.bodySp
+                    )
+                }
                 caraElegida?.let {
                     Text(
                         text = stringResource(id = R.string.match_selected_face, it),
@@ -455,6 +462,7 @@ private fun LeaderboardCard(topTen: List<LeaderboardEntry>, dims: UiDims) {
                     MatchCard(
                         nombre = "${index + 1}. ${entry.alias}",
                         puntos = entry.score,
+                        victorias = entry.wins,
                         dims = dims
                     )
                 }

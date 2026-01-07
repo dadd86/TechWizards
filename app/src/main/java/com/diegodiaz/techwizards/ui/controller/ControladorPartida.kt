@@ -14,6 +14,7 @@ import com.diegodiaz.techwizards.domain.model.Monedero
 import com.diegodiaz.techwizards.domain.model.Partida
 import com.diegodiaz.techwizards.domain.model.Usuario
 import com.diegodiaz.techwizards.domain.model.ResolucionTiradaRemota
+import com.diegodiaz.techwizards.domain.model.UserSession
 import com.diegodiaz.techwizards.domain.repository.JuegoRepository
 import com.diegodiaz.techwizards.domain.repository.ScoreRepository
 import com.diegodiaz.techwizards.core.SessionManager
@@ -37,6 +38,7 @@ data class JuegoUiState(
 
 sealed interface JuegoUiEvent {
     data class Victoria(val partida: Partida) : JuegoUiEvent
+    data class PremioComunReclamado(val monedas: Int) : JuegoUiEvent
 }
 
 private fun Partida.formatoResumen(): String = when (resultado) {
@@ -110,6 +112,7 @@ class ControladorPartida(
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
     val eventos: SharedFlow<JuegoUiEvent> = _eventos
+    //private var ultimoClaimIdAplicado: String? = null
 
     fun lanzar() {
         viewModelScope.launch {
@@ -118,6 +121,7 @@ class ControladorPartida(
                 rollCounter.update { it + 1 }
                 registrarHistorialRemoto(partida)
                 publicarPuntuacionRemota(partida)
+                aplicarPremioComun(partida)
                 handleVictoriaSiNecesario(partida, origen = "lanzar")
             } catch (t: Throwable) {
                 DecentralizedLogger.e(TAG, "Error al lanzar", t)
@@ -132,6 +136,7 @@ class ControladorPartida(
                 rollCounter.update { it + 1 }
                 registrarHistorialRemoto(partida)
                 publicarPuntuacionRemota(partida)
+                aplicarPremioComun(partida)
                 handleVictoriaSiNecesario(partida, origen = "elegirNumero($num)")
             }
         }
@@ -147,6 +152,7 @@ class ControladorPartida(
                 is Result.Ok -> {
                     rollCounter.update { it + 1 }
                     registrarHistorialRemoto(resultado.value.partida)
+                    aplicarPremioComun(resultado.value.partida)
                     if (resultado.value.gano) {
                         handleVictoriaSiNecesario(resultado.value.partida, origen = "remoto")
                     }
@@ -157,13 +163,91 @@ class ControladorPartida(
 
     private suspend fun publicarPuntuacionRemota(partida: Partida) {
         val currentSession = sessionManager.session.value ?: return
-        val score = partida.deltaMonedas.coerceAtLeast(0) + if (partida.resultado == Resultado.GANADO) 50 else 10
+        if (!esSesionFirebaseValida(currentSession)) {
+            DecentralizedLogger.i(TAG, "Puntuación remota omitida por sesión inválida")
+            return
+        }
         runCatching {
-            scoreRepository.publicarPuntuacion(currentSession, score)
+            scoreRepository.publicarPuntuacion(currentSession, partida.deltaMonedas)
         }.onFailure { error ->
             DecentralizedLogger.e(TAG, "No se pudo publicar la puntuación", error)
         }
     }
+
+    private suspend fun aplicarPremioComun(partida: Partida) {
+        val currentSession = sessionManager.session.value
+        DecentralizedLogger.i(TAG, "aplicarPremioComun() session=${currentSession != null}")
+        if (currentSession == null || !esSesionFirebaseValida(currentSession)) {
+            DecentralizedLogger.i(TAG, "Premio común omitido por sesión inválida")
+            return
+        }
+
+        runCatching {
+            when (partida.resultado) {
+                Resultado.PERDIDO -> {
+                    val delta = kotlin.math.abs(partida.deltaMonedas).coerceAtLeast(1)
+                    DecentralizedLogger.i(TAG, "PREMIO: PERDIDO delta=$delta")
+                    scoreRepository.incrementarPremioComun(currentSession, delta)
+                    DecentralizedLogger.i(TAG, "PREMIO: increment OK")
+                }
+
+                Resultado.GANADO -> {
+                    val uid = firebaseUidProvider()?.trim()
+                    DecentralizedLogger.i(TAG, "PREMIO: GANADO uidDisponible=${uid != null}")
+                    if (uid.isNullOrBlank()) {
+                        DecentralizedLogger.i(TAG, "PREMIO: UID Firebase no disponible")
+                        return
+                    }
+                    if (!esSesionFirebaseValida(currentSession)) {
+                        DecentralizedLogger.i(TAG, "PREMIO: sesión Firebase inválida para reclamar")
+                        return
+                    }
+                    val claimId = "${uid}_${System.currentTimeMillis()}"
+
+                    //val claimId = "${uid}_${partida.createdAtMsOrFallback()}"
+                    DecentralizedLogger.i(TAG, "PREMIO: claimId=${redactId(claimId)}")
+
+                    val claimed = scoreRepository.reclamarPremioComun(currentSession, claimId)
+                    if (claimed > 0) {
+                    //if (claimed > 0 && ultimoClaimIdAplicado != claimId) {
+                        repo.sumarMonedas(usuarioId, claimed)
+                        //ultimoClaimIdAplicado = claimId
+                        // 👈 suma al monedero local
+                        _eventos.tryEmit(JuegoUiEvent.PremioComunReclamado(claimed))
+                    //} else if (claimed > 0) {
+                       // DecentralizedLogger.i(TAG, "PREMIO: claimId ya aplicado localmente")
+                    }
+                }
+            }
+
+        }.onFailure { error ->
+            val http = error as? retrofit2.HttpException
+            if (http != null) {
+                val body = runCatching { http.response()?.errorBody()?.string() }.getOrNull()
+                DecentralizedLogger.e(
+                    TAG,
+                    "No se pudo aplicar premio común: HTTP ${http.code()} body=$body",
+                    error
+                )
+            } else {
+                DecentralizedLogger.e(TAG, "No se pudo aplicar premio común", error)
+            }
+        }
+
+    }
+
+    // helper: usa un timestamp estable para claimId
+    private fun Partida.createdAtMsOrFallback(): Long {
+        // usa el que tengas en Partida si existe; si no, fallback a now
+        return try {
+            // si tu Partida tiene un campo tipo createdAtMs / timestamp etc.
+            val f = this::class.members.firstOrNull { it.name == "createdAtMs" } ?: return System.currentTimeMillis()
+            (f.call(this) as? Long) ?: System.currentTimeMillis()
+        } catch (_: Throwable) {
+            System.currentTimeMillis()
+        }
+    }
+
 
 
     private suspend fun handleVictoriaSiNecesario(partida: Partida, origen: String) {
@@ -224,9 +308,20 @@ class ControladorPartida(
 
     fun resetMonedas(usuario: Usuario, nuevoSaldo: Int = 100) {
         viewModelScope.launch {
-            repo.inicializarMonedas(usuario, nuevoSaldo)
+            repo.reiniciarMonedas(usuario, nuevoSaldo)
         }
     }
+    private fun esSesionFirebaseValida(session: UserSession): Boolean {
+        val token = session.token.trim()
+        if (token.isEmpty()) return false
+        if (token.startsWith("local-")) return false
+        val backendToken = session.backendToken
+        if (!backendToken.isNullOrBlank() && backendToken == token) return false
+        return true
+    }
+
+    private fun redactId(value: String?): String =
+        value?.take(2)?.plus("***") ?: "***"
 }
 
 class ControladorPartidaFactory(

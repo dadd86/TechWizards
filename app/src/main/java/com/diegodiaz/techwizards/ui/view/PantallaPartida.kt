@@ -6,10 +6,13 @@ import android.graphics.Bitmap
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
+import android.widget.Toast
+
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -183,37 +186,50 @@ fun PantallaPartida(
 
             DecentralizedLogger.i("Partida", "Evento recibido: $evento")
 
-            if (evento is JuegoUiEvent.Victoria && evento.partida.resultado == Resultado.GANADO) {
-
-                DecentralizedLogger.i("Partida", "Victoria detectada en PantallaPartida")
-
-                val bitmap = view.drawToBitmap()
-                val screenshotPath = guardarCapturaTemporal(context, bitmap)
-                bitmap.recycle()
-
-                val payload = VictoryCelebrationPayload.fromPartida(
-                    partida = evento.partida,
-                    screenshotPath = screenshotPath
-                )
-                onProgramarCelebracion(payload)
-
-                // Confeti solo si las animaciones están activadas
-                if (uiState.animationsEnabled) {
-                    showConfetti = true
-                    kotlinx.coroutines.delay(2500)
-                    showConfetti = false
+            when (evento) {
+                is JuegoUiEvent.PremioComunReclamado -> {
+                    Toast.makeText(
+                        context,
+                        "¡Premio común: +${evento.monedas} monedas!",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
 
-                // Sonido extra de victoria, respetando el switch de SFX
-                if (uiState.sfxEnabled) {
-                    toneGenerator.startTone(
-                        ToneGenerator.TONE_CDMA_HIGH_PBX_SLS,
-                        300
-                    )
+                is JuegoUiEvent.Victoria -> {
+                    if (evento.partida.resultado == Resultado.GANADO) {
+
+                        DecentralizedLogger.i("Partida", "Victoria detectada en PantallaPartida")
+
+                        val bitmap = view.drawToBitmap()
+                        val screenshotPath = guardarCapturaTemporal(context, bitmap)
+                        bitmap.recycle()
+
+                        val payload = VictoryCelebrationPayload.fromPartida(
+                            partida = evento.partida,
+                            screenshotPath = screenshotPath
+                        )
+                        onProgramarCelebracion(payload)
+
+                        // Confeti solo si las animaciones están activadas
+                        if (uiState.animationsEnabled) {
+                            showConfetti = true
+                            kotlinx.coroutines.delay(2500)
+                            showConfetti = false
+                        }
+
+                        // Sonido extra de victoria, respetando el switch de SFX
+                        if (uiState.sfxEnabled) {
+                            toneGenerator.startTone(
+                                ToneGenerator.TONE_CDMA_HIGH_PBX_SLS,
+                                300
+                            )
+                        }
+                    }
                 }
             }
         }
     }
+
 
     val boxSize = (dims.minSide * 0.8f).coerceAtMost(360.dp)
     val diceSize = boxSize * 0.7f

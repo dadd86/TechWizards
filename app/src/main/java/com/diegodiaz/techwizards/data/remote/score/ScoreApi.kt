@@ -5,44 +5,67 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
-import retrofit2.http.Query
+import com.diegodiaz.techwizards.data.remote.dto.BackendLoginRequestDto
+import com.diegodiaz.techwizards.data.remote.dto.BackendLoginResponseDto
 
-/**
- * API REST para ranking y premios.
- *
- * @security
- * Las cabeceras de autorización se inyectan en cada llamada.
- */
 interface ScoreApi {
 
-    @GET("leaderboard/top10")
+    /**
+     * Obtiene el top 10 desde el endpoint REST más reciente.
+     *
+     * @param bearerToken Token Firebase opcional.
+     * @security No persiste ni registra tokens.
+     */
+    @GET("scores/top10")
     suspend fun fetchTopTen(
-        @Header("Authorization") bearerToken: String?
-    ): List<ScoreEntryDto>
+        @Header("Authorization") bearerToken: String? = null
+    ): ScoreTopTenResponseDto
 
-    @GET("leaderboard")
-    suspend fun fetchLeaderboard(
-        @Header("Authorization") bearerToken: String?,
-        @Query("limit") limit: Int = 10
+    /**
+     * Obtiene el top 10 desde el endpoint legacy en Firebase Functions.
+     *
+     * @param bearerToken Token Firebase opcional.
+     * @security No persiste ni registra tokens.
+     */
+    @GET("leaderboard/top10")
+    suspend fun fetchTopTenLegacy(
+        @Header("Authorization") bearerToken: String? = null
     ): List<ScoreEntryDto>
 
     @POST("scores")
-    suspend fun publishScore(
-        @Header("Authorization") bearerToken: String?,
-        @Body payload: ScorePayload
+    suspend fun publicarScore(
+        @Header("Authorization") bearerToken: String,
+        @Body score: ScorePayload
     )
 
     @GET("prize/common")
     suspend fun fetchCommonPrize(
-        @Header("Authorization") bearerToken: String?
-    ): PrizeDto
+        @Header("Authorization") bearerToken: String? = null
+    ): PrizeCommonDto
 
     @PUT("prize/common")
     suspend fun updatePrize(
-        @Header("Authorization") bearerToken: String?,
-        @Body prize: PrizeRequestDto
-    ): PrizeDto
+        @Header("Authorization") bearerToken: String,
+        @Body request: PrizeUpdateRequestDto
+    ): PrizeCommonDto
 
+    // Login (NO “loguea”, registra alias) -> REQUIERE Bearer Firebase ID Token
     @POST("login")
-    suspend fun login(@Body request: LoginRequest): SessionResponseDto
+    suspend fun login(
+        @Header("Authorization") bearerToken: String,
+        @Body request: LoginRequest
+    ): SessionResponseDto
+
+    @POST("prize/common/increment")
+    suspend fun incrementCommonPrize(
+        @Header("Authorization") bearerToken: String,
+        @Body request: PrizeIncrementRequestDto
+    ): PrizeCommonDto
+
+    @POST("prize/common/claim")
+    suspend fun claimCommonPrize(
+        @Header("Authorization") bearerToken: String,
+        @Body request: PrizeClaimRequestDto
+    ): PrizeClaimResponseDto
+
 }

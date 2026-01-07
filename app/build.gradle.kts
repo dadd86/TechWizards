@@ -136,6 +136,7 @@ dependencies {
 
     // Base Android
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.splashscreen)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
 
