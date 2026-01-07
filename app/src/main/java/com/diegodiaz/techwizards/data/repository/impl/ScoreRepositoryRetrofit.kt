@@ -13,6 +13,7 @@ import com.diegodiaz.techwizards.data.remote.firestore.FirestorePlayersApi
 import com.diegodiaz.techwizards.data.remote.firestore.winsOrNull
 import com.diegodiaz.techwizards.data.remote.firestore.toLeaderboardEntry
 import com.diegodiaz.techwizards.data.remote.prize.PremioComunFirestoreDataSource
+import com.diegodiaz.techwizards.data.remote.prize.PremioComunBackendDataSource
 import com.diegodiaz.techwizards.data.remote.firestore.PrizeCommonFirebaseDataSource
 import com.diegodiaz.techwizards.data.remote.score.LoginRequest
 import com.diegodiaz.techwizards.data.remote.score.ScoreApi
@@ -42,7 +43,7 @@ class ScoreRepositoryRetrofit(
     private val sessionManager: SessionManager,
     private val firebaseAuth: FirebaseAuth,
     private val prizeCommonDataSource: PrizeCommonFirebaseDataSource,
-    private val premioComunDataSource: PremioComunFirestoreDataSource,
+    private val premioComunDataSource: PremioComunBackendDataSource,
     private val firestorePlayersApi: FirestorePlayersApi? = null,
     private val firestoreLeaderboardApi: FirestoreLeaderboardApi? = null,
     private val firestoreLeaderboardSdkDataSource: FirestoreLeaderboardSdkDataSource? = null
@@ -161,11 +162,14 @@ class ScoreRepositoryRetrofit(
     }
 
     override suspend fun obtenerPremioComun(): CommonPrize {
-        return premioComunDataSource.obtenerPremioComun()
+        val bearer = tokenOrNull()?.let { "Bearer $it" }
+        return premioComunDataSource.obtenerPremioComun(bearer)
     }
 
     override fun observarPremioComun(): Flow<CommonPrize> {
-        return premioComunDataSource.observarPremioComun()
+        return premioComunDataSource.observarPremioComun {
+            tokenOrNull()?.let { "Bearer $it" }
+        }
     }
 
 
@@ -173,7 +177,7 @@ class ScoreRepositoryRetrofit(
         val firebaseToken = requireFirebaseToken(session)
         credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
         credentialsStore.guardarFirebaseToken(firebaseToken)
-        return premioComunDataSource.actualizarPremioComun(nuevoPremio)
+        return premioComunDataSource.actualizarPremioComun("Bearer $firebaseToken", nuevoPremio)
     }
 
     override suspend fun autenticarAlias(alias: String): UserSession {
@@ -254,7 +258,7 @@ class ScoreRepositoryRetrofit(
         val firebaseToken = requireFirebaseToken(session)
         credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
         credentialsStore.guardarFirebaseToken(firebaseToken)
-        return premioComunDataSource.incrementarPremioComun(delta)
+        return premioComunDataSource.incrementarPremioComun("Bearer $firebaseToken", delta)
     }
 
     override suspend fun reclamarPremioComun(session: UserSession, claimId: String): Int {
@@ -263,8 +267,7 @@ class ScoreRepositoryRetrofit(
         credentialsStore.guardarFirebaseToken(firebaseToken)
         val uid = requireFirebaseUid()
         return premioComunDataSource.reclamarPremioComun(
-            firebaseUid = uid,
-            alias = session.alias,
+            bearerToken = "Bearer $firebaseToken",
             claimId = claimId
         )
     }
