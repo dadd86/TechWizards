@@ -55,6 +55,7 @@ import com.diegodiaz.techwizards.domain.repository.PartidaHistoryRepository
 import com.diegodiaz.techwizards.integration.victory.WorkManagerVictoryCelebrationService
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 
 object ServiceLocator {
@@ -65,6 +66,7 @@ object ServiceLocator {
     // Firebase
     // --------------------------------------------------
     private val firebaseAuth: FirebaseAuth by lazy { Firebase.auth }
+    private val firestore: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
 
     // --------------------------------------------------
     // Database
@@ -174,7 +176,7 @@ object ServiceLocator {
     }
 
     private val firestoreLeaderboardSdkDataSource by lazy {
-        FirestoreLeaderboardSdkDataSource()
+        FirestoreLeaderboardSdkDataSource(firestore)
     }
 
 
@@ -202,9 +204,14 @@ object ServiceLocator {
         PartidaHistoryFirebaseDataSource()
     }
 
+    private val premioComunBackendDataSource by lazy {
+        PremioComunBackendDataSource(scoreApi)
+    }
+
+
     private val premioComunDataSource by lazy {
         PremioComunBackendDataSource(scoreApi)
-        PremioComunFirestoreDataSource()
+        PremioComunFirestoreDataSource(firestore)
     }
 
 
@@ -267,7 +274,8 @@ object ServiceLocator {
             credentialsStore = credentialsStore,
             sessionManager = sessionManager,
             firebaseAuth = firebaseAuth,
-            premioComunDataSource = premioComunDataSource,
+            premioComunBackendDataSource = premioComunBackendDataSource,
+            premioComunFirestoreDataSource = premioComunFirestoreDataSource,
             firestorePlayersApi = firestorePlayersApi,
             firestoreLeaderboardApi = firestoreLeaderboardApi,
             firestoreLeaderboardSdkDataSource = firestoreLeaderboardSdkDataSource

@@ -4,8 +4,6 @@ import com.diegodiaz.techwizards.domain.model.CommonPrize
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -19,7 +17,7 @@ import kotlinx.coroutines.tasks.await
  * @security No registra PII ni tokens; solo usa UID para trazabilidad.
  */
 class PremioComunFirestoreDataSource(
-    private val firestore: FirebaseFirestore = Firebase.firestore,
+    private val firestore: FirebaseFirestore,
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance(),
 ) {
 

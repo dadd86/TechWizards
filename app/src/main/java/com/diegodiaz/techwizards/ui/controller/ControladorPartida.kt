@@ -315,8 +315,8 @@ class ControladorPartida(
         val token = session.token.trim()
         if (token.isEmpty()) return false
         if (token.startsWith("local-")) return false
-        val backendToken = session.backendToken
-        if (!backendToken.isNullOrBlank() && backendToken == token) return false
+        val uid = firebaseUidProvider()?.trim()
+        if (uid.isNullOrBlank()) return false
         return true
     }
 
