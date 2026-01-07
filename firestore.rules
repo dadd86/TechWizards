@@ -7,10 +7,14 @@ service cloud.firestore {
         "descripcion",
         "valor",
         "updatedAt",
+        "updatedByUid",
         "lastWinnerUid",
         "lastWinnerAlias",
         "lastClaimId",
-        "lastClaimAt"
+        "lastClaimAt",
+        "lastClaimAmount",
+        "lastClaimedAt",
+        "lastClaimedByUid"
       ]);
     }
 
