@@ -13,7 +13,6 @@ import com.diegodiaz.techwizards.data.remote.firestore.FirestorePlayersApi
 import com.diegodiaz.techwizards.data.remote.firestore.winsOrNull
 import com.diegodiaz.techwizards.data.remote.firestore.toLeaderboardEntry
 import com.diegodiaz.techwizards.data.remote.prize.PremioComunBackendDataSource
-import com.diegodiaz.techwizards.data.remote.prize.PremioComunFirestoreDataSource
 import com.diegodiaz.techwizards.data.remote.score.LoginRequest
 import com.diegodiaz.techwizards.data.remote.score.ScoreApi
 import com.diegodiaz.techwizards.data.remote.score.ScorePayload
@@ -38,7 +37,6 @@ class ScoreRepositoryRetrofit(
     private val sessionManager: SessionManager,
     private val firebaseAuth: FirebaseAuth,
     private val premioComunBackendDataSource: PremioComunBackendDataSource,
-    private val premioComunFirestoreDataSource: PremioComunFirestoreDataSource,
     private val firestorePlayersApi: FirestorePlayersApi? = null,
     private val firestoreLeaderboardApi: FirestoreLeaderboardApi? = null,
     private val firestoreLeaderboardSdkDataSource: FirestoreLeaderboardSdkDataSource? = null
@@ -158,20 +156,13 @@ class ScoreRepositoryRetrofit(
 
     override suspend fun obtenerPremioComun(): CommonPrize {
         val bearer = tokenOrNull()?.let { "Bearer $it" }
-        return runCatching {
-            premioComunBackendDataSource.obtenerPremioComun(bearer)
-        }.getOrElse { error ->
-            DecentralizedLogger.e(
-                "ScoreRepositoryRetrofit",
-                "Fallo premio común desde backend, usando Firestore",
-                error
-            )
-            premioComunFirestoreDataSource.obtenerPremioComun()
-        }
+        return premioComunBackendDataSource.obtenerPremioComun(bearer)
     }
 
     override fun observarPremioComun(): Flow<CommonPrize> {
-        return premioComunFirestoreDataSource.observarPremioComun()
+        return premioComunBackendDataSource.observarPremioComun {
+            tokenOrNull()?.let { "Bearer $it" }
+        }
     }
 
 
@@ -179,16 +170,7 @@ class ScoreRepositoryRetrofit(
         val firebaseToken = requireFirebaseToken(session)
         credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
         credentialsStore.guardarFirebaseToken(firebaseToken)
-        return runCatching {
-            premioComunBackendDataSource.actualizarPremioComun("Bearer $firebaseToken", nuevoPremio)
-        }.getOrElse { error ->
-            DecentralizedLogger.e(
-                "ScoreRepositoryRetrofit",
-                "Fallo actualización premio común en backend, usando Firestore",
-                error
-            )
-            premioComunFirestoreDataSource.actualizarPremioComun(nuevoPremio)
-        }
+        return premioComunBackendDataSource.actualizarPremioComun("Bearer $firebaseToken", nuevoPremio)
     }
 
     override suspend fun autenticarAlias(alias: String): UserSession {
@@ -269,16 +251,7 @@ class ScoreRepositoryRetrofit(
         val firebaseToken = requireFirebaseToken(session)
         credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
         credentialsStore.guardarFirebaseToken(firebaseToken)
-        return runCatching {
-            premioComunBackendDataSource.incrementarPremioComun("Bearer $firebaseToken", delta)
-        }.getOrElse { error ->
-            DecentralizedLogger.e(
-                "ScoreRepositoryRetrofit",
-                "Fallo incremento premio común en backend, usando Firestore",
-                error
-            )
-            premioComunFirestoreDataSource.incrementarPremioComun(delta)
-        }
+        return premioComunBackendDataSource.incrementarPremioComun("Bearer $firebaseToken", delta)
     }
 
 
@@ -287,19 +260,10 @@ class ScoreRepositoryRetrofit(
         credentialsStore.guardarSesionAlias(firebaseToken, session.alias)
         credentialsStore.guardarFirebaseToken(firebaseToken)
         requireFirebaseUid()
-        return runCatching {
-            premioComunBackendDataSource.reclamarPremioComun(
-                bearerToken = "Bearer $firebaseToken",
-                claimId = claimId
-            )
-        }.getOrElse { error ->
-            DecentralizedLogger.e(
-                "ScoreRepositoryRetrofit",
-                "Fallo reclamo premio común en backend, usando Firestore",
-                error
-            )
-            premioComunFirestoreDataSource.reclamarPremioComun(claimId)
-        }
+        return premioComunBackendDataSource.reclamarPremioComun(
+            bearerToken = "Bearer $firebaseToken",
+            claimId = claimId
+        )
     }
 
 }
