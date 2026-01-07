@@ -34,7 +34,6 @@ import com.diegodiaz.techwizards.data.remote.match.MatchApi
 import com.diegodiaz.techwizards.data.remote.match.MatchRemoteMapper
 import com.diegodiaz.techwizards.data.remote.api.ScoresApi
 import com.diegodiaz.techwizards.data.remote.firestore.FirestoreLeaderboardApi
-import com.diegodiaz.techwizards.data.remote.firestore.PrizeCommonFirebaseDataSource
 import com.diegodiaz.techwizards.data.remote.prize.PremioComunBackendDataSource
 
 import com.diegodiaz.techwizards.data.remote.firestore.FirestorePlayersApi
